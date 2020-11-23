@@ -4,7 +4,6 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Database.Persist.Monad
   ( MonadSqlQuery(..)
@@ -14,11 +13,6 @@ module Database.Persist.Monad
   , SqlQueryBackend(..)
   , runSqlQueryT
 
-    -- * Test utility
-  , MockSqlQueryT
-  , runMockSqlQueryT
-  , withRecord
-
     -- * Coerced functions
   , SqlQueryRep(..)
   , selectList
@@ -27,13 +21,12 @@ module Database.Persist.Monad
   , runMigrationSilent
   ) where
 
-import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, lift, local, runReaderT)
 import Data.Pool (Pool)
 import Data.Text (Text)
-import Data.Typeable (Typeable, eqT, (:~:)(..))
+import Data.Typeable (Typeable)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
 import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
@@ -100,35 +93,3 @@ insert_ a = runQueryRep $ Insert_ a
 
 runMigrationSilent :: (MonadUnliftIO m, MonadSqlQuery m) => Migration -> m [Text]
 runMigrationSilent a = runQueryRep $ RunMigrationsSilent a
-
-{- MockSqlQueryT -}
-
-data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe a)
-
-withRecord :: forall record. Typeable record => (forall a. SqlQueryRep record a -> Maybe a) -> MockQuery
-withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
-  case eqT @record @someRecord of
-    Just Refl -> f rep
-    Nothing -> Nothing
-
-newtype MockSqlQueryT m a = MockSqlQueryT
-  { unMockSqlQueryT :: ReaderT [MockQuery] m a
-  } deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadIO
-    )
-
-runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
-runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
-
-instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
-  runQueryRep rep = do
-    mockQueries <- MockSqlQueryT ask
-    maybe (error $ "Could not find mock for query: " ++ show rep) return
-      $ msum $ map tryMockQuery mockQueries
-    where
-      tryMockQuery (MockQuery f) = f rep
-
-  withTransaction = id

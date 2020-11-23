@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2cbd04236620dfe08abdbfaf9f6e0e14b61615e2adc1cf449bebab66127cccd7
+-- hash: 60dd603d42aeb0ea2e45f7c845dfc8dda9609f1fb620959c66e2ee57bfb1e550
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -15,6 +15,7 @@ library
   exposed-modules:
       Database.Persist.Monad
       Database.Persist.Monad.SqlQueryRep
+      Database.Persist.Monad.TestUtils
   other-modules:
       Paths_persistent_mtl
   hs-source-dirs:
