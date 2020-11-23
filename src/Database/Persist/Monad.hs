@@ -25,8 +25,7 @@ import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Data.Pool (Pool)
-import Database.Persist.Sql (SqlBackend, runSqlPool)
-import qualified Database.Persist.Sql as Persist
+import Database.Persist.Sql (SqlBackend, runSqlConn, runSqlPool)
 
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.Shim
@@ -52,7 +51,7 @@ newtype SqlQueryT m a = SqlQueryT
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   runQueryRep queryRep =
     withCurrentConnection $ \conn ->
-      Persist.runSqlConn (runSqlQueryRep queryRep) conn
+      runSqlConn (runSqlQueryRep queryRep) conn
 
   withTransaction action =
     withCurrentConnection $ \conn ->
