@@ -1,0 +1,4 @@
+# MacOSX files
+.DS_Store
+
+.stack-work/

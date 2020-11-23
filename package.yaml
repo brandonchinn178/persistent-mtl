@@ -1,0 +1,29 @@
+name: persistent-mtl
+version: 0.1.0.0
+maintainer: Brandon Chinn <brandonchinn178@gmail.com>
+
+ghc-options: -Wall
+
+library:
+  source-dirs: src
+  dependencies:
+    - base
+    - mtl
+    - persistent
+    - resource-pool
+    - unliftio
+
+tests:
+  persistent-mtl-test:
+    source-dirs: test
+    main: Main.hs
+    dependencies:
+      - base
+      - monad-logger
+      - persistent
+      - persistent-mtl
+      - persistent-sqlite
+      - persistent-template
+      - tasty
+      - tasty-hunit
+      - unliftio

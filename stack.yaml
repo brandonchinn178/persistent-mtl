@@ -1,0 +1,8 @@
+resolver: lts-16.23
+
+extra-deps:
+  - github: brandonchinn178/pool
+    commit: e430450f92828a4808ae61138b9e0c7864260581
+
+ghc-options:
+  "$locals": -Werror

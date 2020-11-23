@@ -1,0 +1,50 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 4fef3a924546c049525ef9d7a184374bd478e548a51418eeb822cabc9e374571
+
+name:           persistent-mtl
+version:        0.1.0.0
+maintainer:     Brandon Chinn <brandonchinn178@gmail.com>
+build-type:     Simple
+
+library
+  exposed-modules:
+      Database.Persist.Monad
+  other-modules:
+      Paths_persistent_mtl
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base
+    , mtl
+    , persistent
+    , resource-pool
+    , unliftio
+  default-language: Haskell2010
+
+test-suite persistent-mtl-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Example
+      Mocked
+      Paths_persistent_mtl
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      base
+    , monad-logger
+    , persistent
+    , persistent-mtl
+    , persistent-sqlite
+    , persistent-template
+    , tasty
+    , tasty-hunit
+    , unliftio
+  default-language: Haskell2010
