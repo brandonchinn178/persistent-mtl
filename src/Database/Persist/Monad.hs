@@ -29,6 +29,7 @@ module Database.Persist.Monad
 
 import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Data.Acquire (withAcquire)
 import Data.Pool (Pool)
@@ -38,7 +39,6 @@ import Data.Typeable ((:~:)(..), Typeable, eqT, typeRep)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
 import Database.Persist.Sql (Migration, SqlBackend, acquireSqlConnFromPool)
 import qualified Database.Persist.Sql as Persist
-import UnliftIO (MonadUnliftIO, withRunInIO, wrappedWithRunInIO)
 
 class MonadSqlQuery m where
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a

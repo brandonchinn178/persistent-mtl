@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a5593a061b4073799edec5e200512d8dceb8206563eed5476599982b4c1e463e
+-- hash: 625e0d1812c0bd2969efcd729ad0ea4796a1ea23a40d4f63ad8fdb74b240f733
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -26,7 +26,7 @@ library
     , resource-pool
     , resourcet
     , text
-    , unliftio
+    , unliftio-core
   default-language: Haskell2010
 
 test-suite persistent-mtl-test

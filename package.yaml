@@ -13,7 +13,7 @@ library:
     - resource-pool
     - resourcet
     - text
-    - unliftio
+    - unliftio-core
 
 tests:
   persistent-mtl-test:
