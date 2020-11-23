@@ -23,6 +23,8 @@ module Database.Persist.Monad
   , SqlQueryRep(..)
   , selectList
   , insert
+  , insert_
+  , runMigrationSilent
   ) where
 
 import Control.Monad (msum)
@@ -31,14 +33,16 @@ import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Data.Pool (Pool)
 import qualified Data.Pool as Pool
 import Data.Proxy (Proxy(..))
+import Data.Text (Text)
 import Data.Typeable ((:~:)(..), Typeable, eqT, typeRep)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
-import Database.Persist.Sql (SqlBackend)
+import Database.Persist.Sql (Migration, SqlBackend)
 import qualified Database.Persist.Sql as Persist
 import UnliftIO (MonadUnliftIO, mask, onException, withRunInIO, wrappedWithRunInIO)
 
 class MonadSqlQuery m where
-  runQuery :: Typeable record => SqlQueryRep record a -> m a
+  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
+  runRawQuery :: Persist.SqlPersistT m a -> m a
   withTransaction :: m a -> m a
 
 {- SqlQueryT -}
@@ -78,9 +82,13 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { backend = BackendPool pool } -> withResource pool f
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
-  runQuery rep =
+  runQueryRep rep =
     withCurrentConnection $ \conn ->
       liftIO $ Persist.runSqlConn (repToActual rep) conn
+
+  runRawQuery m =
+    withCurrentConnection $ \conn ->
+      Persist.runSqlConn m conn
 
   withTransaction action =
     withCurrentConnection $ \conn ->
@@ -99,10 +107,15 @@ data SqlQueryRep record a where
     :: PersistRecordBackend record SqlBackend
     => record -> SqlQueryRep record (Key record)
 
+  Insert_
+    :: PersistRecordBackend record SqlBackend
+    => record -> SqlQueryRep record ()
+
 instance Typeable record => Show (SqlQueryRep record a) where
   show = \case
     SelectList{} -> "SelectList{..}" ++ record
     Insert{} -> "Insert{..}" ++ record
+    Insert_{} -> "Insert_{..}" ++ record
     where
       record = "<" ++ show (typeRep $ Proxy @record) ++ ">"
 
@@ -110,12 +123,19 @@ repToActual :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 repToActual = \case
   SelectList a b -> Persist.selectList a b
   Insert a -> Persist.insert a
+  Insert_ a -> Persist.insert_ a
 
 selectList :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => [Filter record] -> [SelectOpt record] -> m [Entity record]
-selectList a b = runQuery $ SelectList a b
+selectList a b = runQueryRep $ SelectList a b
 
 insert :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => record -> m (Key record)
-insert a = runQuery $ Insert a
+insert a = runQueryRep $ Insert a
+
+insert_ :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => record -> m ()
+insert_ a = runQueryRep $ Insert_ a
+
+runMigrationSilent :: (MonadUnliftIO m, MonadSqlQuery m) => Migration -> m [Text]
+runMigrationSilent a = runRawQuery $ Persist.runMigrationSilent a
 
 {- MockSqlQueryT -}
 
@@ -140,12 +160,14 @@ runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
 runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
 
 instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
-  runQuery rep = do
+  runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
     maybe (error $ "Could not find mock for query: " ++ show rep) return
       $ msum $ map tryMockQuery mockQueries
     where
       tryMockQuery (MockQuery f) = f rep
+
+  runRawQuery _ = error "Can't run raw queries with MockSqlQueryT"
 
   withTransaction = id
 

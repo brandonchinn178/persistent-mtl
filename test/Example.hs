@@ -26,12 +26,13 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import Database.Persist (Entity)
 import Database.Persist.Sqlite (withSqliteConn, withSqlitePool)
-import Database.Persist.TH (mkPersist, persistLowerCase, sqlSettings)
+import Database.Persist.TH
+    (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Database.Persist.Monad
 
-mkPersist sqlSettings [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrate"] [persistLowerCase|
 Person
   name String
   age Int Maybe
@@ -58,7 +59,9 @@ runTestAppWithPool :: TestApp a -> IO a
 runTestAppWithPool m = runNoLoggingT $ withSqlitePool ":memory:" 5 (runTestAppWith m . BackendPool)
 
 runTestAppWith :: MonadIO m => TestApp a -> SqlQueryBackend -> m a
-runTestAppWith m backend = liftIO . runSqlQueryT backend . unTestApp $ m
+runTestAppWith m backend = liftIO . runSqlQueryT backend . unTestApp $ do
+  _ <- runMigrationSilent migrate
+  m
 
 getPeople :: MonadSqlQuery m => m [Entity Person]
 getPeople = selectList [] []
