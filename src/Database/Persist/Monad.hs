@@ -31,11 +31,8 @@ import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
 import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
 
+import Database.Persist.Monad.Class
 import Database.Persist.Monad.SqlQueryRep
-
-class MonadSqlQuery m where
-  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
-  withTransaction :: m a -> m a
 
 {- SqlQueryT -}
 
