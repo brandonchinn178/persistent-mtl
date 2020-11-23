@@ -1,0 +1,20 @@
+steps:
+  - simple_align:
+      cases: false
+      top_level_patterns: false
+      records: true
+
+  - imports:
+      align: none
+      long_list_align: new_line_multiline
+      separate_lists: false
+
+  - language_pragmas:
+      style: vertical
+      align: false
+      remove_redundant: true
+
+  - trailing_whitespace: {}
+
+columns: 80
+newline: lf
