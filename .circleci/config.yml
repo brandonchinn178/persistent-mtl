@@ -1,0 +1,196 @@
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1.0.2
+
+executors:
+  ubuntu:
+    parameters:
+      stack_yaml:
+        type: string
+        default: stack.yaml
+      latest:
+        type: boolean
+        default: false
+
+    docker:
+      - image: cimg/base:2020.01
+    shell: /bin/bash -eux -o pipefail
+    environment:
+      STACK_YAML: << parameters.stack_yaml >>
+      CI_LATEST: <<# parameters.latest >>1<</ parameters.latest >>
+
+commands:
+  install_stack:
+    steps:
+      - run:
+          name: Install stack
+          command: |
+            sudo apt-get update
+            curl -sSL https://get.haskellstack.org/ | sh
+            stack --version
+
+  with_stack_cache:
+    parameters:
+      install_deps:
+        type: steps
+
+    steps:
+      - run:
+          name: Build cache key
+          command: |
+            mkdir -p .ci
+            stack --version | tee .ci/stack-key.txt
+            echo "${STACK_YAML}" | tee -a .ci/stack-key.txt
+            shasum "${STACK_YAML}" | tee -a .ci/stack-key.txt
+      - restore_cache:
+          keys:
+            - v0-{{ .Environment.CIRCLE_JOB }}-{{ checksum ".ci/stack-key.txt" }}-{{ checksum "package.yaml" }}
+            - v0-{{ .Environment.CIRCLE_JOB }}-{{ checksum ".ci/stack-key.txt" }}
+      - << parameters.install_deps >>
+      - save_cache:
+          key: v0-{{ .Environment.CIRCLE_JOB }}-{{ checksum ".ci/stack-key.txt" }}-{{ checksum "package.yaml" }}
+          paths:
+            - ~/.stack
+            - .stack-work
+
+jobs:
+  lint:
+    executor: ubuntu
+    steps:
+      - checkout
+      - run:
+          name: Install hlint
+          command: |
+            HLINT_ARCHIVE="hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"
+            curl -sSLO "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/${HLINT_ARCHIVE}"
+            mkdir -p ~/.local/bin/
+            tar xzf "${HLINT_ARCHIVE}" -C ~/.local/bin/ --strip-components=1 "hlint-${HLINT_VERSION}/hlint"
+          environment:
+            HLINT_VERSION: 3.2.2
+      - run:
+          name: Install stylish-haskell
+          command: |
+            STYLISH_ARCHIVE="stylish-haskell-v${STYLISH_VERSION}-linux-x86_64.tar.gz"
+            curl -sSLO "https://github.com/jaspervdj/stylish-haskell/releases/download/v${STYLISH_VERSION}/${STYLISH_ARCHIVE}"
+            mkdir -p ~/.local/bin/
+            tar xzf "${STYLISH_ARCHIVE}" -C ~/.local/bin/ --strip-components=1 "stylish-haskell-v${STYLISH_VERSION}-linux-x86_64/stylish-haskell"
+          environment:
+            STYLISH_VERSION: 0.12.2.0
+      - run:
+          name: Install Python
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python
+      - run:
+          name: Install pre-commit
+          command: curl https://pre-commit.com/install-local.py | python -
+      - run:
+          name: Run pre-commit
+          command: pre-commit run --all-files -v --show-diff-on-failure
+          ENVIRONMENT:
+            SKIP: no-commit-to-branch
+
+  run_build_and_test:
+    parameters:
+      stack_yaml:
+        type: string
+        default: stack.yaml
+      latest:
+        type: boolean
+        default: false
+
+    executor:
+      name: ubuntu
+      stack_yaml: << parameters.stack_yaml >>
+      latest: << parameters.latest >>
+
+    steps:
+      - checkout
+      - install_stack
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Build external dependencies
+                command: stack build --test --only-dependencies
+            - when:
+                condition: << parameters.latest >>
+                steps:
+                  - run:
+                      name: Install hpc-lcov
+                      command: stack install hpc-lcov
+      - run:
+          name: Build
+          command: |
+            STACK_ARGS=(
+                --test
+                --no-run-tests
+                <<# parameters.latest >>--coverage<</ parameters.latest >>
+            )
+            stack build "${STACK_ARGS[@]}"
+      - run:
+          name: Check Cabal file up to date
+          command: git diff --exit-code *.cabal
+      - run:
+          name: Test
+          command: |
+            STACK_ARGS=(
+                --test
+                <<# parameters.latest >>--coverage<</ parameters.latest >>
+            )
+            stack build "${STACK_ARGS[@]}"
+      - when:
+          condition: << parameters.latest >>
+          steps:
+            - run:
+                name: Run hpc-lcov
+                command: hpc-lcov
+            - codecov/upload:
+                file: lcov.info
+
+  haddock:
+    executor: ubuntu
+    steps:
+      - checkout
+      - install_stack
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Build external dependencies
+                command: stack build --test --only-dependencies
+      - run:
+          name: Build haddock
+          command: stack haddock --no-haddock-deps
+      - run:
+          name: Bundle haddock docs
+          command: |
+            mkdir -p .ci/
+            tar czf .ci/haddock-docs.tar.gz -C "$(find .stack-work/dist -regex '.*/doc/html/[^/]*')" .
+      - store_artifacts:
+          path: .ci/haddock-docs.tar.gz
+
+workflows:
+  version: 2
+
+  build_and_test:
+    jobs:
+      - lint
+      - haddock
+      - run_build_and_test:
+          name: test_latest
+          latest: true
+      - run_build_and_test:
+          name: test_ghc_8.10
+          stack_yaml: stack-ghc-8.10.yaml
+      - run_build_and_test:
+          name: test_ghc_8.8
+          stack_yaml: stack-ghc-8.8.yaml
+      - run_build_and_test:
+          name: test_ghc_8.6
+          stack_yaml: stack-ghc-8.6.yaml
+      - run_build_and_test:
+          name: test_ghc_8.4
+          stack_yaml: stack-ghc-8.4.yaml
+      - run_build_and_test:
+          name: test_ghc_8.2
+          stack_yaml: stack-ghc-8.2.yaml

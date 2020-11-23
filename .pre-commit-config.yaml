@@ -12,9 +12,9 @@ repos:
         name: hlint
         language: system
         files: '\.hs$'
-        entry: stack exec -- hlint
+        entry: hlint
       - id: stylish-haskell
         name: stylish-haskell
         language: system
         files: '\.hs$'
-        entry: stack exec -- stylish-haskell -i
+        entry: stylish-haskell -i

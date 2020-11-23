@@ -34,7 +34,7 @@ import Control.Monad.Reader (ReaderT, ask, lift, local, runReaderT)
 import Data.Pool (Pool)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
-import Data.Typeable ((:~:)(..), Typeable, eqT, typeRep)
+import Data.Typeable (Typeable, eqT, typeRep, (:~:)(..))
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
 import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
