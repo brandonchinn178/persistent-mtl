@@ -30,14 +30,13 @@ module Database.Persist.Monad
 import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
-import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
-import Data.Acquire (withAcquire)
+import Control.Monad.Reader (ReaderT, ask, lift, local, runReaderT)
 import Data.Pool (Pool)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import Data.Typeable ((:~:)(..), Typeable, eqT, typeRep)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
-import Database.Persist.Sql (Migration, SqlBackend, acquireSqlConnFromPool)
+import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
 
 class MonadSqlQuery m where
@@ -79,7 +78,7 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { currentConn = Just conn } -> f conn
   -- Otherwise, get a new connection
   SqlQueryEnv { backend = BackendSingle conn } -> f conn
-  SqlQueryEnv { backend = BackendPool pool } -> withAcquire (acquireSqlConnFromPool pool) f
+  SqlQueryEnv { backend = BackendPool pool } -> runSqlPool (lift . f =<< ask) pool
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   runQueryRep = runRawQuery . runSqlQueryRep
