@@ -82,13 +82,9 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { backend = BackendPool pool } -> withResource pool f
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
-  runQueryRep rep =
-    withCurrentConnection $ \conn ->
-      liftIO $ Persist.runSqlConn (repToActual rep) conn
+  runQueryRep = runRawQuery . runSqlQueryRep
 
-  runRawQuery m =
-    withCurrentConnection $ \conn ->
-      Persist.runSqlConn m conn
+  runRawQuery m = withCurrentConnection (Persist.runSqlConn m)
 
   withTransaction action =
     withCurrentConnection $ \conn ->
@@ -119,8 +115,8 @@ instance Typeable record => Show (SqlQueryRep record a) where
     where
       record = "<" ++ show (typeRep $ Proxy @record) ++ ">"
 
-repToActual :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
-repToActual = \case
+runSqlQueryRep :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
+runSqlQueryRep = \case
   SelectList a b -> Persist.selectList a b
   Insert a -> Persist.insert a
   Insert_ a -> Persist.insert_ a
