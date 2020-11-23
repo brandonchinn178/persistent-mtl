@@ -35,13 +35,13 @@ import Data.Pool (Pool)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import Data.Typeable (Typeable, eqT, typeRep, (:~:)(..))
+import Data.Void (Void)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
 import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
 
 class MonadSqlQuery m where
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a
-  runRawQuery :: Persist.SqlPersistT m a -> m a
   withTransaction :: m a -> m a
 
 {- SqlQueryT -}
@@ -81,9 +81,9 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { backend = BackendPool pool } -> runSqlPool (lift . f =<< ask) pool
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
-  runQueryRep = runRawQuery . runSqlQueryRep
-
-  runRawQuery m = withCurrentConnection (Persist.runSqlConn m)
+  runQueryRep queryRep =
+    withCurrentConnection $ \conn ->
+      Persist.runSqlConn (runSqlQueryRep queryRep) conn
 
   withTransaction action =
     withCurrentConnection $ \conn ->
@@ -106,19 +106,29 @@ data SqlQueryRep record a where
     :: PersistRecordBackend record SqlBackend
     => record -> SqlQueryRep record ()
 
+  RunMigrationsSilent
+    :: Migration -> SqlQueryRep Void [Text]
+
 instance Typeable record => Show (SqlQueryRep record a) where
   show = \case
     SelectList{} -> "SelectList{..}" ++ record
     Insert{} -> "Insert{..}" ++ record
     Insert_{} -> "Insert_{..}" ++ record
+    RunMigrationsSilent{} -> "RunMigrationsSilent{..}" ++ record
     where
-      record = "<" ++ show (typeRep $ Proxy @record) ++ ">"
+      record = case recordTypeRep of
+        Just recordType -> "<" ++ show recordType ++ ">"
+        Nothing -> ""
+      recordTypeRep = case eqT @record @Void of
+        Just Refl -> Nothing
+        Nothing -> Just $ typeRep $ Proxy @record
 
-runSqlQueryRep :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
+runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
   SelectList a b -> Persist.selectList a b
   Insert a -> Persist.insert a
   Insert_ a -> Persist.insert_ a
+  RunMigrationsSilent a -> Persist.runMigrationSilent a
 
 selectList :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => [Filter record] -> [SelectOpt record] -> m [Entity record]
 selectList a b = runQueryRep $ SelectList a b
@@ -130,7 +140,7 @@ insert_ :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQue
 insert_ a = runQueryRep $ Insert_ a
 
 runMigrationSilent :: (MonadUnliftIO m, MonadSqlQuery m) => Migration -> m [Text]
-runMigrationSilent a = runRawQuery $ Persist.runMigrationSilent a
+runMigrationSilent a = runQueryRep $ RunMigrationsSilent a
 
 {- MockSqlQueryT -}
 
@@ -161,7 +171,5 @@ instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
       $ msum $ map tryMockQuery mockQueries
     where
       tryMockQuery (MockQuery f) = f rep
-
-  runRawQuery _ = error "Can't run raw queries with MockSqlQueryT"
 
   withTransaction = id
