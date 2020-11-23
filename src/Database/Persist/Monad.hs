@@ -6,15 +6,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Database.Persist.Monad
-  ( MonadSqlQuery(..)
+  (
+  -- * Type class for executing database queries
+    MonadSqlQuery(..)
+  , SqlQueryRep(..)
 
-    -- * SqlQueryT monad transformer
+  -- * SqlQueryT monad transformer
   , SqlQueryT
   , SqlQueryBackend(..)
   , runSqlQueryT
 
-    -- * Coerced functions
-  , SqlQueryRep(..)
+  -- * Lifted functions
   , selectList
   , insert
   , insert_
@@ -34,7 +36,7 @@ import qualified Database.Persist.Sql as Persist
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.SqlQueryRep
 
-{- SqlQueryT -}
+{- SqlQueryT monad -}
 
 data SqlQueryEnv = SqlQueryEnv
   { backend     :: SqlQueryBackend
@@ -50,8 +52,19 @@ newtype SqlQueryT m a = SqlQueryT
     , MonadIO
     )
 
+instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
+  runQueryRep queryRep =
+    withCurrentConnection $ \conn ->
+      Persist.runSqlConn (runSqlQueryRep queryRep) conn
+
+  withTransaction action =
+    withCurrentConnection $ \conn ->
+      SqlQueryT . local (\env -> env { currentConn = Just conn }) . unSqlQueryT $ action
+
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
+
+{- Running SqlQueryT -}
 
 data SqlQueryBackend
   = BackendSingle SqlBackend
@@ -70,14 +83,7 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { backend = BackendSingle conn } -> f conn
   SqlQueryEnv { backend = BackendPool pool } -> runSqlPool (lift . f =<< ask) pool
 
-instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
-  runQueryRep queryRep =
-    withCurrentConnection $ \conn ->
-      Persist.runSqlConn (runSqlQueryRep queryRep) conn
-
-  withTransaction action =
-    withCurrentConnection $ \conn ->
-      SqlQueryT . local (\env -> env { currentConn = Just conn }) . unSqlQueryT $ action
+{- Lifted persistent functions -}
 
 selectList :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => [Filter record] -> [SelectOpt record] -> m [Entity record]
 selectList a b = runQueryRep $ SelectList a b
