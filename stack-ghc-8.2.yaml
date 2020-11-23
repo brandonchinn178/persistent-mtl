@@ -1,0 +1,7 @@
+resolver: lts-11.22
+
+extra-deps:
+  - unliftio-core-0.1.2.0
+
+ghc-options:
+  "$locals": -Werror

@@ -1,4 +1,1 @@
-resolver: lts-16.23
-
-ghc-options:
-  "$locals": -Werror
+stack-ghc-8.8.yaml
