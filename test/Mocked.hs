@@ -10,6 +10,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import Database.Persist.Monad
+import Database.Persist.Monad.TestUtils
 import Example
 
 tests :: TestTree
