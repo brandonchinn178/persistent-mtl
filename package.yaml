@@ -7,13 +7,13 @@ ghc-options: -Wall
 library:
   source-dirs: src
   dependencies:
-    - base
-    - mtl
-    - persistent
-    - resource-pool
-    - resourcet
-    - text
-    - unliftio-core
+    - base >= 4.10 && < 5
+    - mtl >= 2.2.2 && < 3
+    - persistent >= 2.8.2 && < 3
+    - resource-pool >= 0.2.3.2 && < 0.3
+    - resourcet >= 1.2.1 && < 2
+    - text >= 1.2.3.0 && < 2
+    - unliftio-core >= 0.1.2.0 && < 0.3
 
 tests:
   persistent-mtl-test:
