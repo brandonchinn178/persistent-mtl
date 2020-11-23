@@ -30,15 +30,15 @@ module Database.Persist.Monad
 import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
+import Data.Acquire (withAcquire)
 import Data.Pool (Pool)
-import qualified Data.Pool as Pool
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import Data.Typeable ((:~:)(..), Typeable, eqT, typeRep)
 import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
-import Database.Persist.Sql (Migration, SqlBackend)
+import Database.Persist.Sql (Migration, SqlBackend, acquireSqlConnFromPool)
 import qualified Database.Persist.Sql as Persist
-import UnliftIO (MonadUnliftIO, mask, onException, withRunInIO, wrappedWithRunInIO)
+import UnliftIO (MonadUnliftIO, withRunInIO, wrappedWithRunInIO)
 
 class MonadSqlQuery m where
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a
@@ -79,7 +79,7 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   SqlQueryEnv { currentConn = Just conn } -> f conn
   -- Otherwise, get a new connection
   SqlQueryEnv { backend = BackendSingle conn } -> f conn
-  SqlQueryEnv { backend = BackendPool pool } -> withResource pool f
+  SqlQueryEnv { backend = BackendPool pool } -> withAcquire (acquireSqlConnFromPool pool) f
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   runQueryRep = runRawQuery . runSqlQueryRep
@@ -166,13 +166,3 @@ instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
   runRawQuery _ = error "Can't run raw queries with MockSqlQueryT"
 
   withTransaction = id
-
--- | Upstream 'withResource' modified to use MonadUnliftIO
--- https://github.com/bos/pool/issues/31
-withResource :: MonadUnliftIO m => Pool a -> (a -> m b) -> m b
-withResource pool act = withRunInIO $ \runInIO -> mask $ \restore -> do
-  (resource, local') <- Pool.takeResource pool
-  ret <- restore (runInIO (act resource)) `onException`
-            Pool.destroyResource pool local' resource
-  Pool.putResource local' resource
-  return ret
