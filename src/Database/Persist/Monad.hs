@@ -25,7 +25,8 @@ module Database.Persist.Monad
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
-import Control.Monad.Reader (ReaderT, ask, lift, local, runReaderT)
+import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
+import Control.Monad.Trans.Class (MonadTrans(..))
 import Data.Pool (Pool)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
@@ -50,6 +51,7 @@ newtype SqlQueryT m a = SqlQueryT
     , Applicative
     , Monad
     , MonadIO
+    , MonadTrans
     )
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
