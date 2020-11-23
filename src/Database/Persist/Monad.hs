@@ -17,10 +17,7 @@ module Database.Persist.Monad
   , runSqlQueryT
 
   -- * Lifted functions
-  , selectList
-  , insert
-  , insert_
-  , runMigrationSilent
+  , module Database.Persist.Monad.Shim
   ) where
 
 import Control.Monad.IO.Class (MonadIO(..))
@@ -28,13 +25,11 @@ import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Data.Pool (Pool)
-import Data.Text (Text)
-import Data.Typeable (Typeable)
-import Database.Persist (Entity, Filter, Key, PersistRecordBackend, SelectOpt)
-import Database.Persist.Sql (Migration, SqlBackend, runSqlPool)
+import Database.Persist.Sql (SqlBackend, runSqlPool)
 import qualified Database.Persist.Sql as Persist
 
 import Database.Persist.Monad.Class
+import Database.Persist.Monad.Shim
 import Database.Persist.Monad.SqlQueryRep
 
 {- SqlQueryT monad -}
@@ -84,17 +79,3 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   -- Otherwise, get a new connection
   SqlQueryEnv { backend = BackendSingle conn } -> f conn
   SqlQueryEnv { backend = BackendPool pool } -> runSqlPool (lift . f =<< ask) pool
-
-{- Lifted persistent functions -}
-
-selectList :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => [Filter record] -> [SelectOpt record] -> m [Entity record]
-selectList a b = runQueryRep $ SelectList a b
-
-insert :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => record -> m (Key record)
-insert a = runQueryRep $ Insert a
-
-insert_ :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m) => record -> m ()
-insert_ a = runQueryRep $ Insert_ a
-
-runMigrationSilent :: (MonadUnliftIO m, MonadSqlQuery m) => Migration -> m [Text]
-runMigrationSilent a = runQueryRep $ RunMigrationsSilent a
