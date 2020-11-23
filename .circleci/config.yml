@@ -59,15 +59,29 @@ jobs:
     executor: ubuntu
     steps:
       - checkout
-      - install_stack
-      - with_stack_cache:
-          install_deps:
-            - run:
-                name: Build linters
-                command: stack build hlint stylish-haskell
+      - run:
+          name: Install hlint
+          command: |
+            HLINT_ARCHIVE="hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"
+            curl -sSLO "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/${HLINT_ARCHIVE}"
+            mkdir -p ~/.local/bin/
+            tar xzf "${HLINT_ARCHIVE}" -C ~/.local/bin/ --strip-components=1 "hlint-${HLINT_VERSION}/hlint"
+          environment:
+            HLINT_VERSION: 3.2.2
+      - run:
+          name: Install stylish-haskell
+          command: |
+            STYLISH_ARCHIVE="stylish-haskell-v${STYLISH_VERSION}-linux-x86_64.tar.gz"
+            curl -sSLO "https://github.com/jaspervdj/stylish-haskell/releases/download/v${STYLISH_VERSION}/${STYLISH_ARCHIVE}"
+            mkdir -p ~/.local/bin/
+            tar xzf "${STYLISH_ARCHIVE}" -C ~/.local/bin/ --strip-components=1 "stylish-haskell-v${STYLISH_VERSION}-linux-x86_64/stylish-haskell"
+          environment:
+            STYLISH_VERSION: 0.12.2.0
       - run:
           name: Install Python
-          command: sudo apt-get install -y python
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python
       - run:
           name: Install pre-commit
           command: curl https://pre-commit.com/install-local.py | python -
