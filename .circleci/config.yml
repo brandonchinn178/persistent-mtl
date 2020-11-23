@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@1.0.2
+
 executors:
   ubuntu:
     parameters:
@@ -51,14 +54,6 @@ commands:
             - ~/.stack
             - .stack-work
 
-  install_stack_deps:
-    steps:
-      - with_stack_cache:
-          install_deps:
-            - run:
-                name: Build external dependencies
-                command: stack build --test --only-dependencies
-
 jobs:
   lint:
     executor: ubuntu
@@ -99,7 +94,17 @@ jobs:
     steps:
       - checkout
       - install_stack
-      - install_stack_deps
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Build external dependencies
+                command: stack build --test --only-dependencies
+            - when:
+                condition: << parameters.latest >>
+                steps:
+                  - run:
+                      name: Install hpc-lcov
+                      command: stack install hpc-lcov
       - run:
           name: Build
           command: |
@@ -120,13 +125,25 @@ jobs:
                 <<# parameters.latest >>--coverage<</ parameters.latest >>
             )
             stack build "${STACK_ARGS[@]}"
+      - when:
+          condition: << parameters.latest >>
+          steps:
+            - run:
+                name: Run hpc-lcov
+                command: hpc-lcov
+            - codecov/upload:
+                file: lcov.info
 
   haddock:
     executor: ubuntu
     steps:
       - checkout
       - install_stack
-      - install_stack_deps
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Build external dependencies
+                command: stack build --test --only-dependencies
       - run:
           name: Build haddock
           command: stack haddock --no-haddock-deps
