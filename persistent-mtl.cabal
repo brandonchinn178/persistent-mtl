@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ed87d93280415b4fcbbb88057eb1df14d7ed6b3251947b40b2b150598adef468
+-- hash: f1717fb11c2c334c4fb635d2ab3fafd4960e5d56d9f998a53962019736a970e5
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -25,6 +25,7 @@ library
   ghc-options: -Wall
   build-depends:
       base >=4.10 && <5
+    , containers >=0.5.10.2 && <0.7
     , mtl >=2.2.2 && <3
     , persistent >=2.8.2 && <3
     , resource-pool >=0.2.3.2 && <0.3

@@ -8,6 +8,7 @@ library:
   source-dirs: src
   dependencies:
     - base >= 4.10 && < 5
+    - containers >= 0.5.10.2 && < 0.7
     - mtl >= 2.2.2 && < 3
     - persistent >= 2.8.2 && < 3
     - resource-pool >= 0.2.3.2 && < 0.3
