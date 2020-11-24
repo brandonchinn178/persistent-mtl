@@ -1,0 +1,27 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE PatternSynonyms #-}
+
+module Database.Persist.Monad.Shim where
+
+import Data.Conduit (ConduitM)
+import Data.Int (Int64)
+import Data.Map (Map)
+import Data.Text (Text)
+import Data.Typeable (Typeable)
+import Data.Void (Void)
+import Database.Persist.Sql hiding (pattern Update)
+import GHC.Stack (HasCallStack)
+
+import Database.Persist.Monad.Class (MonadSqlQuery(..))
+import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
+
+{-# ANN module "HLint: ignore" #-}
+
+{{#functions}}
+{{{name}}}
+  :: ({{#constraints}}{{{type}}}, {{/constraints}}{{#recordTypeVars}}Typeable {{.}}, {{/recordTypeVars}}MonadSqlQuery m)
+  => {{#args}}{{{type}}} -> {{/args}}m {{result}}
+{{{name}}} {{#args}}a{{index}} {{/args}}= runQueryRep $ {{{nameCapital}}}{{#args}} a{{index}}{{/args}}
+
+{{/functions}}

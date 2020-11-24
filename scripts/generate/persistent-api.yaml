@@ -1,0 +1,546 @@
+# PersistStoreRead
+
+- name: get
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+  result: '(Maybe record)'
+
+- name: getMany
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Key record]'
+  result: '(Map (Key record) record)'
+
+- name: getJust
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+  result: 'record'
+
+- name: getJustEntity
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+  result: '(Entity record)'
+
+- name: getEntity
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+  result: '(Maybe (Entity record))'
+
+- name: belongsTo
+  constraints:
+    - 'PersistEntity record1'
+    - 'PersistRecordBackend record2 SqlBackend'
+  args:
+    - '(record1 -> Maybe (Key record2))'
+    - 'record1'
+  result: '(Maybe record2)'
+
+- name: belongsToJust
+  constraints:
+    - 'PersistEntity record1'
+    - 'PersistRecordBackend record2 SqlBackend'
+  args:
+    - '(record1 -> Key record2)'
+    - 'record1'
+  result: 'record2'
+
+# PersistStoreWrite
+
+- name: insert
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '(Key record)'
+
+- name: insert_
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '()'
+
+- name: insertMany
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[record]'
+  result: '[Key record]'
+
+- name: insertMany_
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[record]'
+  result: '()'
+
+- name: insertEntityMany
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Entity record]'
+  result: '()'
+
+- name: insertKey
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+    - 'record'
+  result: '()'
+
+- name: repsert
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+    - 'record'
+  result: '()'
+
+- name: repsertMany
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[(Key record, record)]'
+  result: '()'
+
+- name: replace
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+    - 'record'
+  result: '()'
+
+- name: delete
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+  result: '()'
+
+- name: update
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+    - '[Update record]'
+  result: '()'
+
+- name: updateGet
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Key record'
+    - '[Update record]'
+  result: 'record'
+
+- name: insertEntity
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '(Entity record)'
+
+- name: insertRecord
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: 'record'
+
+# PersistUniqueRead
+
+- name: getBy
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Unique record'
+  result: '(Maybe (Entity record))'
+
+- name: getByValue
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'AtLeastOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Maybe (Entity record))'
+
+- name: checkUnique
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '(Maybe (Unique record))'
+
+# TODO: >= 2.11
+# - name: checkUniqueUpdateable
+#   constraints:
+#     - 'PersistRecordBackend record SqlBackend'
+#   args:
+#     - 'Entity record'
+#   result: '(Maybe (Unique record))'
+
+# PersistUniqueWrite
+
+- name: deleteBy
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Unique record'
+  result: '()'
+
+- name: insertUnique
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '(Maybe (Key record))'
+
+- name: upsert
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'OnlyOneUniqueKey record'
+  args:
+    - 'record'
+    - '[Update record]'
+  result: '(Entity record)'
+
+- name: upsertBy
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Unique record'
+    - 'record'
+    - '[Update record]'
+  result: '(Entity record)'
+
+- name: putMany
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[record]'
+  result: '()'
+
+- name: insertBy
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'AtLeastOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Either (Entity record) (Key record))'
+
+- name: insertUniqueEntity
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'record'
+  result: '(Maybe (Entity record))'
+
+- name: replaceUnique
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'Eq (Unique record)'
+  args:
+    - 'Key record'
+    - 'record'
+  result: '(Maybe (Unique record))'
+
+- name: onlyUnique
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'OnlyOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Unique record)'
+
+# PersistQueryRead
+
+# TODO: advanced
+# - name: selectSourceRes
+#   constraints:
+#     - 'MonadIO m1'
+#     - 'MonadIO m2'
+#     - 'PersistRecordBackend record SqlBackend'
+#   args:
+#     - '[Filter record]'
+#     - '[SelectOpt record]'
+#   result: 'm1 (Acquire (ConduitM () (Entity record) m2 ()))'
+
+- name: selectFirst
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: '(Maybe (Entity record))'
+
+# TODO: advanced
+# - name: selectKeysRes
+#   constraints:
+#     - 'MonadIO m1'
+#     - 'MonadIO m2'
+#     - 'PersistRecordBackend record SqlBackend'
+#   args:
+#     - '[Filter record]'
+#     - '[SelectOpt record]'
+#   result: 'm1 (Acquire (ConduitM () (Key record) m2 ()))'
+
+- name: count
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+  result: 'Int'
+
+# TODO: >= 2.11
+# - name: exists
+#   constraints:
+#     - 'PersistRecordBackend record SqlBackend'
+#   args:
+#     - '[Filter record]'
+#   result: 'Bool'
+
+# TODO: advanced
+# - name: selectSource
+#   constraints:
+#     - 'MonadResource m'
+#     - 'PersistRecordBackend record SqlBackend'
+#     - 'MonadReader SqlBackend m'
+#   args:
+#     - '[Filter record]'
+#     - '[SelectOpt record]'
+#   result: 'ConduitM () (Entity record) m ()'
+
+# TODO: advanced
+# - name: selectKeys
+#   constraints:
+#     - 'MonadResource m'
+#     - 'PersistRecordBackend record SqlBackend'
+#     - 'MonadReader SqlBackend m'
+#   args:
+#     - '[Filter record]'
+#     - '[SelectOpt record]'
+#   result: 'ConduitM () (Key record) m ()'
+
+- name: selectList
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: '[Entity record]'
+
+- name: selectKeysList
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: '[Key record]'
+
+# PersistQueryWrite
+
+- name: updateWhere
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[Update record]'
+  result: '()'
+
+- name: deleteWhere
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+  result: '()'
+
+- name: deleteWhereCount
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+  result: 'Int64'
+
+- name: updateWhereCount
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[Update record]'
+  result: 'Int64'
+
+# DeleteCascade
+
+- name: deleteCascade
+  constraints:
+    - 'DeleteCascade record SqlBackend'
+  args:
+    - 'Key record'
+  result: '()'
+
+- name: deleteCascadeWhere
+  constraints:
+    - 'DeleteCascade record SqlBackend'
+  args:
+    - '[Filter record]'
+  result: '()'
+
+# migration
+
+- name: parseMigration
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: '(Either [Text] CautiousMigration)'
+
+- name: parseMigration'
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: 'CautiousMigration'
+
+- name: printMigration
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: '()'
+
+- name: showMigration
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: '[Text]'
+
+- name: getMigration
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: '[Sql]'
+
+- name: runMigration
+  args:
+    - 'Migration'
+  result: '()'
+
+- name: runMigrationQuiet
+  args:
+    - 'Migration'
+  result: '[Text]'
+
+- name: runMigrationSilent
+  args:
+    - 'Migration'
+  result: '[Text]'
+
+- name: runMigrationUnsafe
+  args:
+    - 'Migration'
+  result: '()'
+
+- name: runMigrationUnsafeQuiet
+  constraints:
+    - 'HasCallStack'
+  args:
+    - 'Migration'
+  result: '[Text]'
+
+# database identifiers
+
+- name: getFieldName
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'EntityField record typ'
+  result: 'Text'
+
+- name: getTableName
+  constraints:
+    - 'PersistEntity record'
+  args:
+    - 'record'
+  result: 'Text'
+
+# raw queries
+
+- name: withRawQuery
+  args:
+    - 'Text'
+    - '[PersistValue]'
+    - 'ConduitM [PersistValue] Void IO a'
+  result: 'a'
+
+# TODO: advanced
+# - name: rawQueryRes
+#   constraints:
+#     - 'MonadIO m1'
+#     - 'MonadIO m2'
+#     - 'BackendCompatible SqlBackend env'
+#   args:
+#     - 'Text'
+#     - '[PersistValue]'
+#   result: 'ReaderT env m1 (Acquire (ConduitM () [PersistValue] m2 ()))'
+
+# TODO: advanced
+# - name: rawQuery
+#   constraints:
+#     - 'MonadResource m'
+#     - 'MonadReader env m'
+#     - 'BackendCompatible SqlBackend env'
+#   args:
+#     - 'Text'
+#     - '[PersistValue]'
+#   result: 'ConduitM () [PersistValue] m ()'
+
+- name: rawExecute
+  args:
+    - 'Text'
+    - '[PersistValue]'
+  result: '()'
+
+- name: rawExecuteCount
+  args:
+    - 'Text'
+    - '[PersistValue]'
+  result: 'Int64'
+
+- name: rawSql
+  constraints:
+    - 'RawSql a'
+  args:
+    - 'Text'
+    - '[PersistValue]'
+  result: '[a]'
+
+# transactions
+
+- name: transactionSave
+  result: '()'
+
+- name: transactionSaveWithIsolation
+  args:
+    - 'IsolationLevel'
+  result: '()'
+
+- name: transactionUndo
+  result: '()'
+
+- name: transactionUndoWithIsolation
+  args:
+    - 'IsolationLevel'
+  result: '()'
