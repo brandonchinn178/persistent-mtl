@@ -133,10 +133,19 @@ getBy
   => Unique record -> m (Maybe (Entity record))
 getBy a1 = runQueryRep $ GetBy a1
 
+#if MIN_VERSION_persistent(2,10,0)
 getByValue
   :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Maybe (Entity record))
 getByValue a1 = runQueryRep $ GetByValue a1
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+getByValue
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => record -> m (Maybe (Entity record))
+getByValue a1 = runQueryRep $ GetByValue a1
+#endif
 
 checkUnique
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -160,10 +169,19 @@ insertUnique
   => record -> m (Maybe (Key record))
 insertUnique a1 = runQueryRep $ InsertUnique a1
 
+#if MIN_VERSION_persistent(2,10,0)
 upsert
   :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> [Update record] -> m (Entity record)
 upsert a1 a2 = runQueryRep $ Upsert a1 a2
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+upsert
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => record -> [Update record] -> m (Entity record)
+upsert a1 a2 = runQueryRep $ Upsert a1 a2
+#endif
 
 upsertBy
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -175,10 +193,19 @@ putMany
   => [record] -> m ()
 putMany a1 = runQueryRep $ PutMany a1
 
+#if MIN_VERSION_persistent(2,10,0)
 insertBy
   :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Either (Entity record) (Key record))
 insertBy a1 = runQueryRep $ InsertBy a1
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+insertBy
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => record -> m (Either (Entity record) (Key record))
+insertBy a1 = runQueryRep $ InsertBy a1
+#endif
 
 insertUniqueEntity
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -186,14 +213,23 @@ insertUniqueEntity
 insertUniqueEntity a1 = runQueryRep $ InsertUniqueEntity a1
 
 replaceUnique
-  :: (PersistRecordBackend record SqlBackend, Eq (Unique record), Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, Eq (Unique record), Eq record, Typeable record, MonadSqlQuery m)
   => Key record -> record -> m (Maybe (Unique record))
 replaceUnique a1 a2 = runQueryRep $ ReplaceUnique a1 a2
 
+#if MIN_VERSION_persistent(2,10,0)
 onlyUnique
   :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Unique record)
 onlyUnique a1 = runQueryRep $ OnlyUnique a1
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+onlyUnique
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => record -> m (Unique record)
+onlyUnique a1 = runQueryRep $ OnlyUnique a1
+#endif
 
 selectSourceRes
   :: (MonadIO m2, PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -302,10 +338,12 @@ runMigration
   => Migration -> m ()
 runMigration a1 = runQueryRep $ RunMigration a1
 
+#if MIN_VERSION_persistent(2,10,2)
 runMigrationQuiet
   :: (MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationQuiet a1 = runQueryRep $ RunMigrationQuiet a1
+#endif
 
 runMigrationSilent
   :: (MonadSqlQuery m)
@@ -317,10 +355,12 @@ runMigrationUnsafe
   => Migration -> m ()
 runMigrationUnsafe a1 = runQueryRep $ RunMigrationUnsafe a1
 
+#if MIN_VERSION_persistent(2,10,2)
 runMigrationUnsafeQuiet
   :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationUnsafeQuiet a1 = runQueryRep $ RunMigrationUnsafeQuiet a1
+#endif
 
 getFieldName
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -328,7 +368,7 @@ getFieldName
 getFieldName a1 = runQueryRep $ GetFieldName a1
 
 getTableName
-  :: (PersistEntity record, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => record -> m Text
 getTableName a1 = runQueryRep $ GetTableName a1
 
@@ -367,20 +407,24 @@ transactionSave
   => m ()
 transactionSave = runQueryRep $ TransactionSave
 
+#if MIN_VERSION_persistent(2,9,0)
 transactionSaveWithIsolation
   :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionSaveWithIsolation a1 = runQueryRep $ TransactionSaveWithIsolation a1
+#endif
 
 transactionUndo
   :: (MonadSqlQuery m)
   => m ()
 transactionUndo = runQueryRep $ TransactionUndo
 
+#if MIN_VERSION_persistent(2,9,0)
 transactionUndoWithIsolation
   :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionUndoWithIsolation a1 = runQueryRep $ TransactionUndoWithIsolation a1
+#endif
 
 {- Helpers -}
 

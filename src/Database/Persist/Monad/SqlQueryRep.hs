@@ -115,9 +115,17 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend)
     => Unique record -> SqlQueryRep record (Maybe (Entity record))
 
+#if MIN_VERSION_persistent(2,10,0)
   GetByValue
     :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record)
     => record -> SqlQueryRep record (Maybe (Entity record))
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+  GetByValue
+    :: (PersistRecordBackend record SqlBackend)
+    => record -> SqlQueryRep record (Maybe (Entity record))
+#endif
 
   CheckUnique
     :: (PersistRecordBackend record SqlBackend)
@@ -137,9 +145,17 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Key record))
 
+#if MIN_VERSION_persistent(2,10,0)
   Upsert
     :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
     => record -> [Update record] -> SqlQueryRep record (Entity record)
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+  Upsert
+    :: (PersistRecordBackend record SqlBackend)
+    => record -> [Update record] -> SqlQueryRep record (Entity record)
+#endif
 
   UpsertBy
     :: (PersistRecordBackend record SqlBackend)
@@ -149,21 +165,37 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend)
     => [record] -> SqlQueryRep record ()
 
+#if MIN_VERSION_persistent(2,10,0)
   InsertBy
     :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record)
     => record -> SqlQueryRep record (Either (Entity record) (Key record))
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+  InsertBy
+    :: (PersistRecordBackend record SqlBackend)
+    => record -> SqlQueryRep record (Either (Entity record) (Key record))
+#endif
 
   InsertUniqueEntity
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Entity record))
 
   ReplaceUnique
-    :: (PersistRecordBackend record SqlBackend, Eq (Unique record))
+    :: (PersistRecordBackend record SqlBackend, Eq (Unique record), Eq record)
     => Key record -> record -> SqlQueryRep record (Maybe (Unique record))
 
+#if MIN_VERSION_persistent(2,10,0)
   OnlyUnique
     :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
     => record -> SqlQueryRep record (Unique record)
+#endif
+
+#if !MIN_VERSION_persistent(2,10,0)
+  OnlyUnique
+    :: (PersistRecordBackend record SqlBackend)
+    => record -> SqlQueryRep record (Unique record)
+#endif
 
   SelectSourceRes
     :: (MonadIO m2, PersistRecordBackend record SqlBackend)
@@ -243,9 +275,11 @@ data SqlQueryRep record a where
     :: ()
     => Migration -> SqlQueryRep Void ()
 
+#if MIN_VERSION_persistent(2,10,2)
   RunMigrationQuiet
     :: ()
     => Migration -> SqlQueryRep Void [Text]
+#endif
 
   RunMigrationSilent
     :: ()
@@ -255,16 +289,18 @@ data SqlQueryRep record a where
     :: ()
     => Migration -> SqlQueryRep Void ()
 
+#if MIN_VERSION_persistent(2,10,2)
   RunMigrationUnsafeQuiet
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void [Text]
+#endif
 
   GetFieldName
     :: (PersistRecordBackend record SqlBackend)
     => EntityField record typ -> SqlQueryRep record Text
 
   GetTableName
-    :: (PersistEntity record)
+    :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record Text
 
   WithRawQuery
@@ -291,17 +327,21 @@ data SqlQueryRep record a where
     :: ()
     => SqlQueryRep Void ()
 
+#if MIN_VERSION_persistent(2,9,0)
   TransactionSaveWithIsolation
     :: ()
     => IsolationLevel -> SqlQueryRep Void ()
+#endif
 
   TransactionUndo
     :: ()
     => SqlQueryRep Void ()
 
+#if MIN_VERSION_persistent(2,9,0)
   TransactionUndoWithIsolation
     :: ()
     => IsolationLevel -> SqlQueryRep Void ()
+#endif
 
 instance Typeable record => Show (SqlQueryRep record a) where
   show = \case
@@ -327,20 +367,40 @@ instance Typeable record => Show (SqlQueryRep record a) where
     InsertEntity{} -> "InsertEntity{..}" ++ record
     InsertRecord{} -> "InsertRecord{..}" ++ record
     GetBy{} -> "GetBy{..}" ++ record
+#if MIN_VERSION_persistent(2,10,0)
     GetByValue{} -> "GetByValue{..}" ++ record
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+    GetByValue{} -> "GetByValue{..}" ++ record
+#endif
     CheckUnique{} -> "CheckUnique{..}" ++ record
 #if MIN_VERSION_persistent(2,11,0)
     CheckUniqueUpdateable{} -> "CheckUniqueUpdateable{..}" ++ record
 #endif
     DeleteBy{} -> "DeleteBy{..}" ++ record
     InsertUnique{} -> "InsertUnique{..}" ++ record
+#if MIN_VERSION_persistent(2,10,0)
     Upsert{} -> "Upsert{..}" ++ record
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+    Upsert{} -> "Upsert{..}" ++ record
+#endif
     UpsertBy{} -> "UpsertBy{..}" ++ record
     PutMany{} -> "PutMany{..}" ++ record
+#if MIN_VERSION_persistent(2,10,0)
     InsertBy{} -> "InsertBy{..}" ++ record
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+    InsertBy{} -> "InsertBy{..}" ++ record
+#endif
     InsertUniqueEntity{} -> "InsertUniqueEntity{..}" ++ record
     ReplaceUnique{} -> "ReplaceUnique{..}" ++ record
+#if MIN_VERSION_persistent(2,10,0)
     OnlyUnique{} -> "OnlyUnique{..}" ++ record
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+    OnlyUnique{} -> "OnlyUnique{..}" ++ record
+#endif
     SelectSourceRes{} -> "SelectSourceRes{..}" ++ record
     SelectFirst{} -> "SelectFirst{..}" ++ record
     SelectKeysRes{} -> "SelectKeysRes{..}" ++ record
@@ -362,10 +422,14 @@ instance Typeable record => Show (SqlQueryRep record a) where
     ShowMigration{} -> "ShowMigration{..}" ++ record
     GetMigration{} -> "GetMigration{..}" ++ record
     RunMigration{} -> "RunMigration{..}" ++ record
+#if MIN_VERSION_persistent(2,10,2)
     RunMigrationQuiet{} -> "RunMigrationQuiet{..}" ++ record
+#endif
     RunMigrationSilent{} -> "RunMigrationSilent{..}" ++ record
     RunMigrationUnsafe{} -> "RunMigrationUnsafe{..}" ++ record
+#if MIN_VERSION_persistent(2,10,2)
     RunMigrationUnsafeQuiet{} -> "RunMigrationUnsafeQuiet{..}" ++ record
+#endif
     GetFieldName{} -> "GetFieldName{..}" ++ record
     GetTableName{} -> "GetTableName{..}" ++ record
     WithRawQuery{} -> "WithRawQuery{..}" ++ record
@@ -374,9 +438,13 @@ instance Typeable record => Show (SqlQueryRep record a) where
     RawExecuteCount{} -> "RawExecuteCount{..}" ++ record
     RawSql{} -> "RawSql{..}" ++ record
     TransactionSave{} -> "TransactionSave{..}" ++ record
+#if MIN_VERSION_persistent(2,9,0)
     TransactionSaveWithIsolation{} -> "TransactionSaveWithIsolation{..}" ++ record
+#endif
     TransactionUndo{} -> "TransactionUndo{..}" ++ record
+#if MIN_VERSION_persistent(2,9,0)
     TransactionUndoWithIsolation{} -> "TransactionUndoWithIsolation{..}" ++ record
+#endif
     where
       record = case recordTypeRep of
         Just recordType -> "<" ++ show recordType ++ ">"
@@ -409,20 +477,40 @@ runSqlQueryRep = \case
   InsertEntity a1 -> Persist.insertEntity a1
   InsertRecord a1 -> Persist.insertRecord a1
   GetBy a1 -> Persist.getBy a1
+#if MIN_VERSION_persistent(2,10,0)
   GetByValue a1 -> Persist.getByValue a1
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+  GetByValue a1 -> Persist.getByValue a1
+#endif
   CheckUnique a1 -> Persist.checkUnique a1
 #if MIN_VERSION_persistent(2,11,0)
   CheckUniqueUpdateable a1 -> Persist.checkUniqueUpdateable a1
 #endif
   DeleteBy a1 -> Persist.deleteBy a1
   InsertUnique a1 -> Persist.insertUnique a1
+#if MIN_VERSION_persistent(2,10,0)
   Upsert a1 a2 -> Persist.upsert a1 a2
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+  Upsert a1 a2 -> Persist.upsert a1 a2
+#endif
   UpsertBy a1 a2 a3 -> Persist.upsertBy a1 a2 a3
   PutMany a1 -> Persist.putMany a1
+#if MIN_VERSION_persistent(2,10,0)
   InsertBy a1 -> Persist.insertBy a1
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+  InsertBy a1 -> Persist.insertBy a1
+#endif
   InsertUniqueEntity a1 -> Persist.insertUniqueEntity a1
   ReplaceUnique a1 a2 -> Persist.replaceUnique a1 a2
+#if MIN_VERSION_persistent(2,10,0)
   OnlyUnique a1 -> Persist.onlyUnique a1
+#endif
+#if !MIN_VERSION_persistent(2,10,0)
+  OnlyUnique a1 -> Persist.onlyUnique a1
+#endif
   SelectSourceRes a1 a2 -> Persist.selectSourceRes a1 a2
   SelectFirst a1 a2 -> Persist.selectFirst a1 a2
   SelectKeysRes a1 a2 -> Persist.selectKeysRes a1 a2
@@ -444,10 +532,14 @@ runSqlQueryRep = \case
   ShowMigration a1 -> Persist.showMigration a1
   GetMigration a1 -> Persist.getMigration a1
   RunMigration a1 -> Persist.runMigration a1
+#if MIN_VERSION_persistent(2,10,2)
   RunMigrationQuiet a1 -> Persist.runMigrationQuiet a1
+#endif
   RunMigrationSilent a1 -> Persist.runMigrationSilent a1
   RunMigrationUnsafe a1 -> Persist.runMigrationUnsafe a1
+#if MIN_VERSION_persistent(2,10,2)
   RunMigrationUnsafeQuiet a1 -> Persist.runMigrationUnsafeQuiet a1
+#endif
   GetFieldName a1 -> Persist.getFieldName a1
   GetTableName a1 -> Persist.getTableName a1
   WithRawQuery a1 a2 a3 -> Persist.withRawQuery a1 a2 a3
@@ -456,6 +548,10 @@ runSqlQueryRep = \case
   RawExecuteCount a1 a2 -> Persist.rawExecuteCount a1 a2
   RawSql a1 a2 -> Persist.rawSql a1 a2
   TransactionSave -> Persist.transactionSave
+#if MIN_VERSION_persistent(2,9,0)
   TransactionSaveWithIsolation a1 -> Persist.transactionSaveWithIsolation a1
+#endif
   TransactionUndo -> Persist.transactionUndo
+#if MIN_VERSION_persistent(2,9,0)
   TransactionUndoWithIsolation a1 -> Persist.transactionUndoWithIsolation a1
+#endif

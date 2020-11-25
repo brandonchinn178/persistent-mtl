@@ -168,9 +168,18 @@
   result: '(Maybe (Entity record))'
 
 - name: getByValue
+  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'AtLeastOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Maybe (Entity record))'
+
+- name: getByValue
+  condition: '!MIN_VERSION_persistent(2,10,0)'
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Maybe (Entity record))'
@@ -207,9 +216,19 @@
   result: '(Maybe (Key record))'
 
 - name: upsert
+  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'OnlyOneUniqueKey record'
+  args:
+    - 'record'
+    - '[Update record]'
+  result: '(Entity record)'
+
+- name: upsert
+  condition: '!MIN_VERSION_persistent(2,10,0)'
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
     - '[Update record]'
@@ -232,9 +251,18 @@
   result: '()'
 
 - name: insertBy
+  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'AtLeastOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Either (Entity record) (Key record))'
+
+- name: insertBy
+  condition: '!MIN_VERSION_persistent(2,10,0)'
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Either (Entity record) (Key record))'
@@ -250,15 +278,26 @@
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'Eq (Unique record)'
+    # needed by <= 2.9.2
+    - 'Eq record'
   args:
     - 'Key record'
     - 'record'
   result: '(Maybe (Unique record))'
 
 - name: onlyUnique
+  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'OnlyOneUniqueKey record'
+  args:
+    - 'record'
+  result: '(Unique record)'
+
+- name: onlyUnique
+  condition: '!MIN_VERSION_persistent(2,10,0)'
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Unique record)'
@@ -433,6 +472,7 @@
   result: '()'
 
 - name: runMigrationQuiet
+  condition: MIN_VERSION_persistent(2,10,2)
   args:
     - 'Migration'
   result: '[Text]'
@@ -448,6 +488,7 @@
   result: '()'
 
 - name: runMigrationUnsafeQuiet
+  condition: MIN_VERSION_persistent(2,10,2)
   constraints:
     - 'HasCallStack'
   args:
@@ -465,7 +506,8 @@
 
 - name: getTableName
   constraints:
-    - 'PersistEntity record'
+    # <= 2.9.2 has the `PersistEntityBackend record ~ SqlBackend` constraint
+    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: 'Text'
@@ -522,6 +564,7 @@
   result: '()'
 
 - name: transactionSaveWithIsolation
+  condition: MIN_VERSION_persistent(2,9,0)
   args:
     - 'IsolationLevel'
   result: '()'
@@ -530,6 +573,7 @@
   result: '()'
 
 - name: transactionUndoWithIsolation
+  condition: MIN_VERSION_persistent(2,9,0)
   args:
     - 'IsolationLevel'
   result: '()'
