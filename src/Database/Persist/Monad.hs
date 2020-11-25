@@ -46,7 +46,6 @@ module Database.Persist.Monad
   -- * SqlQueryT monad transformer
   , SqlQueryT
   , runSqlQueryT
-  , SqlQueryBackend(..)
 
   -- * Lifted functions
   , module Database.Persist.Monad.Shim
@@ -66,7 +65,7 @@ import Database.Persist.Monad.SqlQueryRep
 {- SqlQueryT monad -}
 
 data SqlQueryEnv = SqlQueryEnv
-  { backend     :: SqlQueryBackend
+  { backendPool :: Pool SqlBackend
   , currentConn :: Maybe SqlBackend
   }
 
@@ -95,18 +94,9 @@ instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
 
 {- Running SqlQueryT -}
 
--- | The backend to use to run 'SqlQueryT'.
---
--- You can get these from the database-specific persistent library, e.g.
--- 'Database.Persist.Postgresql.withPostgresqlConn' or
--- 'Database.Persist.Postgresql.withPostgresqlPool' from @persistent-postgresql@
-data SqlQueryBackend
-  = BackendSingle SqlBackend
-  | BackendPool (Pool SqlBackend)
-
 -- | Run the 'SqlQueryT' monad transformer with the given backend.
-runSqlQueryT :: SqlQueryBackend -> SqlQueryT m a -> m a
-runSqlQueryT backend = (`runReaderT` env) . unSqlQueryT
+runSqlQueryT :: Pool SqlBackend -> SqlQueryT m a -> m a
+runSqlQueryT backendPool = (`runReaderT` env) . unSqlQueryT
   where
     env = SqlQueryEnv { currentConn = Nothing, .. }
 
@@ -115,5 +105,4 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   -- Currently in a transaction; use the transaction connection
   SqlQueryEnv { currentConn = Just conn } -> f conn
   -- Otherwise, get a new connection
-  SqlQueryEnv { backend = BackendSingle conn } -> f conn
-  SqlQueryEnv { backend = BackendPool pool } -> runSqlPool (lift . f =<< ask) pool
+  SqlQueryEnv { backendPool = pool } -> runSqlPool (lift . f =<< ask) pool
