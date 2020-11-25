@@ -1,3 +1,34 @@
+{-|
+Module: Database.Persist.Monad
+
+Defines the 'SqlQueryT' monad transformer that has a 'MonadSqlQuery' instance
+to execute @persistent@ database operations.
+
+Usage:
+
+@
+myFunction :: (MonadSqlQuery m, MonadIO m) => m ()
+myFunction = do
+  insert_ $ Person { name = \"Alice\", age = Just 25 }
+  insert_ $ Person { name = \"Bob\", age = Nothing }
+
+  -- some other business logic
+
+  personList <- selectList [] []
+  liftIO $ print (personList :: [Person])
+
+  -- everything in here will run in a transaction
+  withTransaction $
+    selectFirst [PersonAge >. 30] [] >>= \\case
+      Nothing -> insert_ $ Person { name = \"Claire\", age = Just 50 }
+      Just (Entity key person) -> replace key person{ age = Just (age person - 10) }
+
+  -- some more business logic
+
+  return ()
+@
+-}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
@@ -8,13 +39,14 @@
 module Database.Persist.Monad
   (
   -- * Type class for executing database queries
-    MonadSqlQuery(..)
+    MonadSqlQuery
+  , withTransaction
   , SqlQueryRep(..)
 
   -- * SqlQueryT monad transformer
   , SqlQueryT
-  , SqlQueryBackend(..)
   , runSqlQueryT
+  , SqlQueryBackend(..)
 
   -- * Lifted functions
   , module Database.Persist.Monad.Shim
@@ -38,6 +70,7 @@ data SqlQueryEnv = SqlQueryEnv
   , currentConn :: Maybe SqlBackend
   }
 
+-- | The monad transformer that implements 'MonadSqlQuery'.
 newtype SqlQueryT m a = SqlQueryT
   { unSqlQueryT :: ReaderT SqlQueryEnv m a
   } deriving
@@ -62,10 +95,16 @@ instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
 
 {- Running SqlQueryT -}
 
+-- | The backend to use to run 'SqlQueryT'.
+--
+-- You can get these from the database-specific persistent library, e.g.
+-- 'Database.Persist.Postgresql.withPostgresqlConn' or
+-- 'Database.Persist.Postgresql.withPostgresqlPool' from @persistent-postgresql@
 data SqlQueryBackend
   = BackendSingle SqlBackend
   | BackendPool (Pool SqlBackend)
 
+-- | Run the 'SqlQueryT' monad transformer with the given backend.
 runSqlQueryT :: SqlQueryBackend -> SqlQueryT m a -> m a
 runSqlQueryT backend = (`runReaderT` env) . unSqlQueryT
   where
