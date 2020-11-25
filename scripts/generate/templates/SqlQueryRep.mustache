@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -25,15 +26,19 @@ import GHC.Stack (HasCallStack)
 
 data SqlQueryRep record a where
 {{#functions}}
+{{#withCondition}}
   {{{nameCapital}}}
     :: ({{#constraints}}{{{type}}}{{^last}}, {{/last}}{{/constraints}})
     => {{#args}}{{{type}}} -> {{/args}}SqlQueryRep {{sqlQueryRepRecord}} {{result}}
+{{/withCondition}}
 
 {{/functions}}
 instance Typeable record => Show (SqlQueryRep record a) where
   show = \case
 {{#functions}}
+{{#withCondition}}
     {{{nameCapital}}}{} -> "{{{nameCapital}}}{..}" ++ record
+{{/withCondition}}
 {{/functions}}
     where
       record = case recordTypeRep of
@@ -46,5 +51,7 @@ instance Typeable record => Show (SqlQueryRep record a) where
 runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
 {{#functions}}
+{{#withCondition}}
   {{{nameCapital}}} {{#args}}a{{index}} {{/args}}-> Persist.{{{name}}}{{#args}} a{{index}}{{/args}}
+{{/withCondition}}
 {{/functions}}

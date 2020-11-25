@@ -182,13 +182,13 @@
     - 'record'
   result: '(Maybe (Unique record))'
 
-# TODO: >= 2.11
-# - name: checkUniqueUpdateable
-#   constraints:
-#     - 'PersistRecordBackend record SqlBackend'
-#   args:
-#     - 'Entity record'
-#   result: '(Maybe (Unique record))'
+- name: checkUniqueUpdateable
+  condition: MIN_VERSION_persistent(2,11,0)
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - 'Entity record'
+  result: '(Maybe (Unique record))'
 
 # PersistUniqueWrite
 
@@ -302,13 +302,13 @@
     - '[Filter record]'
   result: 'Int'
 
-# TODO: >= 2.11
-# - name: exists
-#   constraints:
-#     - 'PersistRecordBackend record SqlBackend'
-#   args:
-#     - '[Filter record]'
-#   result: 'Bool'
+- name: exists
+  condition: MIN_VERSION_persistent(2,11,0)
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+  result: 'Bool'
 
 # TODO: advanced
 # - name: selectSource

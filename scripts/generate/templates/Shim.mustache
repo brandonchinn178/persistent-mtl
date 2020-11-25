@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PatternSynonyms #-}
@@ -19,9 +20,11 @@ import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 {-# ANN module "HLint: ignore" #-}
 
 {{#functions}}
+{{#withCondition}}
 {{{name}}}
   :: ({{#constraints}}{{{type}}}, {{/constraints}}{{#recordTypeVars}}Typeable {{.}}, {{/recordTypeVars}}MonadSqlQuery m)
   => {{#args}}{{{type}}} -> {{/args}}m {{result}}
 {{{name}}} {{#args}}a{{index}} {{/args}}= runQueryRep $ {{{nameCapital}}}{{#args}} a{{index}}{{/args}}
+{{/withCondition}}
 
 {{/functions}}

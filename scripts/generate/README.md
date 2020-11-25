@@ -41,6 +41,8 @@ First, make the following modifications:
 Then add the function to the YAML file in the following format:
 
 * `name`: The function's name
+* `condition`: (optional) The CPP condition that must be satisfied for the function to compile successfully
+    * e.g. `MIN_VERSION_persistent(2,11,0)` for a function that was added in 2.11.0
 * `constraints`: The function's constraints
 * `args`: The function's arguments
 * `result`: The function's result, without the monad

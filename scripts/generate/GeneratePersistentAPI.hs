@@ -11,6 +11,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 import Control.Monad (forM_)
 import Data.Aeson (FromJSON(..), withObject, (.!=), (.:), (.:?))
@@ -33,6 +34,7 @@ data PersistentFunction = PersistentFunction
   , constraints :: [Text]
   , args        :: [Text]
   , result      :: Text
+  , condition   :: Maybe Text
   } deriving (Show)
 
 instance FromJSON PersistentFunction where
@@ -42,6 +44,7 @@ instance FromJSON PersistentFunction where
       <*> o .:? "constraints" .!= []
       <*> o .:? "args" .!= []
       <*> o .: "result"
+      <*> o .:? "condition"
 
 {- Rendering -}
 
@@ -60,6 +63,7 @@ data FunctionContext = FunctionContext
   , constraints :: [Text]
   , args        :: [Text]
   , result      :: Text
+  , condition   :: Maybe Text
   }
 
 buildFunctionContext :: PersistentFunction -> FunctionContext
@@ -74,6 +78,14 @@ instance ToMustache FunctionContext where
     , "result" ~> result
     , "sqlQueryRepRecord" ~> sqlQueryRepRecord
     , "recordTypeVars" ~> recordTypeVars
+    , "withCondition" ~> \stree -> pure @Mustache.SubM $
+        case condition of
+          Nothing -> stree
+          Just cond -> concat
+            [ [Mustache.TextBlock $ "#if " <> cond <>"\n"]
+            , stree
+            , [Mustache.TextBlock "#endif\n"]
+            ]
     ]
     where
       fromConstraint constraint = object [ "type" ~> constraint ]

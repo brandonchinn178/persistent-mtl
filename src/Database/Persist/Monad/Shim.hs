@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PatternSynonyms #-}
@@ -138,6 +139,13 @@ checkUnique
   => record -> m (Maybe (Unique record))
 checkUnique a1 = runQueryRep $ CheckUnique a1
 
+#if MIN_VERSION_persistent(2,11,0)
+checkUniqueUpdateable
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => Entity record -> m (Maybe (Unique record))
+checkUniqueUpdateable a1 = runQueryRep $ CheckUniqueUpdateable a1
+#endif
+
 deleteBy
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => Unique record -> m ()
@@ -192,6 +200,13 @@ count
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => [Filter record] -> m Int
 count a1 = runQueryRep $ Count a1
+
+#if MIN_VERSION_persistent(2,11,0)
+exists
+  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => [Filter record] -> m Bool
+exists a1 = runQueryRep $ Exists a1
+#endif
 
 selectList
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)

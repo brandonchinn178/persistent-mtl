@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -120,6 +121,12 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Unique record))
 
+#if MIN_VERSION_persistent(2,11,0)
+  CheckUniqueUpdateable
+    :: (PersistRecordBackend record SqlBackend)
+    => Entity record -> SqlQueryRep record (Maybe (Unique record))
+#endif
+
   DeleteBy
     :: (PersistRecordBackend record SqlBackend)
     => Unique record -> SqlQueryRep record ()
@@ -163,6 +170,12 @@ data SqlQueryRep record a where
   Count
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> SqlQueryRep record Int
+
+#if MIN_VERSION_persistent(2,11,0)
+  Exists
+    :: (PersistRecordBackend record SqlBackend)
+    => [Filter record] -> SqlQueryRep record Bool
+#endif
 
   SelectList
     :: (PersistRecordBackend record SqlBackend)
@@ -302,6 +315,9 @@ instance Typeable record => Show (SqlQueryRep record a) where
     GetBy{} -> "GetBy{..}" ++ record
     GetByValue{} -> "GetByValue{..}" ++ record
     CheckUnique{} -> "CheckUnique{..}" ++ record
+#if MIN_VERSION_persistent(2,11,0)
+    CheckUniqueUpdateable{} -> "CheckUniqueUpdateable{..}" ++ record
+#endif
     DeleteBy{} -> "DeleteBy{..}" ++ record
     InsertUnique{} -> "InsertUnique{..}" ++ record
     Upsert{} -> "Upsert{..}" ++ record
@@ -313,6 +329,9 @@ instance Typeable record => Show (SqlQueryRep record a) where
     OnlyUnique{} -> "OnlyUnique{..}" ++ record
     SelectFirst{} -> "SelectFirst{..}" ++ record
     Count{} -> "Count{..}" ++ record
+#if MIN_VERSION_persistent(2,11,0)
+    Exists{} -> "Exists{..}" ++ record
+#endif
     SelectList{} -> "SelectList{..}" ++ record
     SelectKeysList{} -> "SelectKeysList{..}" ++ record
     UpdateWhere{} -> "UpdateWhere{..}" ++ record
@@ -375,6 +394,9 @@ runSqlQueryRep = \case
   GetBy a1 -> Persist.getBy a1
   GetByValue a1 -> Persist.getByValue a1
   CheckUnique a1 -> Persist.checkUnique a1
+#if MIN_VERSION_persistent(2,11,0)
+  CheckUniqueUpdateable a1 -> Persist.checkUniqueUpdateable a1
+#endif
   DeleteBy a1 -> Persist.deleteBy a1
   InsertUnique a1 -> Persist.insertUnique a1
   Upsert a1 a2 -> Persist.upsert a1 a2
@@ -386,6 +408,9 @@ runSqlQueryRep = \case
   OnlyUnique a1 -> Persist.onlyUnique a1
   SelectFirst a1 a2 -> Persist.selectFirst a1 a2
   Count a1 -> Persist.count a1
+#if MIN_VERSION_persistent(2,11,0)
+  Exists a1 -> Persist.exists a1
+#endif
   SelectList a1 a2 -> Persist.selectList a1 a2
   SelectKeysList a1 a2 -> Persist.selectKeysList a1 a2
   UpdateWhere a1 a2 -> Persist.updateWhere a1 a2
