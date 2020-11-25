@@ -1,4 +1,7 @@
 resolver: nightly-2020-11-22
 
+extra-deps:
+  - resourcet-pool-0.1.0.0
+
 ghc-options:
   "$locals": -Werror

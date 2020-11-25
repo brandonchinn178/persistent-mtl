@@ -55,8 +55,10 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
+import Data.Acquire (withAcquire)
 import Data.Pool (Pool)
-import Database.Persist.Sql (SqlBackend, runSqlConn, runSqlPool)
+import Data.Pool.Acquire (poolToAcquire)
+import Database.Persist.Sql (SqlBackend, runSqlConn)
 
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.Shim
@@ -105,4 +107,4 @@ withCurrentConnection f = SqlQueryT ask >>= \case
   -- Currently in a transaction; use the transaction connection
   SqlQueryEnv { currentConn = Just conn } -> f conn
   -- Otherwise, get a new connection
-  SqlQueryEnv { backendPool = pool } -> runSqlPool (lift . f =<< ask) pool
+  SqlQueryEnv { backendPool = pool } -> withAcquire (poolToAcquire pool) f

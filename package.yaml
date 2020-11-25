@@ -14,6 +14,7 @@ library:
     - persistent >= 2.8.2 && < 3
     - resource-pool >= 0.2.3.2 && < 0.3
     - resourcet >= 1.2.1 && < 2
+    - resourcet-pool >= 0.1.0.0 && < 0.2
     - text >= 1.2.3.0 && < 2
     - transformers >= 0.5.2.0 && < 0.6
     - unliftio-core >= 0.1.2.0 && < 0.3
