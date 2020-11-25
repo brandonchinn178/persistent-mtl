@@ -169,6 +169,20 @@ jobs:
       - store_artifacts:
           path: .ci/haddock-docs.tar.gz
 
+  check_codegen:
+    executor: ubuntu
+    steps:
+      - checkout
+      - install_stack
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Run code generation
+                command: scripts/generate/run.sh
+      - run:
+          name: Check if generated code not up to date
+          command: git diff --exit-code src/
+
 workflows:
   version: 2
 
@@ -176,6 +190,7 @@ workflows:
     jobs:
       - lint
       - haddock
+      - check_codegen
       - run_build_and_test:
           name: test_latest
           latest: true

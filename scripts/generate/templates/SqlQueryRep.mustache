@@ -1,0 +1,65 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
+module Database.Persist.Monad.SqlQueryRep
+  ( SqlQueryRep(..)
+  , runSqlQueryRep
+  ) where
+
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Data.Acquire (Acquire)
+import Data.Conduit (ConduitM)
+import Data.Int (Int64)
+import Data.Map (Map)
+import Data.Proxy (Proxy(..))
+import Data.Text (Text)
+import Data.Typeable (Typeable, eqT, typeRep, (:~:)(..))
+import Data.Void (Void)
+import Database.Persist.Sql as Persist hiding (pattern Update)
+import GHC.Stack (HasCallStack)
+
+{-# ANN module "HLint: ignore" #-}
+
+data SqlQueryRep record a where
+{{#functions}}
+{{#generateSqlQueryRep?}}
+{{#withCondition}}
+  {{{nameCapital}}}
+    :: ({{#constraints}}{{{type}}}{{^last}}, {{/last}}{{/constraints}})
+    => {{#args}}{{{type}}} -> {{/args}}SqlQueryRep {{sqlQueryRepRecord}} {{sqlQueryRepResult}}
+{{/withCondition}}
+
+{{/generateSqlQueryRep?}}
+{{/functions}}
+instance Typeable record => Show (SqlQueryRep record a) where
+  show = \case
+{{#functions}}
+{{#generateSqlQueryRep?}}
+{{#withCondition}}
+    {{{nameCapital}}}{} -> "{{{nameCapital}}}{..}" ++ record
+{{/withCondition}}
+{{/generateSqlQueryRep?}}
+{{/functions}}
+    where
+      record = case recordTypeRep of
+        Just recordType -> "<" ++ show recordType ++ ">"
+        Nothing -> ""
+      recordTypeRep = case eqT @record @Void of
+        Just Refl -> Nothing
+        Nothing -> Just $ typeRep $ Proxy @record
+
+runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
+runSqlQueryRep = \case
+{{#functions}}
+{{#generateSqlQueryRep?}}
+{{#withCondition}}
+  {{{nameCapital}}} {{#args}}a{{index}} {{/args}}-> Persist.{{{name}}}{{#args}} a{{index}}{{/args}}
+{{/withCondition}}
+{{/generateSqlQueryRep?}}
+{{/functions}}
