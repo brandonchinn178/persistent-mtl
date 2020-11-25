@@ -6,7 +6,9 @@
 module Database.Persist.Monad.Shim where
 
 import Control.Monad.IO.Class (MonadIO)
-import Data.Acquire (Acquire)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Resource (MonadResource)
+import Data.Acquire (Acquire, allocateAcquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -25,8 +27,19 @@ import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 {{#withCondition}}
 {{{name}}}
   :: ({{#constraints}}{{{type}}}, {{/constraints}}{{#recordTypeVars}}Typeable {{.}}, {{/recordTypeVars}}MonadSqlQuery m)
-  => {{#args}}{{{type}}} -> {{/args}}m {{result}}
+  => {{#args}}{{{type}}} -> {{/args}}{{result}}
+{{#conduitFrom?}}
+{{{name}}} {{#args}}a{{index}} {{/args}}= fromAcquire $ runQueryRep $ {{{conduitFrom.nameCapital}}}{{#args}} a{{index}}{{/args}}
+{{/conduitFrom?}}
+{{^conduitFrom?}}
 {{{name}}} {{#args}}a{{index}} {{/args}}= runQueryRep $ {{{nameCapital}}}{{#args}} a{{index}}{{/args}}
+{{/conduitFrom?}}
 {{/withCondition}}
 
 {{/functions}}
+{- Helpers -}
+
+fromAcquire :: MonadResource m => m (Acquire (ConduitM i o m a)) -> ConduitM i o m a
+fromAcquire getAcquire = do
+  (_, conduit) <- lift $ getAcquire >>= allocateAcquire
+  conduit

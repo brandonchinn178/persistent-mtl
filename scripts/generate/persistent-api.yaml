@@ -306,27 +306,25 @@
     - '[Filter record]'
   result: 'Bool'
 
-# TODO: advanced
-# - name: selectSource
-#   constraints:
-#     - 'MonadResource m'
-#     - 'PersistRecordBackend record SqlBackend'
-#     - 'MonadReader SqlBackend m'
-#   args:
-#     - '[Filter record]'
-#     - '[SelectOpt record]'
-#   result: 'ConduitM () (Entity record) m ()'
+- name: selectSource
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'MonadResource m'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: 'ConduitM () (Entity record) m ()'
+  conduitFrom: selectSourceRes
 
-# TODO: advanced
-# - name: selectKeys
-#   constraints:
-#     - 'MonadResource m'
-#     - 'PersistRecordBackend record SqlBackend'
-#     - 'MonadReader SqlBackend m'
-#   args:
-#     - '[Filter record]'
-#     - '[SelectOpt record]'
-#   result: 'ConduitM () (Key record) m ()'
+- name: selectKeys
+  constraints:
+    - 'PersistRecordBackend record SqlBackend'
+    - 'MonadResource m'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: 'ConduitM () (Key record) m ()'
+  conduitFrom: selectKeysRes
 
 - name: selectList
   constraints:
@@ -489,16 +487,14 @@
     - '[PersistValue]'
   result: '(Acquire (ConduitM () [PersistValue] m2 ()))'
 
-# TODO: advanced
-# - name: rawQuery
-#   constraints:
-#     - 'MonadResource m'
-#     - 'MonadReader env m'
-#     - 'BackendCompatible SqlBackend env'
-#   args:
-#     - 'Text'
-#     - '[PersistValue]'
-#   result: 'ConduitM () [PersistValue] m ()'
+- name: rawQuery
+  constraints:
+    - 'MonadResource m'
+  args:
+    - 'Text'
+    - '[PersistValue]'
+  result: 'ConduitM () [PersistValue] m ()'
+  conduitFrom: rawQueryRes
 
 - name: rawExecute
   args:

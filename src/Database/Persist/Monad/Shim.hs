@@ -6,7 +6,9 @@
 module Database.Persist.Monad.Shim where
 
 import Control.Monad.IO.Class (MonadIO)
-import Data.Acquire (Acquire)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Resource (MonadResource)
+import Data.Acquire (Acquire, allocateAcquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -220,6 +222,16 @@ exists
 exists a1 = runQueryRep $ Exists a1
 #endif
 
+selectSource
+  :: (PersistRecordBackend record SqlBackend, MonadResource m, Typeable record, MonadSqlQuery m)
+  => [Filter record] -> [SelectOpt record] -> ConduitM () (Entity record) m ()
+selectSource a1 a2 = fromAcquire $ runQueryRep $ SelectSourceRes a1 a2
+
+selectKeys
+  :: (PersistRecordBackend record SqlBackend, MonadResource m, Typeable record, MonadSqlQuery m)
+  => [Filter record] -> [SelectOpt record] -> ConduitM () (Key record) m ()
+selectKeys a1 a2 = fromAcquire $ runQueryRep $ SelectKeysRes a1 a2
+
 selectList
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => [Filter record] -> [SelectOpt record] -> m [Entity record]
@@ -330,6 +342,11 @@ rawQueryRes
   => Text -> [PersistValue] -> m (Acquire (ConduitM () [PersistValue] m2 ()))
 rawQueryRes a1 a2 = runQueryRep $ RawQueryRes a1 a2
 
+rawQuery
+  :: (MonadResource m, MonadSqlQuery m)
+  => Text -> [PersistValue] -> ConduitM () [PersistValue] m ()
+rawQuery a1 a2 = fromAcquire $ runQueryRep $ RawQueryRes a1 a2
+
 rawExecute
   :: (MonadSqlQuery m)
   => Text -> [PersistValue] -> m ()
@@ -364,3 +381,10 @@ transactionUndoWithIsolation
   :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionUndoWithIsolation a1 = runQueryRep $ TransactionUndoWithIsolation a1
+
+{- Helpers -}
+
+fromAcquire :: MonadResource m => m (Acquire (ConduitM i o m a)) -> ConduitM i o m a
+fromAcquire getAcquire = do
+  (_, conduit) <- lift $ getAcquire >>= allocateAcquire
+  conduit
