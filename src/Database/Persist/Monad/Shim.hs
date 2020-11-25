@@ -5,6 +5,8 @@
 
 module Database.Persist.Monad.Shim where
 
+import Control.Monad.IO.Class (MonadIO)
+import Data.Acquire (Acquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -191,10 +193,20 @@ onlyUnique
   => record -> m (Unique record)
 onlyUnique a1 = runQueryRep $ OnlyUnique a1
 
+selectSourceRes
+  :: (MonadIO m2, PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => [Filter record] -> [SelectOpt record] -> m (Acquire (ConduitM () (Entity record) m2 ()))
+selectSourceRes a1 a2 = runQueryRep $ SelectSourceRes a1 a2
+
 selectFirst
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => [Filter record] -> [SelectOpt record] -> m (Maybe (Entity record))
 selectFirst a1 a2 = runQueryRep $ SelectFirst a1 a2
+
+selectKeysRes
+  :: (MonadIO m2, PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  => [Filter record] -> [SelectOpt record] -> m (Acquire (ConduitM () (Key record) m2 ()))
+selectKeysRes a1 a2 = runQueryRep $ SelectKeysRes a1 a2
 
 count
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
@@ -312,6 +324,11 @@ withRawQuery
   :: (MonadSqlQuery m)
   => Text -> [PersistValue] -> ConduitM [PersistValue] Void IO a -> m a
 withRawQuery a1 a2 a3 = runQueryRep $ WithRawQuery a1 a2 a3
+
+rawQueryRes
+  :: (MonadIO m2, MonadSqlQuery m)
+  => Text -> [PersistValue] -> m (Acquire (ConduitM () [PersistValue] m2 ()))
+rawQueryRes a1 a2 = runQueryRep $ RawQueryRes a1 a2
 
 rawExecute
   :: (MonadSqlQuery m)

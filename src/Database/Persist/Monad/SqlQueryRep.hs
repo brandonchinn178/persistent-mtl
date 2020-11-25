@@ -11,7 +11,9 @@ module Database.Persist.Monad.SqlQueryRep
   , runSqlQueryRep
   ) where
 
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Data.Acquire (Acquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -163,9 +165,17 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
     => record -> SqlQueryRep record (Unique record)
 
+  SelectSourceRes
+    :: (MonadIO m2, PersistRecordBackend record SqlBackend)
+    => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Acquire (ConduitM () (Entity record) m2 ()))
+
   SelectFirst
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Maybe (Entity record))
+
+  SelectKeysRes
+    :: (MonadIO m2, PersistRecordBackend record SqlBackend)
+    => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Acquire (ConduitM () (Key record) m2 ()))
 
   Count
     :: (PersistRecordBackend record SqlBackend)
@@ -261,6 +271,10 @@ data SqlQueryRep record a where
     :: ()
     => Text -> [PersistValue] -> ConduitM [PersistValue] Void IO a -> SqlQueryRep Void a
 
+  RawQueryRes
+    :: (MonadIO m2)
+    => Text -> [PersistValue] -> SqlQueryRep Void (Acquire (ConduitM () [PersistValue] m2 ()))
+
   RawExecute
     :: ()
     => Text -> [PersistValue] -> SqlQueryRep Void ()
@@ -327,7 +341,9 @@ instance Typeable record => Show (SqlQueryRep record a) where
     InsertUniqueEntity{} -> "InsertUniqueEntity{..}" ++ record
     ReplaceUnique{} -> "ReplaceUnique{..}" ++ record
     OnlyUnique{} -> "OnlyUnique{..}" ++ record
+    SelectSourceRes{} -> "SelectSourceRes{..}" ++ record
     SelectFirst{} -> "SelectFirst{..}" ++ record
+    SelectKeysRes{} -> "SelectKeysRes{..}" ++ record
     Count{} -> "Count{..}" ++ record
 #if MIN_VERSION_persistent(2,11,0)
     Exists{} -> "Exists{..}" ++ record
@@ -353,6 +369,7 @@ instance Typeable record => Show (SqlQueryRep record a) where
     GetFieldName{} -> "GetFieldName{..}" ++ record
     GetTableName{} -> "GetTableName{..}" ++ record
     WithRawQuery{} -> "WithRawQuery{..}" ++ record
+    RawQueryRes{} -> "RawQueryRes{..}" ++ record
     RawExecute{} -> "RawExecute{..}" ++ record
     RawExecuteCount{} -> "RawExecuteCount{..}" ++ record
     RawSql{} -> "RawSql{..}" ++ record
@@ -406,7 +423,9 @@ runSqlQueryRep = \case
   InsertUniqueEntity a1 -> Persist.insertUniqueEntity a1
   ReplaceUnique a1 a2 -> Persist.replaceUnique a1 a2
   OnlyUnique a1 -> Persist.onlyUnique a1
+  SelectSourceRes a1 a2 -> Persist.selectSourceRes a1 a2
   SelectFirst a1 a2 -> Persist.selectFirst a1 a2
+  SelectKeysRes a1 a2 -> Persist.selectKeysRes a1 a2
   Count a1 -> Persist.count a1
 #if MIN_VERSION_persistent(2,11,0)
   Exists a1 -> Persist.exists a1
@@ -432,6 +451,7 @@ runSqlQueryRep = \case
   GetFieldName a1 -> Persist.getFieldName a1
   GetTableName a1 -> Persist.getTableName a1
   WithRawQuery a1 a2 a3 -> Persist.withRawQuery a1 a2 a3
+  RawQueryRes a1 a2 -> Persist.rawQueryRes a1 a2
   RawExecute a1 a2 -> Persist.rawExecute a1 a2
   RawExecuteCount a1 a2 -> Persist.rawExecuteCount a1 a2
   RawSql a1 a2 -> Persist.rawSql a1 a2

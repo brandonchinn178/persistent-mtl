@@ -265,16 +265,14 @@
 
 # PersistQueryRead
 
-# TODO: advanced
-# - name: selectSourceRes
-#   constraints:
-#     - 'MonadIO m1'
-#     - 'MonadIO m2'
-#     - 'PersistRecordBackend record SqlBackend'
-#   args:
-#     - '[Filter record]'
-#     - '[SelectOpt record]'
-#   result: 'm1 (Acquire (ConduitM () (Entity record) m2 ()))'
+- name: selectSourceRes
+  constraints:
+    - 'MonadIO m2'
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: '(Acquire (ConduitM () (Entity record) m2 ()))'
 
 - name: selectFirst
   constraints:
@@ -284,16 +282,14 @@
     - '[SelectOpt record]'
   result: '(Maybe (Entity record))'
 
-# TODO: advanced
-# - name: selectKeysRes
-#   constraints:
-#     - 'MonadIO m1'
-#     - 'MonadIO m2'
-#     - 'PersistRecordBackend record SqlBackend'
-#   args:
-#     - '[Filter record]'
-#     - '[SelectOpt record]'
-#   result: 'm1 (Acquire (ConduitM () (Key record) m2 ()))'
+- name: selectKeysRes
+  constraints:
+    - 'MonadIO m2'
+    - 'PersistRecordBackend record SqlBackend'
+  args:
+    - '[Filter record]'
+    - '[SelectOpt record]'
+  result: '(Acquire (ConduitM () (Key record) m2 ()))'
 
 - name: count
   constraints:
@@ -485,16 +481,13 @@
     - 'ConduitM [PersistValue] Void IO a'
   result: 'a'
 
-# TODO: advanced
-# - name: rawQueryRes
-#   constraints:
-#     - 'MonadIO m1'
-#     - 'MonadIO m2'
-#     - 'BackendCompatible SqlBackend env'
-#   args:
-#     - 'Text'
-#     - '[PersistValue]'
-#   result: 'ReaderT env m1 (Acquire (ConduitM () [PersistValue] m2 ()))'
+- name: rawQueryRes
+  constraints:
+    - 'MonadIO m2'
+  args:
+    - 'Text'
+    - '[PersistValue]'
+  result: '(Acquire (ConduitM () [PersistValue] m2 ()))'
 
 # TODO: advanced
 # - name: rawQuery

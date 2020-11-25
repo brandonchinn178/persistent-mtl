@@ -11,7 +11,9 @@ module Database.Persist.Monad.SqlQueryRep
   , runSqlQueryRep
   ) where
 
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Data.Acquire (Acquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)

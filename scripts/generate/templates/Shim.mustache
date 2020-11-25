@@ -5,6 +5,8 @@
 
 module Database.Persist.Monad.Shim where
 
+import Control.Monad.IO.Class (MonadIO)
+import Data.Acquire (Acquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
 import Data.Map (Map)
