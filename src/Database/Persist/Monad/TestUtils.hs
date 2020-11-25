@@ -15,7 +15,8 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Data.Typeable (Typeable, eqT, (:~:)(..))
 
-import Database.Persist.Monad (MonadSqlQuery(..), SqlQueryRep)
+import Database.Persist.Monad.Class (MonadSqlQuery(..))
+import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
 
 newtype MockSqlQueryT m a = MockSqlQueryT
   { unMockSqlQueryT :: ReaderT [MockQuery] m a

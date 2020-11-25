@@ -8,7 +8,8 @@
 module Database.Persist.Monad
   (
   -- * Type class for executing database queries
-    MonadSqlQuery(..)
+    MonadSqlQuery
+  , withTransaction
   , SqlQueryRep(..)
 
   -- * SqlQueryT monad transformer

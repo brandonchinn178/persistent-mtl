@@ -17,8 +17,17 @@ import Data.Typeable (Typeable)
 
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
 
+-- | The type-class for monads that can run persistent database queries.
 class Monad m => MonadSqlQuery m where
+  -- | The main function that interprets a SQL query operation and runs it
+  -- in the monadic context.
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a
+
+  -- | Run all queries in the given action using the same database connection.
+  --
+  -- You should make sure to not fork any threads within this action. This
+  -- will almost certainly cause problems.
+  -- https://github.com/brandonchinn178/persistent-mtl/issues/7
   withTransaction :: m a -> m a
 
 {- Instances for common monad transformers -}
