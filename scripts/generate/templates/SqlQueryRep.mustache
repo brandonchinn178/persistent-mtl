@@ -26,10 +26,20 @@ import GHC.Stack (HasCallStack)
 
 {-# ANN module "HLint: ignore" #-}
 
+-- | The data type containing a constructor for each persistent function we'd
+-- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.
+--
+-- The @record@ type parameter contains the 'PersistEntity' types used in a
+-- given function.
+--
+-- We're using a free-monads-like technique here to allow us to introspect
+-- persistent functions in 'Database.Persist.Monad.MonadSqlQuery', e.g. to
+-- mock out persistent calls in tests.
 data SqlQueryRep record a where
 {{#functions}}
 {{#generateSqlQueryRep?}}
 {{#withCondition}}
+  -- | Constructor corresponding to 'Persist.{{{name}}}'
   {{{nameCapital}}}
     :: ({{#constraints}}{{{type}}}{{^last}}, {{/last}}{{/constraints}})
     => {{#args}}{{{type}}} -> {{/args}}SqlQueryRep {{sqlQueryRepRecord}} {{sqlQueryRepResult}}
@@ -54,6 +64,8 @@ instance Typeable record => Show (SqlQueryRep record a) where
         Just Refl -> Nothing
         Nothing -> Just $ typeRep $ Proxy @record
 
+-- | A helper to execute the actual @persistent@ function corresponding to
+-- each 'SqlQueryRep' data constructor.
 runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
 {{#functions}}

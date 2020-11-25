@@ -26,318 +26,399 @@ import GHC.Stack (HasCallStack)
 
 {-# ANN module "HLint: ignore" #-}
 
+-- | The data type containing a constructor for each persistent function we'd
+-- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.
+--
+-- The @record@ type parameter contains the 'PersistEntity' types used in a
+-- given function.
+--
+-- We're using a free-monads-like technique here to allow us to introspect
+-- persistent functions in 'Database.Persist.Monad.MonadSqlQuery', e.g. to
+-- mock out persistent calls in tests.
 data SqlQueryRep record a where
+  -- | Constructor corresponding to 'Persist.get'
   Get
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> SqlQueryRep record (Maybe record)
 
+  -- | Constructor corresponding to 'Persist.getMany'
   GetMany
     :: (PersistRecordBackend record SqlBackend)
     => [Key record] -> SqlQueryRep record (Map (Key record) record)
 
+  -- | Constructor corresponding to 'Persist.getJust'
   GetJust
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> SqlQueryRep record record
 
+  -- | Constructor corresponding to 'Persist.getJustEntity'
   GetJustEntity
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> SqlQueryRep record (Entity record)
 
+  -- | Constructor corresponding to 'Persist.getEntity'
   GetEntity
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> SqlQueryRep record (Maybe (Entity record))
 
+  -- | Constructor corresponding to 'Persist.belongsTo'
   BelongsTo
     :: (PersistEntity record1, PersistRecordBackend record2 SqlBackend)
     => (record1 -> Maybe (Key record2)) -> record1 -> SqlQueryRep (record1, record2) (Maybe record2)
 
+  -- | Constructor corresponding to 'Persist.belongsToJust'
   BelongsToJust
     :: (PersistEntity record1, PersistRecordBackend record2 SqlBackend)
     => (record1 -> Key record2) -> record1 -> SqlQueryRep (record1, record2) record2
 
+  -- | Constructor corresponding to 'Persist.insert'
   Insert
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Key record)
 
+  -- | Constructor corresponding to 'Persist.insert_'
   Insert_
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.insertMany'
   InsertMany
     :: (PersistRecordBackend record SqlBackend)
     => [record] -> SqlQueryRep record [Key record]
 
+  -- | Constructor corresponding to 'Persist.insertMany_'
   InsertMany_
     :: (PersistRecordBackend record SqlBackend)
     => [record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.insertEntityMany'
   InsertEntityMany
     :: (PersistRecordBackend record SqlBackend)
     => [Entity record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.insertKey'
   InsertKey
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.repsert'
   Repsert
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.repsertMany'
   RepsertMany
     :: (PersistRecordBackend record SqlBackend)
     => [(Key record, record)] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.replace'
   Replace
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.delete'
   Delete
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.update'
   Update
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> [Update record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.updateGet'
   UpdateGet
     :: (PersistRecordBackend record SqlBackend)
     => Key record -> [Update record] -> SqlQueryRep record record
 
+  -- | Constructor corresponding to 'Persist.insertEntity'
   InsertEntity
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Entity record)
 
+  -- | Constructor corresponding to 'Persist.insertRecord'
   InsertRecord
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record record
 
+  -- | Constructor corresponding to 'Persist.getBy'
   GetBy
     :: (PersistRecordBackend record SqlBackend)
     => Unique record -> SqlQueryRep record (Maybe (Entity record))
 
 #if MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.getByValue'
   GetByValue
     :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record)
     => record -> SqlQueryRep record (Maybe (Entity record))
 #endif
 
 #if !MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.getByValue'
   GetByValue
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Entity record))
 #endif
 
+  -- | Constructor corresponding to 'Persist.checkUnique'
   CheckUnique
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Unique record))
 
 #if MIN_VERSION_persistent(2,11,0)
+  -- | Constructor corresponding to 'Persist.checkUniqueUpdateable'
   CheckUniqueUpdateable
     :: (PersistRecordBackend record SqlBackend)
     => Entity record -> SqlQueryRep record (Maybe (Unique record))
 #endif
 
+  -- | Constructor corresponding to 'Persist.deleteBy'
   DeleteBy
     :: (PersistRecordBackend record SqlBackend)
     => Unique record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.insertUnique'
   InsertUnique
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Key record))
 
 #if MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.upsert'
   Upsert
     :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
     => record -> [Update record] -> SqlQueryRep record (Entity record)
 #endif
 
 #if !MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.upsert'
   Upsert
     :: (PersistRecordBackend record SqlBackend)
     => record -> [Update record] -> SqlQueryRep record (Entity record)
 #endif
 
+  -- | Constructor corresponding to 'Persist.upsertBy'
   UpsertBy
     :: (PersistRecordBackend record SqlBackend)
     => Unique record -> record -> [Update record] -> SqlQueryRep record (Entity record)
 
+  -- | Constructor corresponding to 'Persist.putMany'
   PutMany
     :: (PersistRecordBackend record SqlBackend)
     => [record] -> SqlQueryRep record ()
 
 #if MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.insertBy'
   InsertBy
     :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record)
     => record -> SqlQueryRep record (Either (Entity record) (Key record))
 #endif
 
 #if !MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.insertBy'
   InsertBy
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Either (Entity record) (Key record))
 #endif
 
+  -- | Constructor corresponding to 'Persist.insertUniqueEntity'
   InsertUniqueEntity
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Maybe (Entity record))
 
+  -- | Constructor corresponding to 'Persist.replaceUnique'
   ReplaceUnique
     :: (PersistRecordBackend record SqlBackend, Eq (Unique record), Eq record)
     => Key record -> record -> SqlQueryRep record (Maybe (Unique record))
 
 #if MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.onlyUnique'
   OnlyUnique
     :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
     => record -> SqlQueryRep record (Unique record)
 #endif
 
 #if !MIN_VERSION_persistent(2,10,0)
+  -- | Constructor corresponding to 'Persist.onlyUnique'
   OnlyUnique
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record (Unique record)
 #endif
 
+  -- | Constructor corresponding to 'Persist.selectSourceRes'
   SelectSourceRes
     :: (MonadIO m2, PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Acquire (ConduitM () (Entity record) m2 ()))
 
+  -- | Constructor corresponding to 'Persist.selectFirst'
   SelectFirst
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Maybe (Entity record))
 
+  -- | Constructor corresponding to 'Persist.selectKeysRes'
   SelectKeysRes
     :: (MonadIO m2, PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record (Acquire (ConduitM () (Key record) m2 ()))
 
+  -- | Constructor corresponding to 'Persist.count'
   Count
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> SqlQueryRep record Int
 
 #if MIN_VERSION_persistent(2,11,0)
+  -- | Constructor corresponding to 'Persist.exists'
   Exists
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> SqlQueryRep record Bool
 #endif
 
+  -- | Constructor corresponding to 'Persist.selectList'
   SelectList
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record [Entity record]
 
+  -- | Constructor corresponding to 'Persist.selectKeysList'
   SelectKeysList
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [SelectOpt record] -> SqlQueryRep record [Key record]
 
+  -- | Constructor corresponding to 'Persist.updateWhere'
   UpdateWhere
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [Update record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.deleteWhere'
   DeleteWhere
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.deleteWhereCount'
   DeleteWhereCount
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> SqlQueryRep record Int64
 
+  -- | Constructor corresponding to 'Persist.updateWhereCount'
   UpdateWhereCount
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [Update record] -> SqlQueryRep record Int64
 
+  -- | Constructor corresponding to 'Persist.deleteCascade'
   DeleteCascade
     :: (DeleteCascade record SqlBackend)
     => Key record -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.deleteCascadeWhere'
   DeleteCascadeWhere
     :: (DeleteCascade record SqlBackend)
     => [Filter record] -> SqlQueryRep record ()
 
+  -- | Constructor corresponding to 'Persist.parseMigration'
   ParseMigration
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void (Either [Text] CautiousMigration)
 
+  -- | Constructor corresponding to 'Persist.parseMigration''
   ParseMigration'
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void CautiousMigration
 
+  -- | Constructor corresponding to 'Persist.printMigration'
   PrintMigration
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void ()
 
+  -- | Constructor corresponding to 'Persist.showMigration'
   ShowMigration
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void [Text]
 
+  -- | Constructor corresponding to 'Persist.getMigration'
   GetMigration
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void [Sql]
 
+  -- | Constructor corresponding to 'Persist.runMigration'
   RunMigration
     :: ()
     => Migration -> SqlQueryRep Void ()
 
 #if MIN_VERSION_persistent(2,10,2)
+  -- | Constructor corresponding to 'Persist.runMigrationQuiet'
   RunMigrationQuiet
     :: ()
     => Migration -> SqlQueryRep Void [Text]
 #endif
 
+  -- | Constructor corresponding to 'Persist.runMigrationSilent'
   RunMigrationSilent
     :: ()
     => Migration -> SqlQueryRep Void [Text]
 
+  -- | Constructor corresponding to 'Persist.runMigrationUnsafe'
   RunMigrationUnsafe
     :: ()
     => Migration -> SqlQueryRep Void ()
 
 #if MIN_VERSION_persistent(2,10,2)
+  -- | Constructor corresponding to 'Persist.runMigrationUnsafeQuiet'
   RunMigrationUnsafeQuiet
     :: (HasCallStack)
     => Migration -> SqlQueryRep Void [Text]
 #endif
 
+  -- | Constructor corresponding to 'Persist.getFieldName'
   GetFieldName
     :: (PersistRecordBackend record SqlBackend)
     => EntityField record typ -> SqlQueryRep record Text
 
+  -- | Constructor corresponding to 'Persist.getTableName'
   GetTableName
     :: (PersistRecordBackend record SqlBackend)
     => record -> SqlQueryRep record Text
 
+  -- | Constructor corresponding to 'Persist.withRawQuery'
   WithRawQuery
     :: ()
     => Text -> [PersistValue] -> ConduitM [PersistValue] Void IO a -> SqlQueryRep Void a
 
+  -- | Constructor corresponding to 'Persist.rawQueryRes'
   RawQueryRes
     :: (MonadIO m2)
     => Text -> [PersistValue] -> SqlQueryRep Void (Acquire (ConduitM () [PersistValue] m2 ()))
 
+  -- | Constructor corresponding to 'Persist.rawExecute'
   RawExecute
     :: ()
     => Text -> [PersistValue] -> SqlQueryRep Void ()
 
+  -- | Constructor corresponding to 'Persist.rawExecuteCount'
   RawExecuteCount
     :: ()
     => Text -> [PersistValue] -> SqlQueryRep Void Int64
 
+  -- | Constructor corresponding to 'Persist.rawSql'
   RawSql
     :: (RawSql a)
     => Text -> [PersistValue] -> SqlQueryRep Void [a]
 
+  -- | Constructor corresponding to 'Persist.transactionSave'
   TransactionSave
     :: ()
     => SqlQueryRep Void ()
 
 #if MIN_VERSION_persistent(2,9,0)
+  -- | Constructor corresponding to 'Persist.transactionSaveWithIsolation'
   TransactionSaveWithIsolation
     :: ()
     => IsolationLevel -> SqlQueryRep Void ()
 #endif
 
+  -- | Constructor corresponding to 'Persist.transactionUndo'
   TransactionUndo
     :: ()
     => SqlQueryRep Void ()
 
 #if MIN_VERSION_persistent(2,9,0)
+  -- | Constructor corresponding to 'Persist.transactionUndoWithIsolation'
   TransactionUndoWithIsolation
     :: ()
     => IsolationLevel -> SqlQueryRep Void ()
@@ -453,6 +534,8 @@ instance Typeable record => Show (SqlQueryRep record a) where
         Just Refl -> Nothing
         Nothing -> Just $ typeRep $ Proxy @record
 
+-- | A helper to execute the actual @persistent@ function corresponding to
+-- each 'SqlQueryRep' data constructor.
 runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
   Get a1 -> Persist.get a1

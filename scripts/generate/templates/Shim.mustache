@@ -25,6 +25,7 @@ import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
 {{#functions}}
 {{#withCondition}}
+-- | The lifted version of 'Database.Persist.Sql.{{{name}}}'
 {{{name}}}
   :: ({{#constraints}}{{{type}}}, {{/constraints}}{{#recordTypeVars}}Typeable {{.}}, {{/recordTypeVars}}MonadSqlQuery m)
   => {{#args}}{{{type}}} -> {{/args}}{{result}}
@@ -39,6 +40,7 @@ import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 {{/functions}}
 {- Helpers -}
 
+-- | A helper for functions that return a conduit.
 fromAcquire :: MonadResource m => m (Acquire (ConduitM i o m a)) -> ConduitM i o m a
 fromAcquire getAcquire = do
   (_, conduit) <- lift $ getAcquire >>= allocateAcquire
