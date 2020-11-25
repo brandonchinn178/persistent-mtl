@@ -161,17 +161,16 @@ main :: IO ()
 main = do
   context <- buildContext <$> Yaml.decodeFileThrow "persistent-api.yaml"
 
-  generate context "SqlQueryRep.mustache" "Database/Persist/Monad/SqlQueryRep.hs"
-  generate context "Shim.mustache" "Database/Persist/Monad/Shim.hs"
+  let root = "../../"
 
-srcDir :: FilePath
-srcDir = "../../src/"
+  generate context "SqlQueryRep.mustache" $ root ++ "src/Database/Persist/Monad/SqlQueryRep.hs"
+  generate context "Shim.mustache" $ root ++ "src/Database/Persist/Monad/Shim.hs"
 
 generate :: ToMustache k => k -> FilePath -> FilePath -> IO ()
 generate context templatePath output = do
   template <- either (error . show) return =<< Mustache.automaticCompile ["./templates"] templatePath
   case Mustache.checkedSubstitute template context of
-    ([], rendered) -> Text.writeFile (srcDir ++ output) rendered
+    ([], rendered) -> Text.writeFile output rendered
     (errors, _) -> error $ unlines $
       "Found errors when generating template:" : map showError errors
   where
