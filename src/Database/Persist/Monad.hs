@@ -14,8 +14,8 @@ module Database.Persist.Monad
 
   -- * SqlQueryT monad transformer
   , SqlQueryT
-  , SqlQueryBackend(..)
   , runSqlQueryT
+  , SqlQueryBackend(..)
 
   -- * Lifted functions
   , module Database.Persist.Monad.Shim
@@ -39,6 +39,7 @@ data SqlQueryEnv = SqlQueryEnv
   , currentConn :: Maybe SqlBackend
   }
 
+-- | The monad transformer that implements 'MonadSqlQuery'.
 newtype SqlQueryT m a = SqlQueryT
   { unSqlQueryT :: ReaderT SqlQueryEnv m a
   } deriving
@@ -63,10 +64,16 @@ instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
 
 {- Running SqlQueryT -}
 
+-- | The backend to use to run 'SqlQueryT'.
+--
+-- You can get these from the database-specific persistent library, e.g.
+-- 'Database.Persist.Postgresql.withPostgresqlConn' or
+-- 'Database.Persist.Postgresql.withPostgresqlPool' from @persistent-postgresql@
 data SqlQueryBackend
   = BackendSingle SqlBackend
   | BackendPool (Pool SqlBackend)
 
+-- | Run the 'SqlQueryT' monad transformer with the given backend.
 runSqlQueryT :: SqlQueryBackend -> SqlQueryT m a -> m a
 runSqlQueryT backend = (`runReaderT` env) . unSqlQueryT
   where
