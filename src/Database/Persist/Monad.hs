@@ -1,3 +1,34 @@
+{-|
+Module: Database.Persist.Monad
+
+Defines the 'SqlQueryT' monad transformer that has a 'MonadSqlQuery' instance
+to execute @persistent@ database operations.
+
+Usage:
+
+@
+myFunction :: (MonadSqlQuery m, MonadIO m) => m ()
+myFunction = do
+  insert_ $ Person { name = \"Alice\", age = Just 25 }
+  insert_ $ Person { name = \"Bob\", age = Nothing }
+
+  -- some other business logic
+
+  personList <- selectList [] []
+  liftIO $ print (personList :: [Person])
+
+  -- everything in here will run in a transaction
+  withTransaction $
+    selectFirst [PersonAge >. 30] [] >>= \\case
+      Nothing -> insert_ $ Person { name = \"Claire\", age = Just 50 }
+      Just (Entity key person) -> replace key person{ age = Just (age person - 10) }
+
+  -- some more business logic
+
+  return ()
+@
+-}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}

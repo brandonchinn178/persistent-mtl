@@ -1,3 +1,10 @@
+{-|
+Module: Database.Persist.Monad.TestUtils
+
+Defines 'MockSqlQueryT', which one can use in tests in order to mock out
+@persistent@ database queries called in production code.
+-}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}

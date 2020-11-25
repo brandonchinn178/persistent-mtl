@@ -1,3 +1,12 @@
+{-|
+Module: Database.Persist.Monad.Class
+
+Defines the 'MonadSqlQuery' type class that a monad can make an instance of
+in order to interpret how to run a
+'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
+@Database.Persist.Monad.Shim@.
+-}
+
 module Database.Persist.Monad.Class
   ( MonadSqlQuery(..)
   ) where
