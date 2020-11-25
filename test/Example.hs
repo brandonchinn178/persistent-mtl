@@ -15,7 +15,6 @@
 module Example
   ( TestApp
   , runTestApp
-  , runTestAppWithPool
 
     -- * Functions
   , getPeople
@@ -27,7 +26,7 @@ module Example
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import Database.Persist (Entity)
-import Database.Persist.Sqlite (withSqliteConn, withSqlitePool)
+import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
     (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
@@ -55,15 +54,10 @@ instance MonadUnliftIO TestApp where
   withRunInIO = wrappedWithRunInIO TestApp unTestApp
 
 runTestApp :: TestApp a -> IO a
-runTestApp m = runNoLoggingT $ withSqliteConn ":memory:" (runTestAppWith m . BackendSingle)
-
-runTestAppWithPool :: TestApp a -> IO a
-runTestAppWithPool m = runNoLoggingT $ withSqlitePool ":memory:" 5 (runTestAppWith m . BackendPool)
-
-runTestAppWith :: MonadIO m => TestApp a -> SqlQueryBackend -> m a
-runTestAppWith m backend = liftIO . runSqlQueryT backend . unTestApp $ do
-  _ <- runMigrationSilent migrate
-  m
+runTestApp m = runNoLoggingT $ withSqlitePool ":memory:" 5 $ \pool ->
+  liftIO . runSqlQueryT pool . unTestApp $ do
+    _ <- runMigrationSilent migrate
+    m
 
 getPeople :: MonadSqlQuery m => m [Entity Person]
 getPeople = selectList [] []
