@@ -5,6 +5,7 @@
 
 module Mocked where
 
+import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..))
 import Database.Persist.Sql (fromSqlKey, toSqlKey)
 import Test.Tasty
@@ -41,6 +42,16 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "getMany" $ do
+      result <- runMockSqlQueryT (getMany [toSqlKey 1])
+        [ withRecord @Person $ \case
+            GetMany _ -> Just $ Map.fromList
+              [ (toSqlKey 1, person "Alice")
+              ]
+            _ -> Nothing
+        ]
+      personName <$> Map.lookup (toSqlKey 1) result @?= Just "Alice"
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])

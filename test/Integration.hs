@@ -1,5 +1,6 @@
 module Integration where
 
+import qualified Data.Map.Strict as Map
 import Database.Persist.Sql (toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -49,6 +50,12 @@ testPersistentAPI = testGroup "Persistent API"
         insert_ $ person "Alice"
         mapM (get . toSqlKey) [1, 2]
       map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "getMany" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        getMany [toSqlKey 1]
+      personName <$> Map.lookup (toSqlKey 1) result @?= Just "Alice"
 
   , testCase "selectList" $ do
       result <- runTestApp $ do
