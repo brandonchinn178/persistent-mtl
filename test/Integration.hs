@@ -68,6 +68,12 @@ testPersistentAPI = testGroup "Persistent API"
         getJustEntity 1
       getName result @?= "Alice"
 
+  , testCase "getEntity" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        mapM getEntity [1, 2]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

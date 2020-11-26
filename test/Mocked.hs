@@ -65,6 +65,16 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       getName result @?= "Alice"
 
+  , testCase "getEntity" $ do
+      result <- runMockSqlQueryT (mapM getEntity [1, 2])
+        [ withRecord @Person $ \case
+            GetEntity n
+              | n == 1 -> Just $ Just $ Entity 1 $ person "Alice"
+              | n == 2 -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
