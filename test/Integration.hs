@@ -1,6 +1,7 @@
 module Integration where
 
 import qualified Data.Map.Strict as Map
+import Database.Persist (Entity(..))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -115,6 +116,16 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "insertMany_" $ do
       result <- runTestApp $ do
         result <- insertMany_ [person "Alice", person "Bob"]
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice", "Bob"])
+
+  , testCase "insertEntityMany" $ do
+      result <- runTestApp $ do
+        result <- insertEntityMany
+          [ Entity 1 $ person "Alice"
+          , Entity 2 $ person "Bob"
+          ]
         people <- getPeopleNames
         return (result, people)
       result @?= ((), ["Alice", "Bob"])
