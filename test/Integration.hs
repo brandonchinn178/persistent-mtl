@@ -130,6 +130,13 @@ testPersistentAPI = testGroup "Persistent API"
         return (result, people)
       result @?= ((), ["Alice", "Bob"])
 
+  , testCase "insertKey" $ do
+      result <- runTestApp $ do
+        result <- insertKey 1 $ person "Alice"
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice"])
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
