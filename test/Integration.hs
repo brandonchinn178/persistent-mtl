@@ -62,6 +62,12 @@ testPersistentAPI = testGroup "Persistent API"
         getJust 1
       personName result @?= "Alice"
 
+  , testCase "getJustEntity" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        getJustEntity 1
+      getName result @?= "Alice"
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
