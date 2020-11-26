@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 210261a9504b5bd4c206aa7b1f7b07c3cc0b24873e86b3187f1346904853eeab
+-- hash: 0057f23742aac71de0e674b4150055965426a4f7fe91573e8ef33c6232200c4f
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -42,20 +42,28 @@ test-suite persistent-mtl-test
   main-is: Main.hs
   other-modules:
       Example
+      Generated
       Integration
       Mocked
+      SqlQueryRepTest
       Paths_persistent_mtl
   hs-source-dirs:
       test
   ghc-options: -Wall
   build-depends:
       base
+    , bytestring
+    , conduit
+    , containers
     , monad-logger
     , persistent
     , persistent-mtl
     , persistent-sqlite
     , persistent-template
+    , resourcet
     , tasty
+    , tasty-golden
     , tasty-hunit
+    , text
     , unliftio
   default-language: Haskell2010

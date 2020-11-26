@@ -31,7 +31,7 @@ myFunction = do
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -83,13 +83,15 @@ newtype SqlQueryT m a = SqlQueryT
     )
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
-  runQueryRep queryRep =
-    withCurrentConnection $ \conn ->
-      runSqlConn (runSqlQueryRep queryRep) conn
+  runQueryRep queryRep = do
+    SqlQueryEnv{currentConn} <- SqlQueryT ask
+    case currentConn of
+      Just conn -> runWithConn conn
+      Nothing -> withTransactionConn runWithConn
+    where
+      runWithConn = runReaderT (runSqlQueryRep queryRep)
 
-  withTransaction action =
-    withCurrentConnection $ \conn ->
-      SqlQueryT . local (\env -> env { currentConn = Just conn }) . unSqlQueryT $ action
+  withTransaction action = withTransactionConn $ \_ -> action
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
@@ -102,9 +104,12 @@ runSqlQueryT backendPool = (`runReaderT` env) . unSqlQueryT
   where
     env = SqlQueryEnv { currentConn = Nothing, .. }
 
-withCurrentConnection :: MonadUnliftIO m => (SqlBackend -> SqlQueryT m a) -> SqlQueryT m a
-withCurrentConnection f = SqlQueryT ask >>= \case
-  -- Currently in a transaction; use the transaction connection
-  SqlQueryEnv { currentConn = Just conn } -> f conn
-  -- Otherwise, get a new connection
-  SqlQueryEnv { backendPool = pool } -> withAcquire (poolToAcquire pool) f
+-- | Start a new transaction and get the connection.
+withTransactionConn :: MonadUnliftIO m => (SqlBackend -> SqlQueryT m a) -> SqlQueryT m a
+withTransactionConn f = do
+  SqlQueryEnv{backendPool} <- SqlQueryT ask
+  withAcquire (poolToAcquire backendPool) $ \conn ->
+    SqlQueryT . local (setCurrentConn conn) . unSqlQueryT $
+      runSqlConn (lift $ f conn) conn
+  where
+    setCurrentConn conn env = env { currentConn = Just conn }

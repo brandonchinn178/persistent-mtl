@@ -17,28 +17,50 @@ module Example
   , runTestApp
 
     -- * Functions
-  , getPeople
+  , getPeopleNames
 
     -- * Models
   , Person(..)
+  , Post(..)
+  , Unique(..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
-import Database.Persist (Entity)
+import qualified Data.Text as Text
+import Database.Persist (Entity(..), Unique)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
-    (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
-import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
+    ( mkDeleteCascade
+    , mkMigrate
+    , mkPersist
+    , persistLowerCase
+    , share
+    , sqlSettings
+    )
+import UnliftIO (MonadUnliftIO(..), withSystemTempDirectory, wrappedWithRunInIO)
 
 import Database.Persist.Monad
 
-share [mkPersist sqlSettings, mkMigrate "migrate"] [persistLowerCase|
+share
+  [ mkPersist sqlSettings
+  , mkDeleteCascade sqlSettings
+  , mkMigrate "migrate"
+  ]
+  [persistLowerCase|
 Person
   name String
-  age Int Maybe
+  age Int
+  UniqueName name
+  deriving Show Eq
+
+Post
+  title String
+  author PersonId
   deriving Show Eq
 |]
+
+deriving instance Eq (Unique Person)
 
 newtype TestApp a = TestApp
   { unTestApp :: SqlQueryT IO a
@@ -54,10 +76,15 @@ instance MonadUnliftIO TestApp where
   withRunInIO = wrappedWithRunInIO TestApp unTestApp
 
 runTestApp :: TestApp a -> IO a
-runTestApp m = runNoLoggingT $ withSqlitePool ":memory:" 5 $ \pool ->
-  liftIO . runSqlQueryT pool . unTestApp $ do
-    _ <- runMigrationSilent migrate
-    m
+runTestApp m =
+  withSystemTempDirectory "persistent-mtl-testapp" $ \dir -> do
+    let db = Text.pack $ dir ++ "/db.sqlite"
+    runNoLoggingT $ withSqlitePool db 5 $ \pool ->
+      liftIO . runSqlQueryT pool . unTestApp $ do
+        _ <- runMigrationSilent migrate
+        m
 
-getPeople :: MonadSqlQuery m => m [Entity Person]
-getPeople = selectList [] []
+{- Functions -}
+
+getPeopleNames :: MonadSqlQuery m => m [String]
+getPeopleNames = map (personName . entityVal) <$> selectList [] []

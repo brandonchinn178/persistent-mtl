@@ -225,7 +225,7 @@ So what does `persistent-mtl` do differently?
       bar
     ```
 
-    `fooAndBar` will run both `foo` and `bar` in the same transaction. Note that `foo` and `bar` themselves don't say anything about transactions. By default, using a `persistent` function without `withTransaction` will run each query in its own transaction. And if `foo` did use `withTransaction`, it would reuse the same transaction as `fooAndBar`. Now, `foo` and `bar` are composable!
+    `fooAndBar` will run both `foo` and `bar` in the same transaction. Note that `foo` and `bar` themselves don't say anything about transactions. By default, using a `persistent` function without `withTransaction` will run each query in its own transaction. And if `foo` did use `withTransaction`, it would start a transaction within a transaction (if the SQL backend supports it). Now, `foo` and `bar` are composable!
 
 In summary, `persistent-mtl` takes all the good things about option 2, implements them out of the box (so you don't have to do it yourself), and makes your business logic functions composable with transactions behaving the way YOU want.
 

@@ -20,7 +20,7 @@ import Data.Char (isAlphaNum, toUpper)
 import Data.List (nub, sort)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
@@ -58,7 +58,10 @@ data Context = Context
   }
 
 instance ToMustache Context where
-  toMustache Context{..} = object [ "functions" ~> functions ]
+  toMustache Context{..} = object
+    [ "functions" ~> enumerate functions
+    , "sqlQueryRepConstructors" ~> enumerate (filter shouldGenerateSqlQueryRep functions)
+    ]
 
 buildContext :: [PersistentFunction] -> Context
 buildContext functions = Context functionContexts
@@ -103,9 +106,19 @@ instance ToMustache FunctionContext where
             , stree
             , [Mustache.TextBlock "#endif\n"]
             ]
-    , "generateSqlQueryRep?" ~> not hasConduitFrom
     , "conduitFrom?" ~> hasConduitFrom
     , "conduitFrom" ~> conduitFrom
+
+      -- testing
+    , "sqlQueryRepExample" ~>
+        let modifyType = replaceAll
+              [ ("record", "Person")
+              , ("record1", "Person")
+              , ("record2", "Post")
+              , ("m2", "IO")
+              , ("[a]", "[Entity Person]")
+              ]
+        in modifyType $ Text.unwords ["SqlQueryRep", sqlQueryRepRecord, result]
     ]
     where
       fromConstraint constraint = object [ "type" ~> constraint ]
@@ -118,6 +131,9 @@ instance ToMustache FunctionContext where
         [] -> "Void"
         [record] -> record
         records -> "(" <> Text.intercalate ", " records <> ")"
+
+shouldGenerateSqlQueryRep :: FunctionContext -> Bool
+shouldGenerateSqlQueryRep FunctionContext{..} = isNothing conduitFrom
 
 -- | Get all `record` type variables in the given list of constraints.
 --
@@ -139,16 +155,24 @@ capitalize t = case Text.uncons t of
   Just (c, cs) -> Text.cons (toUpper c) cs
   Nothing -> t
 
--- | Convert each element in the list into a Value with the given function,
--- adding the "index" and "last" keys indicating the element's index in the list
--- and whether the element is the last one in the list, respectively.
-enumerateWith :: (a -> Mustache.Value) -> [a] -> [Mustache.Value]
-enumerateWith f xs =
-  let mkElem x i = merge (f x) $ object
+replaceAll :: [(Text, Text)] -> Text -> Text
+replaceAll replacers haystack = foldr (uncurry Text.replace) haystack replacers
+
+-- | Add to each element keys that indicate information about the element's
+-- index in the list.
+enumerate :: Mustache.ToMustache a => [a] -> [Mustache.Value]
+enumerate xs =
+  let mkElem x i = merge (Mustache.toMustache x) $ object
         [ "index" ~> i
+        , "first" ~> (i == 1)
         , "last" ~> (i == length xs)
         ]
   in zipWith mkElem xs [1..]
+
+-- | Convert each element in the list into a Value with the given function,
+-- then enumerate each element.
+enumerateWith :: (a -> Mustache.Value) -> [a] -> [Mustache.Value]
+enumerateWith f = enumerate . map f
 
 -- If only Value had a Monoid instance...
 merge :: Mustache.Value -> Mustache.Value -> Mustache.Value
@@ -161,17 +185,17 @@ main :: IO ()
 main = do
   context <- buildContext <$> Yaml.decodeFileThrow "persistent-api.yaml"
 
-  generate "SqlQueryRep.mustache" "Database/Persist/Monad/SqlQueryRep.hs" context
-  generate "Shim.mustache" "Database/Persist/Monad/Shim.hs" context
+  let root = "../../"
 
-srcDir :: FilePath
-srcDir = "../../src/"
+  generate context "SqlQueryRep.mustache" $ root ++ "src/Database/Persist/Monad/SqlQueryRep.hs"
+  generate context "Shim.mustache" $ root ++ "src/Database/Persist/Monad/Shim.hs"
+  generate context "TestHelpers.mustache" $ root ++ "test/Generated.hs"
 
-generate :: ToMustache k => FilePath -> FilePath -> k -> IO ()
-generate templatePath output value = do
+generate :: ToMustache k => k -> FilePath -> FilePath -> IO ()
+generate context templatePath output = do
   template <- either (error . show) return =<< Mustache.automaticCompile ["./templates"] templatePath
-  case Mustache.checkedSubstitute template value of
-    ([], rendered) -> Text.writeFile (srcDir ++ output) rendered
+  case Mustache.checkedSubstitute template context of
+    ([], rendered) -> Text.writeFile output rendered
     (errors, _) -> error $ unlines $
       "Found errors when generating template:" : map showError errors
   where

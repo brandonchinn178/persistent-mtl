@@ -25,11 +25,17 @@ tests:
     main: Main.hs
     dependencies:
       - base
+      - bytestring
+      - conduit
+      - containers
       - monad-logger
       - persistent
       - persistent-mtl
       - persistent-sqlite
       - persistent-template
+      - resourcet
       - tasty
+      - tasty-golden
       - tasty-hunit
+      - text
       - unliftio
