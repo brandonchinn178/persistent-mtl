@@ -1,5 +1,6 @@
 module Integration where
 
+import Database.Persist.Sql (toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -43,11 +44,16 @@ testWithTransaction = testGroup "withTransaction"
 
 testPersistentAPI :: TestTree
 testPersistentAPI = testGroup "Persistent API"
-  [ testCase "selectList" $ do
+  [ testCase "get" $ do
+      result <- runTestApp $ do
+        insert_ $ Person "Alice" 0
+        mapM (get . toSqlKey) [1, 2]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ Person "Alice" 10
         insert_ $ Person "Bob" 20
         selectList [] []
-
       map getName result @?= ["Alice", "Bob"]
   ]

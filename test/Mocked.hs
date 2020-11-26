@@ -1,11 +1,12 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Mocked where
 
 import Database.Persist (Entity(..))
-import Database.Persist.Sql (toSqlKey)
+import Database.Persist.Sql (fromSqlKey, toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -31,7 +32,17 @@ testWithTransaction = testGroup "withTransaction"
 
 testPersistentAPI :: TestTree
 testPersistentAPI = testGroup "Persistent API"
-  [ testCase "selectList" $ do
+  [ testCase "get" $ do
+      result <- runMockSqlQueryT (mapM (get . toSqlKey) [1, 2])
+        [ withRecord @Person $ \case
+            Get (fromSqlKey -> n)
+              | n == 1 -> Just $ Just $ Person "Alice" 10
+              | n == 2 -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
             SelectList _ _ -> Just
@@ -40,6 +51,5 @@ testPersistentAPI = testGroup "Persistent API"
               ]
             _ -> Nothing
         ]
-
       map getName result @?= ["Alice", "Bob"]
   ]
