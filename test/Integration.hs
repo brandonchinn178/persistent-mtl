@@ -164,6 +164,14 @@ testPersistentAPI = testGroup "Persistent API"
         , ("Bob", 0)
         ]
 
+  , testCase "replace" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        replace 1 $ alice { personAge = 100 }
+        getJust 1
+      personAge result @?= 100
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
