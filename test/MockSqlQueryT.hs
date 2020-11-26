@@ -16,14 +16,14 @@ import Example
 
 tests :: TestTree
 tests = testGroup "MockSqlQueryT"
-  [ testCase "MockSqlQueryT errors if it could not find a mock" $ do
+  [ testCase "it errors if it could not find a mock" $ do
       result <- try $ runMockSqlQueryT getPeopleNames []
       case result of
         Right _ -> assertFailure "runMockSqlQueryT did not fail"
         Left e -> do
           let msg = head $ lines $ show (e :: SomeException)
           msg @?= "Could not find mock for query: SelectList{..}<Person>"
-  , testCase "MockSqlQueryT continues after a mock doesn't match" $ do
+  , testCase "it continues after a mock doesn't match" $ do
       result <- runMockSqlQueryT getPeopleNames
         [ withRecord @Post $ \_ -> error "getPeopleNames matched Post record"
         , mockQuery $ \_ -> Nothing

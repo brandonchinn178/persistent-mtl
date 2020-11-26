@@ -23,7 +23,7 @@ tests = testGroup "Integration tests"
 
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
-  [ testCase "withTransaction uses the same transaction" $ do
+  [ testCase "it uses the same transaction" $ do
       let catchTestError m = do
             result <- try m
             liftIO $ result @?= Left TestError

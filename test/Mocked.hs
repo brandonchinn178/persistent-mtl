@@ -21,7 +21,7 @@ tests = testGroup "Mocked tests"
 
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
-  [ testCase "withTransaction doesn't error" $
+  [ testCase "it doesn't error with MockSqlQueryT" $
       runMockSqlQueryT (withTransaction $ insert_ $ person "Alice")
         [ withRecord @Person $ \case
             Insert_ _ -> Just ()
