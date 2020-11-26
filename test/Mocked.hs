@@ -111,6 +111,22 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= ()
 
+  , testCase "insertMany" $ do
+      result <- runMockSqlQueryT (insertMany [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertMany records -> Just $ map fromIntegral [ 1 .. length records ]
+            _ -> Nothing
+        ]
+      result @?= [1, 2]
+
+  , testCase "insertMany_" $ do
+      result <- runMockSqlQueryT (insertMany_ [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertMany_ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case

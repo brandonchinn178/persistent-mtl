@@ -105,6 +105,20 @@ testPersistentAPI = testGroup "Persistent API"
         return (result, people)
       result @?= ((), ["Alice"])
 
+  , testCase "insertMany" $ do
+      result <- runTestApp $ do
+        keys <- insertMany [person "Alice", person "Bob"]
+        people <- getPeopleNames
+        return (keys, people)
+      result @?= ([1, 2], ["Alice", "Bob"])
+
+  , testCase "insertMany_" $ do
+      result <- runTestApp $ do
+        result <- insertMany_ [person "Alice", person "Bob"]
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice", "Bob"])
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
