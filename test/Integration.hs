@@ -27,7 +27,7 @@ testWithTransaction = testGroup "withTransaction"
             liftIO $ result @?= Left TestError
 
           insertAndFail :: TestApp ()
-          insertAndFail = insert_ (Person "Alice" 0) >> throwIO TestError
+          insertAndFail = insert_ (person "Alice") >> throwIO TestError
 
       -- without transactions, the INSERT shouldn't be rolled back
       runTestApp $ do
@@ -46,14 +46,14 @@ testPersistentAPI :: TestTree
 testPersistentAPI = testGroup "Persistent API"
   [ testCase "get" $ do
       result <- runTestApp $ do
-        insert_ $ Person "Alice" 0
+        insert_ $ person "Alice"
         mapM (get . toSqlKey) [1, 2]
       map (fmap personName) result @?= [Just "Alice", Nothing]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do
-        insert_ $ Person "Alice" 10
-        insert_ $ Person "Bob" 20
+        insert_ $ person "Alice"
+        insert_ $ person "Bob"
         selectList [] []
       map getName result @?= ["Alice", "Bob"]
   ]

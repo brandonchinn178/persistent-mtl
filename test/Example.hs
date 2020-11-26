@@ -16,7 +16,8 @@ module Example
   ( TestApp
   , runTestApp
 
-    -- * Functions
+    -- * Helper functions
+  , person
   , getPeopleNames
   , getName
 
@@ -85,7 +86,10 @@ runTestApp m =
         _ <- runMigrationSilent migrate
         m
 
-{- Functions -}
+{- Helper functions -}
+
+person :: String -> Person
+person name = Person name 0
 
 getName :: Entity Person -> String
 getName = personName . entityVal
