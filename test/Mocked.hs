@@ -75,6 +75,26 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       map (fmap getName) result @?= [Just "Alice", Nothing]
 
+  , testCase "belongsTo" $ do
+      let post1 = Post "Post #1" 1 (Just 1)
+          post2 = Post "Post #2" 1 Nothing
+      result <- runMockSqlQueryT (mapM (belongsTo postEditor) [post1, post2])
+        [ withRecord @(Post, Person) $ \case
+            BelongsTo _ Post{postEditor = Just 1} -> Just $ Just $ person "Alice"
+            BelongsTo _ Post{postEditor = Nothing} -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "belongsToJust" $ do
+      let post1 = Post "Post #1" 1 Nothing
+      result <- runMockSqlQueryT (belongsToJust postAuthor post1)
+        [ withRecord @(Post, Person) $ \case
+            BelongsToJust _ _ -> Just $ person "Alice"
+            _ -> Nothing
+        ]
+      personName result @?= "Alice"
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case

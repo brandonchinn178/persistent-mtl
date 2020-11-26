@@ -60,6 +60,7 @@ Person
 Post
   title String
   author PersonId
+  editor PersonId Maybe
   deriving Show Eq
 |]
 

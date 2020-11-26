@@ -74,6 +74,23 @@ testPersistentAPI = testGroup "Persistent API"
         mapM getEntity [1, 2]
       map (fmap getName) result @?= [Just "Alice", Nothing]
 
+  , testCase "belongsTo" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        let post1 = Post "Post #1" aliceKey (Just aliceKey)
+            post2 = Post "Post #2" aliceKey Nothing
+        insertMany_ [post1, post2]
+        mapM (belongsTo postEditor) [post1, post2]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "belongsToJust" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        let post1 = Post "Post #1" aliceKey Nothing
+        insert_ post1
+        belongsToJust postAuthor post1
+      personName result @?= "Alice"
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
