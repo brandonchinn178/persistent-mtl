@@ -14,6 +14,12 @@ instance Exception TestError
 
 tests :: TestTree
 tests = testGroup "Integration tests"
+  [ testWithTransaction
+  , testPersistentAPI
+  ]
+
+testWithTransaction :: TestTree
+testWithTransaction = testGroup "withTransaction"
   [ testCase "withTransaction uses the same transaction" $ do
       let catchTestError m = do
             result <- try m
@@ -33,8 +39,6 @@ tests = testGroup "Integration tests"
         catchTestError $ withTransaction insertAndFail
         result <- getPeopleNames
         liftIO $ result @?= []
-
-  , testPersistentAPI
   ]
 
 testPersistentAPI :: TestTree

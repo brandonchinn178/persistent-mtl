@@ -16,13 +16,7 @@ import Example
 
 tests :: TestTree
 tests = testGroup "Mocked tests"
-  [ testCase "withTransaction doesn't error" $
-      runMockSqlQueryT (withTransaction $ insert_ $ Person "Alice" 10)
-        [ withRecord @Person $ \case
-            Insert_ _ -> Just ()
-            _ -> Nothing
-        ]
-  , testCase "MockSqlQueryT errors if it could not find a mock" $ do
+  [ testCase "MockSqlQueryT errors if it could not find a mock" $ do
       result <- try $ runMockSqlQueryT getPeopleNames []
       case result of
         Right _ -> assertFailure "runMockSqlQueryT did not fail"
@@ -42,7 +36,18 @@ tests = testGroup "Mocked tests"
         ]
 
       result @?= ["Alice", "Bob"]
+  , testWithTransaction
   , testPersistentAPI
+  ]
+
+testWithTransaction :: TestTree
+testWithTransaction = testGroup "withTransaction"
+  [ testCase "withTransaction doesn't error" $
+      runMockSqlQueryT (withTransaction $ insert_ $ Person "Alice" 10)
+        [ withRecord @Person $ \case
+            Insert_ _ -> Just ()
+            _ -> Nothing
+        ]
   ]
 
 testPersistentAPI :: TestTree
