@@ -49,10 +49,8 @@ PrintMigration{..}
 ShowMigration{..}
 GetMigration{..}
 RunMigration{..}
-RunMigrationQuiet{..}
 RunMigrationSilent{..}
 RunMigrationUnsafe{..}
-RunMigrationUnsafeQuiet{..}
 GetFieldName{..}<Person>
 GetTableName{..}<Person>
 WithRawQuery{..}
