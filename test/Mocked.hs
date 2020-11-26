@@ -4,8 +4,8 @@
 
 module Mocked where
 
+import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..))
-import Database.Persist.Sql (toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -22,7 +22,7 @@ tests = testGroup "Mocked tests"
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
   [ testCase "withTransaction doesn't error" $
-      runMockSqlQueryT (withTransaction $ insert_ $ Person "Alice" 10)
+      runMockSqlQueryT (withTransaction $ insert_ $ person "Alice")
         [ withRecord @Person $ \case
             Insert_ _ -> Just ()
             _ -> Nothing
@@ -31,15 +31,78 @@ testWithTransaction = testGroup "withTransaction"
 
 testPersistentAPI :: TestTree
 testPersistentAPI = testGroup "Persistent API"
-  [ testCase "selectList" $ do
+  [ testCase "get" $ do
+      result <- runMockSqlQueryT (mapM get [1, 2])
+        [ withRecord @Person $ \case
+            Get n
+              | n == 1 -> Just $ Just $ person "Alice"
+              | n == 2 -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "getMany" $ do
+      result <- runMockSqlQueryT (getMany [1])
+        [ withRecord @Person $ \case
+            GetMany _ -> Just $ Map.fromList [(1, person "Alice")]
+            _ -> Nothing
+        ]
+      personName <$> Map.lookup 1 result @?= Just "Alice"
+
+  , testCase "getJust" $ do
+      result <- runMockSqlQueryT (getJust 1)
+        [ withRecord @Person $ \case
+            GetJust _ -> Just $ person "Alice"
+            _ -> Nothing
+        ]
+      personName result @?= "Alice"
+
+  , testCase "getJustEntity" $ do
+      result <- runMockSqlQueryT (getJustEntity 1)
+        [ withRecord @Person $ \case
+            GetJustEntity _ -> Just $ Entity 1 $ person "Alice"
+            _ -> Nothing
+        ]
+      getName result @?= "Alice"
+
+  , testCase "getEntity" $ do
+      result <- runMockSqlQueryT (mapM getEntity [1, 2])
+        [ withRecord @Person $ \case
+            GetEntity n
+              | n == 1 -> Just $ Just $ Entity 1 $ person "Alice"
+              | n == 2 -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "belongsTo" $ do
+      let post1 = Post "Post #1" 1 (Just 1)
+          post2 = Post "Post #2" 1 Nothing
+      result <- runMockSqlQueryT (mapM (belongsTo postEditor) [post1, post2])
+        [ withRecord @(Post, Person) $ \case
+            BelongsTo _ Post{postEditor = Just 1} -> Just $ Just $ person "Alice"
+            BelongsTo _ Post{postEditor = Nothing} -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap personName) result @?= [Just "Alice", Nothing]
+
+  , testCase "belongsToJust" $ do
+      let post1 = Post "Post #1" 1 Nothing
+      result <- runMockSqlQueryT (belongsToJust postAuthor post1)
+        [ withRecord @(Post, Person) $ \case
+            BelongsToJust _ _ -> Just $ person "Alice"
+            _ -> Nothing
+        ]
+      personName result @?= "Alice"
+
+  , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
             SelectList _ _ -> Just
-              [ Entity (toSqlKey 1) (Person "Alice" 10)
-              , Entity (toSqlKey 2) (Person "Bob" 20)
+              [ Entity 1 (person "Alice")
+              , Entity 2 (person "Bob")
               ]
             _ -> Nothing
         ]
-
       map getName result @?= ["Alice", "Bob"]
   ]

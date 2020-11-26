@@ -11,12 +11,14 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Example
   ( TestApp
   , runTestApp
 
-    -- * Functions
+    -- * Helper functions
+  , person
   , getPeopleNames
   , getName
 
@@ -29,7 +31,7 @@ module Example
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Text as Text
-import Database.Persist (Entity(..), Unique)
+import Database.Persist.Sql (Entity(..), Key, Unique, toSqlKey)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
     ( mkDeleteCascade
@@ -58,10 +60,18 @@ Person
 Post
   title String
   author PersonId
+  editor PersonId Maybe
   deriving Show Eq
 |]
 
 deriving instance Eq (Unique Person)
+
+-- Let tests use a literal number for keys
+instance Num (Key Person) where
+  fromInteger = toSqlKey . fromInteger
+
+instance Num (Key Post) where
+  fromInteger = toSqlKey . fromInteger
 
 newtype TestApp a = TestApp
   { unTestApp :: SqlQueryT IO a
@@ -85,7 +95,10 @@ runTestApp m =
         _ <- runMigrationSilent migrate
         m
 
-{- Functions -}
+{- Helper functions -}
+
+person :: String -> Person
+person name = Person name 0
 
 getName :: Entity Person -> String
 getName = personName . entityVal
