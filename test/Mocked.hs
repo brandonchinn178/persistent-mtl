@@ -49,6 +49,14 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       personName <$> Map.lookup 1 result @?= Just "Alice"
 
+  , testCase "getJust" $ do
+      result <- runMockSqlQueryT (getJust 1)
+        [ withRecord @Person $ \case
+            GetJust _ -> Just $ person "Alice"
+            _ -> Nothing
+        ]
+      personName result @?= "Alice"
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case

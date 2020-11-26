@@ -56,6 +56,12 @@ testPersistentAPI = testGroup "Persistent API"
         getMany [1]
       personName <$> Map.lookup 1 result @?= Just "Alice"
 
+  , testCase "getJust" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        getJust 1
+      personName result @?= "Alice"
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
