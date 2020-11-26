@@ -136,6 +136,7 @@ jobs:
           command: |
             STACK_ARGS=(
                 --test
+                --ta --no-create
                 <<# parameters.latest >>--coverage<</ parameters.latest >>
             )
             stack build "${STACK_ARGS[@]}"
@@ -181,7 +182,7 @@ jobs:
                 command: scripts/generate/run.sh
       - run:
           name: Check if generated code not up to date
-          command: git diff --exit-code src/
+          command: git diff --exit-code *.hs
 
 workflows:
   version: 2

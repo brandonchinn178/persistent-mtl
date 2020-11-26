@@ -58,7 +58,7 @@ data Context = Context
   }
 
 instance ToMustache Context where
-  toMustache Context{..} = object [ "functions" ~> functions ]
+  toMustache Context{..} = object [ "functions" ~> enumerate functions ]
 
 buildContext :: [PersistentFunction] -> Context
 buildContext functions = Context functionContexts
@@ -106,6 +106,17 @@ instance ToMustache FunctionContext where
     , "generateSqlQueryRep?" ~> not hasConduitFrom
     , "conduitFrom?" ~> hasConduitFrom
     , "conduitFrom" ~> conduitFrom
+
+      -- testing
+    , "sqlQueryRepExample" ~>
+        let modifyType = replaceAll
+              [ ("record", "Person")
+              , ("record1", "Person")
+              , ("record2", "Post")
+              , ("m2", "IO")
+              , ("[a]", "[Entity Person]")
+              ]
+        in modifyType $ Text.unwords ["SqlQueryRep", sqlQueryRepRecord, result]
     ]
     where
       fromConstraint constraint = object [ "type" ~> constraint ]
@@ -139,16 +150,24 @@ capitalize t = case Text.uncons t of
   Just (c, cs) -> Text.cons (toUpper c) cs
   Nothing -> t
 
--- | Convert each element in the list into a Value with the given function,
--- adding the "index" and "last" keys indicating the element's index in the list
--- and whether the element is the last one in the list, respectively.
-enumerateWith :: (a -> Mustache.Value) -> [a] -> [Mustache.Value]
-enumerateWith f xs =
-  let mkElem x i = merge (f x) $ object
+replaceAll :: [(Text, Text)] -> Text -> Text
+replaceAll replacers haystack = foldr (uncurry Text.replace) haystack replacers
+
+-- | Add to each element keys that indicate information about the element's
+-- index in the list.
+enumerate :: Mustache.ToMustache a => [a] -> [Mustache.Value]
+enumerate xs =
+  let mkElem x i = merge (Mustache.toMustache x) $ object
         [ "index" ~> i
+        , "first" ~> (i == 1)
         , "last" ~> (i == length xs)
         ]
   in zipWith mkElem xs [1..]
+
+-- | Convert each element in the list into a Value with the given function,
+-- then enumerate each element.
+enumerateWith :: (a -> Mustache.Value) -> [a] -> [Mustache.Value]
+enumerateWith f = enumerate . map f
 
 -- If only Value had a Monoid instance...
 merge :: Mustache.Value -> Mustache.Value -> Mustache.Value
@@ -165,6 +184,7 @@ main = do
 
   generate context "SqlQueryRep.mustache" $ root ++ "src/Database/Persist/Monad/SqlQueryRep.hs"
   generate context "Shim.mustache" $ root ++ "src/Database/Persist/Monad/Shim.hs"
+  generate context "TestHelpers.mustache" $ root ++ "test/Generated.hs"
 
 generate :: ToMustache k => k -> FilePath -> FilePath -> IO ()
 generate context templatePath output = do

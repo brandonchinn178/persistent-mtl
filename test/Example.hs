@@ -21,24 +21,45 @@ module Example
 
     -- * Models
   , Person(..)
+  , Post(..)
+  , Unique(..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
-import Database.Persist (Entity)
+import Database.Persist (Entity, Unique)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
-    (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
+    ( mkDeleteCascade
+    , mkMigrate
+    , mkPersist
+    , persistLowerCase
+    , share
+    , sqlSettings
+    )
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Database.Persist.Monad
 
-share [mkPersist sqlSettings, mkMigrate "migrate"] [persistLowerCase|
+share
+  [ mkPersist sqlSettings
+  , mkDeleteCascade sqlSettings
+  , mkMigrate "migrate"
+  ]
+  [persistLowerCase|
 Person
   name String
   age Int Maybe
+  UniqueName name
+  deriving Show Eq
+
+Post
+  title String
+  author PersonId
   deriving Show Eq
 |]
+
+deriving instance Eq (Unique Person)
 
 newtype TestApp a = TestApp
   { unTestApp :: SqlQueryT IO a
