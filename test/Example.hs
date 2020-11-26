@@ -17,7 +17,7 @@ module Example
   , runTestApp
 
     -- * Functions
-  , getPeople
+  , getPeopleNames
 
     -- * Models
   , Person(..)
@@ -28,7 +28,7 @@ module Example
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Text as Text
-import Database.Persist (Entity, Unique)
+import Database.Persist (Entity(..), Unique)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
     ( mkDeleteCascade
@@ -86,5 +86,5 @@ runTestApp m =
 
 {- Functions -}
 
-getPeople :: MonadSqlQuery m => m [Entity Person]
-getPeople = selectList [] []
+getPeopleNames :: MonadSqlQuery m => m [String]
+getPeopleNames = map (personName . entityVal) <$> selectList [] []

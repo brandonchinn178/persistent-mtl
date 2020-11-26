@@ -21,17 +21,15 @@ tests = testGroup "Mocked tests"
 -- | Each test in list should correspond with Mocked.exampleFunctions
 exampleFunctions :: TestTree
 exampleFunctions = testGroup "Functions from example"
-  [ testCase "getPeople" $ do
-      let persons =
-            [ Entity (toSqlKey 1) (Person "Alice" 10)
-            , Entity (toSqlKey 2) (Person "Bob" 20)
-            ]
-
-      result <- runMockSqlQueryT getPeople
+  [ testCase "getPeopleNames" $ do
+      result <- runMockSqlQueryT getPeopleNames
         [ withRecord @Person $ \case
-            SelectList _ _ -> Just persons
+            SelectList _ _ -> Just
+              [ Entity (toSqlKey 1) (Person "Alice" 10)
+              , Entity (toSqlKey 2) (Person "Bob" 20)
+              ]
             _ -> Nothing
         ]
 
-      result @?= persons
+      result @?= ["Alice", "Bob"]
   ]
