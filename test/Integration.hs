@@ -1,5 +1,6 @@
 module Integration where
 
+import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..))
 import Test.Tasty
@@ -136,6 +137,32 @@ testPersistentAPI = testGroup "Persistent API"
         people <- getPeopleNames
         return (result, people)
       result @?= ((), ["Alice"])
+
+  , testCase "repsert" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        repsert 1 $ alice { personAge = 100 }
+        repsert 2 $ person "Bob"
+        getPeople
+      map (personName &&& personAge) result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
+
+  , testCase "repsertMany" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        repsertMany
+          [ (1, alice { personAge = 100 })
+          , (2, person "Bob")
+          ]
+        getPeople
+      map (personName &&& personAge) result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

@@ -143,6 +143,22 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= ()
 
+  , testCase "repsert" $ do
+      result <- runMockSqlQueryT (repsert 1 $ person "Alice")
+        [ withRecord @Person $ \case
+            Repsert _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "repsertMany" $ do
+      result <- runMockSqlQueryT (repsertMany [(1, person "Alice")])
+        [ withRecord @Person $ \case
+            RepsertMany _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case

@@ -19,6 +19,7 @@ module Example
 
     -- * Helper functions
   , person
+  , getPeople
   , getPeopleNames
   , getName
 
@@ -103,5 +104,8 @@ person name = Person name 0
 getName :: Entity Person -> String
 getName = personName . entityVal
 
+getPeople :: MonadSqlQuery m => m [Person]
+getPeople = map entityVal <$> selectList [] []
+
 getPeopleNames :: MonadSqlQuery m => m [String]
-getPeopleNames = map getName <$> selectList [] []
+getPeopleNames = map personName <$> getPeople
