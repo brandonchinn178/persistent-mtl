@@ -1,13 +1,11 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ViewPatterns #-}
 
 module Mocked where
 
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..))
-import Database.Persist.Sql (fromSqlKey, toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -34,9 +32,9 @@ testWithTransaction = testGroup "withTransaction"
 testPersistentAPI :: TestTree
 testPersistentAPI = testGroup "Persistent API"
   [ testCase "get" $ do
-      result <- runMockSqlQueryT (mapM (get . toSqlKey) [1, 2])
+      result <- runMockSqlQueryT (mapM get [1, 2])
         [ withRecord @Person $ \case
-            Get (fromSqlKey -> n)
+            Get n
               | n == 1 -> Just $ Just $ person "Alice"
               | n == 2 -> Just Nothing
             _ -> Nothing
@@ -44,21 +42,19 @@ testPersistentAPI = testGroup "Persistent API"
       map (fmap personName) result @?= [Just "Alice", Nothing]
 
   , testCase "getMany" $ do
-      result <- runMockSqlQueryT (getMany [toSqlKey 1])
+      result <- runMockSqlQueryT (getMany [1])
         [ withRecord @Person $ \case
-            GetMany _ -> Just $ Map.fromList
-              [ (toSqlKey 1, person "Alice")
-              ]
+            GetMany _ -> Just $ Map.fromList [(1, person "Alice")]
             _ -> Nothing
         ]
-      personName <$> Map.lookup (toSqlKey 1) result @?= Just "Alice"
+      personName <$> Map.lookup 1 result @?= Just "Alice"
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
             SelectList _ _ -> Just
-              [ Entity (toSqlKey 1) (person "Alice")
-              , Entity (toSqlKey 2) (person "Bob")
+              [ Entity 1 (person "Alice")
+              , Entity 2 (person "Bob")
               ]
             _ -> Nothing
         ]
