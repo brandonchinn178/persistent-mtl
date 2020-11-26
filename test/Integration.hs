@@ -91,6 +91,20 @@ testPersistentAPI = testGroup "Persistent API"
         belongsToJust postAuthor post1
       personName result @?= "Alice"
 
+  , testCase "insert" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        people <- getPeopleNames
+        return (aliceKey, people)
+      result @?= (1, ["Alice"])
+
+  , testCase "insert_" $ do
+      result <- runTestApp $ do
+        result <- insert_ $ person "Alice"
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice"])
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

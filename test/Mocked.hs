@@ -95,6 +95,22 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       personName result @?= "Alice"
 
+  , testCase "insert" $ do
+      result <- runMockSqlQueryT (insert $ person "Alice")
+        [ withRecord @Person $ \case
+            Insert _ -> Just 1
+            _ -> Nothing
+        ]
+      result @?= 1
+
+  , testCase "insert_" $ do
+      result <- runMockSqlQueryT (insert_ $ person "Alice")
+        [ withRecord @Person $ \case
+            Insert_ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
