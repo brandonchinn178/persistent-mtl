@@ -10,8 +10,8 @@ import Example
 tests :: TestTree
 tests = testGroup "Integration tests"
   [ testCase "getPeople" $ do
-      let alice = Person "Alice" Nothing
-          bob = Person "Bob" (Just 20)
+      let alice = Person "Alice" 10
+          bob = Person "Bob" 20
 
       result <- runTestApp $ do
         insert_ alice

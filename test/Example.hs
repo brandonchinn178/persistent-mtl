@@ -49,7 +49,7 @@ share
   [persistLowerCase|
 Person
   name String
-  age Int Maybe
+  age Int
   UniqueName name
   deriving Show Eq
 
@@ -79,6 +79,8 @@ runTestApp m = runNoLoggingT $ withSqlitePool ":memory:" 5 $ \pool ->
   liftIO . runSqlQueryT pool . unTestApp $ do
     _ <- runMigrationSilent migrate
     m
+
+{- Functions -}
 
 getPeople :: MonadSqlQuery m => m [Entity Person]
 getPeople = selectList [] []

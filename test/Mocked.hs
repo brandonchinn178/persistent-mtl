@@ -17,8 +17,8 @@ tests :: TestTree
 tests = testGroup "Mocked tests"
   [ testCase "getPeople" $ do
       let persons =
-            [ Entity (toSqlKey 1) (Person "Alice" Nothing)
-            , Entity (toSqlKey 2) (Person "Bob" (Just 20))
+            [ Entity (toSqlKey 1) (Person "Alice" 10)
+            , Entity (toSqlKey 2) (Person "Bob" 20)
             ]
 
       result <- runMockSqlQueryT getPeople
