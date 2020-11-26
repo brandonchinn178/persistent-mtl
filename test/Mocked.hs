@@ -15,7 +15,13 @@ import Example
 
 tests :: TestTree
 tests = testGroup "Mocked tests"
-  [ exampleFunctions
+  [ testCase "withTransaction doesn't error" $
+      runMockSqlQueryT (withTransaction $ insert_ $ Person "Alice" 10)
+        [ withRecord @Person $ \case
+            Insert_ _ -> Just ()
+            _ -> Nothing
+        ]
+  , exampleFunctions
   ]
 
 -- | Each test in list should correspond with Mocked.exampleFunctions
