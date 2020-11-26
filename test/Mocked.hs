@@ -42,14 +42,13 @@ tests = testGroup "Mocked tests"
         ]
 
       result @?= ["Alice", "Bob"]
-  , exampleFunctions
+  , testPersistentAPI
   ]
 
--- | Each test in list should correspond with Mocked.exampleFunctions
-exampleFunctions :: TestTree
-exampleFunctions = testGroup "Functions from example"
-  [ testCase "getPeopleNames" $ do
-      result <- runMockSqlQueryT getPeopleNames
+testPersistentAPI :: TestTree
+testPersistentAPI = testGroup "Persistent API"
+  [ testCase "selectList" $ do
+      result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
             SelectList _ _ -> Just
               [ Entity (toSqlKey 1) (Person "Alice" 10)
@@ -58,5 +57,5 @@ exampleFunctions = testGroup "Functions from example"
             _ -> Nothing
         ]
 
-      result @?= ["Alice", "Bob"]
+      map getName result @?= ["Alice", "Bob"]
   ]

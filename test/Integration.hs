@@ -34,17 +34,16 @@ tests = testGroup "Integration tests"
         result <- getPeopleNames
         liftIO $ result @?= []
 
-  , exampleFunctions
+  , testPersistentAPI
   ]
 
--- | Each test in list should correspond with Mocked.exampleFunctions
-exampleFunctions :: TestTree
-exampleFunctions = testGroup "Functions from example"
-  [ testCase "getPeopleNames" $ do
+testPersistentAPI :: TestTree
+testPersistentAPI = testGroup "Persistent API"
+  [ testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ Person "Alice" 10
         insert_ $ Person "Bob" 20
-        getPeopleNames
+        selectList [] []
 
-      result @?= ["Alice", "Bob"]
+      map getName result @?= ["Alice", "Bob"]
   ]
