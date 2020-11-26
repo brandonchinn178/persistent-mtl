@@ -8,6 +8,7 @@ import Database.Persist (Entity(..))
 import Database.Persist.Sql (toSqlKey)
 import Test.Tasty
 import Test.Tasty.HUnit
+import UnliftIO (SomeException, try)
 
 import Database.Persist.Monad
 import Database.Persist.Monad.TestUtils
@@ -21,6 +22,13 @@ tests = testGroup "Mocked tests"
             Insert_ _ -> Just ()
             _ -> Nothing
         ]
+  , testCase "MockSqlQueryT errors if it could not find a mock" $ do
+      result <- try $ runMockSqlQueryT getPeopleNames []
+      case result of
+        Right _ -> assertFailure "runMockSqlQueryT did not fail"
+        Left e -> do
+          let msg = head $ lines $ show (e :: SomeException)
+          msg @?= "Could not find mock for query: SelectList{..}<Person>"
   , exampleFunctions
   ]
 
