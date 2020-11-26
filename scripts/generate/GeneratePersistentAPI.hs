@@ -20,7 +20,7 @@ import Data.Char (isAlphaNum, toUpper)
 import Data.List (nub, sort)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
@@ -58,7 +58,10 @@ data Context = Context
   }
 
 instance ToMustache Context where
-  toMustache Context{..} = object [ "functions" ~> enumerate functions ]
+  toMustache Context{..} = object
+    [ "functions" ~> enumerate functions
+    , "sqlQueryRepConstructors" ~> enumerate (filter shouldGenerateSqlQueryRep functions)
+    ]
 
 buildContext :: [PersistentFunction] -> Context
 buildContext functions = Context functionContexts
@@ -103,7 +106,6 @@ instance ToMustache FunctionContext where
             , stree
             , [Mustache.TextBlock "#endif\n"]
             ]
-    , "generateSqlQueryRep?" ~> not hasConduitFrom
     , "conduitFrom?" ~> hasConduitFrom
     , "conduitFrom" ~> conduitFrom
 
@@ -129,6 +131,9 @@ instance ToMustache FunctionContext where
         [] -> "Void"
         [record] -> record
         records -> "(" <> Text.intercalate ", " records <> ")"
+
+shouldGenerateSqlQueryRep :: FunctionContext -> Bool
+shouldGenerateSqlQueryRep FunctionContext{..} = isNothing conduitFrom
 
 -- | Get all `record` type variables in the given list of constraints.
 --

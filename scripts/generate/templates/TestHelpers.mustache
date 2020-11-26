@@ -21,11 +21,9 @@ import Example
 
 allSqlQueryRepShowRepresentations :: [String]
 allSqlQueryRepShowRepresentations =
-{{#functions}}
-{{#generateSqlQueryRep?}}
+{{#sqlQueryRepConstructors}}
 {{#withCondition}}
   {{#first}}[{{/first}}{{^first}},{{/first}} show ({{{nameCapital}}} {{#args}}undefined {{/args}}:: {{sqlQueryRepExample}})
 {{/withCondition}}
-{{/generateSqlQueryRep?}}
-{{/functions}}
+{{/sqlQueryRepConstructors}}
   ]

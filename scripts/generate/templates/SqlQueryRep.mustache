@@ -48,8 +48,7 @@ import GHC.Stack (HasCallStack)
 -- persistent functions in 'Database.Persist.Monad.MonadSqlQuery', e.g. to
 -- mock out persistent calls in tests.
 data SqlQueryRep record a where
-{{#functions}}
-{{#generateSqlQueryRep?}}
+{{#sqlQueryRepConstructors}}
 {{#withCondition}}
   -- | Constructor corresponding to 'Persist.{{{name}}}'
   {{{nameCapital}}}
@@ -57,17 +56,14 @@ data SqlQueryRep record a where
     => {{#args}}{{{type}}} -> {{/args}}SqlQueryRep {{sqlQueryRepRecord}} {{sqlQueryRepResult}}
 {{/withCondition}}
 
-{{/generateSqlQueryRep?}}
-{{/functions}}
+{{/sqlQueryRepConstructors}}
 instance Typeable record => Show (SqlQueryRep record a) where
   show = \case
-{{#functions}}
-{{#generateSqlQueryRep?}}
+{{#sqlQueryRepConstructors}}
 {{#withCondition}}
     {{{nameCapital}}}{} -> "{{{nameCapital}}}{..}" ++ record
 {{/withCondition}}
-{{/generateSqlQueryRep?}}
-{{/functions}}
+{{/sqlQueryRepConstructors}}
     where
       record = case recordTypeRep of
         Just recordType -> "<" ++ show recordType ++ ">"
@@ -80,10 +76,8 @@ instance Typeable record => Show (SqlQueryRep record a) where
 -- each 'SqlQueryRep' data constructor.
 runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
-{{#functions}}
-{{#generateSqlQueryRep?}}
+{{#sqlQueryRepConstructors}}
 {{#withCondition}}
   {{{nameCapital}}} {{#args}}a{{index}} {{/args}}-> Persist.{{{name}}}{{#args}} a{{index}}{{/args}}
 {{/withCondition}}
-{{/generateSqlQueryRep?}}
-{{/functions}}
+{{/sqlQueryRepConstructors}}
