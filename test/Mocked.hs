@@ -29,6 +29,19 @@ tests = testGroup "Mocked tests"
         Left e -> do
           let msg = head $ lines $ show (e :: SomeException)
           msg @?= "Could not find mock for query: SelectList{..}<Person>"
+  , testCase "MockSqlQueryT continues after a mock doesn't match" $ do
+      result <- runMockSqlQueryT getPeopleNames
+        [ withRecord @Post $ \_ -> error "getPeopleNames matched Post record"
+        , mockQuery $ \_ -> Nothing
+        , withRecord @Person $ \case
+            SelectList _ _ -> Just
+              [ Entity (toSqlKey 1) (Person "Alice" 10)
+              , Entity (toSqlKey 2) (Person "Bob" 20)
+              ]
+            _ -> Nothing
+        ]
+
+      result @?= ["Alice", "Bob"]
   , exampleFunctions
   ]
 
