@@ -15,6 +15,12 @@ import Example
 
 tests :: TestTree
 tests = testGroup "Mocked tests"
+  [ exampleFunctions
+  ]
+
+-- | Each test in list should correspond with Mocked.exampleFunctions
+exampleFunctions :: TestTree
+exampleFunctions = testGroup "Functions from example"
   [ testCase "getPeople" $ do
       let persons =
             [ Entity (toSqlKey 1) (Person "Alice" 10)

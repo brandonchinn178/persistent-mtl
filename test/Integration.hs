@@ -9,6 +9,12 @@ import Example
 
 tests :: TestTree
 tests = testGroup "Integration tests"
+  [ exampleFunctions
+  ]
+
+-- | Each test in list should correspond with Mocked.exampleFunctions
+exampleFunctions :: TestTree
+exampleFunctions = testGroup "Functions from example"
   [ testCase "getPeople" $ do
       let alice = Person "Alice" 10
           bob = Person "Bob" 20
