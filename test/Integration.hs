@@ -14,6 +14,12 @@ instance Exception TestError
 
 tests :: TestTree
 tests = testGroup "Integration tests"
+  [ testWithTransaction
+  , testPersistentAPI
+  ]
+
+testWithTransaction :: TestTree
+testWithTransaction = testGroup "withTransaction"
   [ testCase "withTransaction uses the same transaction" $ do
       let catchTestError m = do
             result <- try m
@@ -33,18 +39,15 @@ tests = testGroup "Integration tests"
         catchTestError $ withTransaction insertAndFail
         result <- getPeopleNames
         liftIO $ result @?= []
-
-  , exampleFunctions
   ]
 
--- | Each test in list should correspond with Mocked.exampleFunctions
-exampleFunctions :: TestTree
-exampleFunctions = testGroup "Functions from example"
-  [ testCase "getPeopleNames" $ do
+testPersistentAPI :: TestTree
+testPersistentAPI = testGroup "Persistent API"
+  [ testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ Person "Alice" 10
         insert_ $ Person "Bob" 20
-        getPeopleNames
+        selectList [] []
 
-      result @?= ["Alice", "Bob"]
+      map getName result @?= ["Alice", "Bob"]
   ]

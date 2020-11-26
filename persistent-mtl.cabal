@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0057f23742aac71de0e674b4150055965426a4f7fe91573e8ef33c6232200c4f
+-- hash: 2033395bbb3997bf35a73dacd96d3ab1e0d0b3130d9a83e955264f418919d17a
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -45,6 +45,7 @@ test-suite persistent-mtl-test
       Generated
       Integration
       Mocked
+      MockSqlQueryT
       SqlQueryRepTest
       Paths_persistent_mtl
   hs-source-dirs:

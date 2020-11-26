@@ -18,6 +18,7 @@ module Example
 
     -- * Functions
   , getPeopleNames
+  , getName
 
     -- * Models
   , Person(..)
@@ -86,5 +87,8 @@ runTestApp m =
 
 {- Functions -}
 
+getName :: Entity Person -> String
+getName = personName . entityVal
+
 getPeopleNames :: MonadSqlQuery m => m [String]
-getPeopleNames = map (personName . entityVal) <$> selectList [] []
+getPeopleNames = map getName <$> selectList [] []
