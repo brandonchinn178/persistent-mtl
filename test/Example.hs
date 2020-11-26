@@ -27,6 +27,7 @@ module Example
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
+import qualified Data.Text as Text
 import Database.Persist (Entity, Unique)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
@@ -37,7 +38,7 @@ import Database.Persist.TH
     , share
     , sqlSettings
     )
-import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
+import UnliftIO (MonadUnliftIO(..), withSystemTempDirectory, wrappedWithRunInIO)
 
 import Database.Persist.Monad
 
@@ -75,10 +76,13 @@ instance MonadUnliftIO TestApp where
   withRunInIO = wrappedWithRunInIO TestApp unTestApp
 
 runTestApp :: TestApp a -> IO a
-runTestApp m = runNoLoggingT $ withSqlitePool ":memory:" 5 $ \pool ->
-  liftIO . runSqlQueryT pool . unTestApp $ do
-    _ <- runMigrationSilent migrate
-    m
+runTestApp m =
+  withSystemTempDirectory "persistent-mtl-testapp" $ \dir -> do
+    let db = Text.pack $ dir ++ "/db.sqlite"
+    runNoLoggingT $ withSqlitePool db 5 $ \pool ->
+      liftIO . runSqlQueryT pool . unTestApp $ do
+        _ <- runMigrationSilent migrate
+        m
 
 {- Functions -}
 
