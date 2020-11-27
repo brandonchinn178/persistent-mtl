@@ -253,6 +253,23 @@ testPersistentAPI = testGroup "Persistent API"
       result @?= [Nothing, Nothing, Just (UniqueName "Alice")]
 #endif
 
+  , testCase "deleteBy" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        deleteBy $ UniqueName "Alice"
+        getPeople
+      result @?= []
+
+  , testCase "insertUnique" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- insertUnique $ person "Alice"
+        result2 <- insertUnique $ person "Alice"
+        people <- getPeopleNames
+        return (result1, result2, people)
+      result1 @?= Just 1
+      result2 @?= Nothing
+      people @?= ["Alice"]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

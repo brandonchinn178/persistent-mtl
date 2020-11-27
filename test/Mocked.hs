@@ -248,6 +248,23 @@ testPersistentAPI = testGroup "Persistent API"
       result @?= [Just $ UniqueName "Alice", Nothing]
 #endif
 
+  , testCase "deleteBy" $ do
+      result <- runMockSqlQueryT (deleteBy $ UniqueName "Alice")
+        [ withRecord @Person $ \case
+            DeleteBy _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertUnique" $ do
+      result <- runMockSqlQueryT (mapM insertUnique [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertUnique Person{personName = "Alice"} -> Just $ Just 1
+            InsertUnique Person{personName = "Bob"} -> Just Nothing
+            _ -> Nothing
+        ]
+      result @?= [Just 1, Nothing]
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
