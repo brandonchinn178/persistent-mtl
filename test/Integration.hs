@@ -222,6 +222,13 @@ testPersistentAPI = testGroup "Persistent API"
         mapM getBy [UniqueName "Alice", UniqueName "Bob"]
       map (fmap getName) result @?= [Just "Alice", Nothing]
 
+  , testCase "getByValue" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        mapM getByValue [alice, person "Bob"]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
