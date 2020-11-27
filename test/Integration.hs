@@ -3,6 +3,7 @@
 module Integration where
 
 import Control.Arrow ((&&&))
+import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..), (=.))
 import Test.Tasty
@@ -147,7 +148,7 @@ testPersistentAPI = testGroup "Persistent API"
         repsert 1 $ alice { personAge = 100 }
         repsert 2 $ person "Bob"
         getPeople
-      map (personName &&& personAge) result @?=
+      map nameAndAge result @?=
         [ ("Alice", 100)
         , ("Bob", 0)
         ]
@@ -167,7 +168,7 @@ testPersistentAPI = testGroup "Persistent API"
         repsertMany [(2, person "Bob")]
 #endif
         getPeople
-      map (personName &&& personAge) result @?=
+      map nameAndAge result @?=
         [ ("Alice", 100)
         , ("Bob", 0)
         ]
@@ -252,6 +253,98 @@ testPersistentAPI = testGroup "Persistent API"
           ]
       result @?= [Nothing, Nothing, Just (UniqueName "Alice")]
 #endif
+
+  , testCase "deleteBy" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        deleteBy $ UniqueName "Alice"
+        getPeople
+      result @?= []
+
+  , testCase "insertUnique" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- insertUnique $ person "Alice"
+        result2 <- insertUnique $ person "Alice"
+        people <- getPeopleNames
+        return (result1, result2, people)
+      result1 @?= Just 1
+      result2 @?= Nothing
+      people @?= ["Alice"]
+
+  , testCase "upsert" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- upsert (person "Alice") [PersonAge =. 0]
+        result2 <- upsert (person "Alice") [PersonAge =. 100]
+        people <- getPeople
+        return (result1, result2, people)
+      entityKey result1 @?= entityKey result2
+      nameAndAge (entityVal result1) @?= ("Alice", 0)
+      nameAndAge (entityVal result2) @?= ("Alice", 100)
+      map nameAndAge people @?= [("Alice", 100)]
+
+  , testCase "upsertBy" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- upsertBy (UniqueName "Alice") (person "Alice") [PersonAge =. 0]
+        result2 <- upsertBy (UniqueName "Alice") (person "Alice") [PersonAge =. 100]
+        people <- getPeople
+        return (result1, result2, people)
+      entityKey result1 @?= entityKey result2
+      nameAndAge (entityVal result1) @?= ("Alice", 0)
+      nameAndAge (entityVal result2) @?= ("Alice", 100)
+      map nameAndAge people @?= [("Alice", 100)]
+
+  , testCase "putMany" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        putMany
+          [ alice { personAge = 100 }
+          , person "Bob"
+          ]
+        getPeople
+      map nameAndAge result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
+
+  , testCase "insertBy" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+        result1 <- insertBy alice
+        result2 <- insertBy $ alice { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      result1 @?= Right 1
+      first (entityKey &&& getName) result2 @?= Left (1, "Alice")
+      map nameAndAge people @?= [("Alice", 0)]
+
+  , testCase "insertUniqueEntity" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+        result1 <- insertUniqueEntity alice
+        result2 <- insertUniqueEntity $ alice { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      (entityKey &&& getName) <$> result1 @?= Just (1, "Alice")
+      result2 @?= Nothing
+      map nameAndAge people @?= [("Alice", 0)]
+
+  , testCase "replaceUnique" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+            bob = person "Bob"
+        insertMany_ [alice, bob]
+        result1 <- replaceUnique 1 $ alice { personName = "Bob" }
+        result2 <- replaceUnique 2 $ bob { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      result1 @?= Just (UniqueName "Bob")
+      result2 @?= Nothing
+      map nameAndAge people @?= [("Alice", 0), ("Bob", 100)]
+
+  , testCase "onlyUnique" $ do
+      result <- runTestApp $ onlyUnique $ person "Alice"
+      result @?= UniqueName "Alice"
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

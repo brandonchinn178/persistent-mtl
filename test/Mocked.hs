@@ -248,6 +248,86 @@ testPersistentAPI = testGroup "Persistent API"
       result @?= [Just $ UniqueName "Alice", Nothing]
 #endif
 
+  , testCase "deleteBy" $ do
+      result <- runMockSqlQueryT (deleteBy $ UniqueName "Alice")
+        [ withRecord @Person $ \case
+            DeleteBy _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertUnique" $ do
+      result <- runMockSqlQueryT (mapM insertUnique [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertUnique Person{personName = "Alice"} -> Just $ Just 1
+            InsertUnique Person{personName = "Bob"} -> Just Nothing
+            _ -> Nothing
+        ]
+      result @?= [Just 1, Nothing]
+
+  , testCase "upsert" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (upsert alice [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            Upsert _ _ -> Just $ Entity 1 alice
+            _ -> Nothing
+        ]
+      result @?= Entity 1 alice
+
+  , testCase "upsertBy" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (upsertBy (UniqueName "Alice") alice [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            UpsertBy _ _ _ -> Just $ Entity 1 alice
+            _ -> Nothing
+        ]
+      result @?= Entity 1 alice
+
+  , testCase "putMany" $ do
+      result <- runMockSqlQueryT (putMany [person "Alice"])
+        [ withRecord @Person $ \case
+            PutMany _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertBy" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (mapM insertBy [alice, person "Bob"])
+        [ withRecord @Person $ \case
+            InsertBy Person{personName = "Alice"} -> Just $ Left $ Entity 1 alice
+            InsertBy Person{personName = "Bob"} -> Just $ Right 2
+            _ -> Nothing
+        ]
+      result @?= [Left $ Entity 1 alice, Right 2]
+
+  , testCase "insertUniqueEntity" $ do
+      let bob = person "Bob"
+      result <- runMockSqlQueryT (mapM insertUniqueEntity [person "Alice", bob])
+        [ withRecord @Person $ \case
+            InsertUniqueEntity Person{personName = "Alice"} -> Just Nothing
+            InsertUniqueEntity Person{personName = "Bob"} -> Just $ Just $ Entity 1 bob
+            _ -> Nothing
+        ]
+      result @?= [Nothing, Just $ Entity 1 bob]
+
+  , testCase "replaceUnique" $ do
+      result <- runMockSqlQueryT (mapM (uncurry replaceUnique) [(1, person "Alice"), (2, person "Bob")])
+        [ withRecord @Person $ \case
+            ReplaceUnique _ Person{personName = "Alice"} -> Just Nothing
+            ReplaceUnique _ Person{personName = "Bob"} -> Just $ Just $ UniqueName "Bob"
+            _ -> Nothing
+        ]
+      result @?= [Nothing, Just $ UniqueName "Bob"]
+
+  , testCase "onlyUnique" $ do
+      result <- runMockSqlQueryT (onlyUnique $ person "Alice")
+        [ withRecord @Person $ \case
+            OnlyUnique _ -> Just $ UniqueName "Alice"
+            _ -> Nothing
+        ]
+      result @?= UniqueName "Alice"
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
