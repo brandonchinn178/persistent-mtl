@@ -291,6 +291,20 @@ testPersistentAPI = testGroup "Persistent API"
       nameAndAge (entityVal result2) @?= ("Alice", 100)
       map nameAndAge people @?= [("Alice", 100)]
 
+  , testCase "putMany" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        putMany
+          [ alice { personAge = 100 }
+          , person "Bob"
+          ]
+        getPeople
+      map nameAndAge result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
