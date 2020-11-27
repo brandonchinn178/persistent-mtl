@@ -2,6 +2,10 @@ resolver: nightly-2020-11-22
 
 extra-deps:
   - resourcet-pool-0.1.0.0
+  # https://github.com/commercialhaskell/stackage/pull/5761
+  - persistent-2.11.0.1
+  - persistent-template-2.9.1.0
+  - persistent-sqlite-2.11.0.0
 
 ghc-options:
   "$locals": -Werror
