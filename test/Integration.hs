@@ -172,6 +172,13 @@ testPersistentAPI = testGroup "Persistent API"
         getJust 1
       personAge result @?= 100
 
+  , testCase "delete" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        delete aliceKey
+        getPeople
+      result @?= []
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
