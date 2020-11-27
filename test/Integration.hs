@@ -1,6 +1,10 @@
+{-# LANGUAGE CPP #-}
+
 module Integration where
 
+import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
+import Database.Persist (Entity(..), (=.))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -21,7 +25,7 @@ tests = testGroup "Integration tests"
 
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
-  [ testCase "withTransaction uses the same transaction" $ do
+  [ testCase "it uses the same transaction" $ do
       let catchTestError m = do
             result <- try m
             liftIO $ result @?= Left TestError
@@ -90,6 +94,127 @@ testPersistentAPI = testGroup "Persistent API"
         insert_ post1
         belongsToJust postAuthor post1
       personName result @?= "Alice"
+
+  , testCase "insert" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        people <- getPeopleNames
+        return (aliceKey, people)
+      result @?= (1, ["Alice"])
+
+  , testCase "insert_" $ do
+      result <- runTestApp $ do
+        result <- insert_ $ person "Alice"
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice"])
+
+  , testCase "insertMany" $ do
+      result <- runTestApp $ do
+        keys <- insertMany [person "Alice", person "Bob"]
+        people <- getPeopleNames
+        return (keys, people)
+      result @?= ([1, 2], ["Alice", "Bob"])
+
+  , testCase "insertMany_" $ do
+      result <- runTestApp $ do
+        result <- insertMany_ [person "Alice", person "Bob"]
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice", "Bob"])
+
+  , testCase "insertEntityMany" $ do
+      result <- runTestApp $ do
+        result <- insertEntityMany
+          [ Entity 1 $ person "Alice"
+          , Entity 2 $ person "Bob"
+          ]
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice", "Bob"])
+
+  , testCase "insertKey" $ do
+      result <- runTestApp $ do
+        result <- insertKey 1 $ person "Alice"
+        people <- getPeopleNames
+        return (result, people)
+      result @?= ((), ["Alice"])
+
+  , testCase "repsert" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        repsert 1 $ alice { personAge = 100 }
+        repsert 2 $ person "Bob"
+        getPeople
+      map (personName &&& personAge) result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
+
+  , testCase "repsertMany" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+-- https://github.com/yesodweb/persistent/issues/832
+#if MIN_VERSION_persistent(2,9,0)
+        insert_ alice
+        repsertMany
+          [ (1, alice { personAge = 100 })
+          , (2, person "Bob")
+          ]
+#else
+        repsertMany [(1, alice { personAge = 100 })]
+        repsertMany [(2, person "Bob")]
+#endif
+        getPeople
+      map (personName &&& personAge) result @?=
+        [ ("Alice", 100)
+        , ("Bob", 0)
+        ]
+
+  , testCase "replace" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        replace 1 $ alice { personAge = 100 }
+        getJust 1
+      personAge result @?= 100
+
+  , testCase "delete" $ do
+      result <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        delete aliceKey
+        getPeople
+      result @?= []
+
+  , testCase "update" $ do
+      result <- runTestApp $ do
+        key <- insert $ person "Alice"
+        update key [PersonName =. "Alicia"]
+        getPeopleNames
+      result @?= ["Alicia"]
+
+  , testCase "updateGet" $ do
+      (updateResult, getResult) <- runTestApp $ do
+        key <- insert $ person "Alice"
+        updateResult <- updateGet key [PersonName =. "Alicia"]
+        getResult <- getJust key
+        return (updateResult, getResult)
+      updateResult @?= getResult
+
+  , testCase "insertEntity" $ do
+      (insertResult, getResult) <- runTestApp $ do
+        insertResult <- insertEntity $ person "Alice"
+        getResult <- getJust $ entityKey insertResult
+        return (insertResult, getResult)
+      entityVal insertResult @?= getResult
+
+  , testCase "insertRecord" $ do
+      (insertResult, getResult) <- runTestApp $ do
+        insertResult <- insertRecord $ person "Alice"
+        getResult <- getJust 1
+        return (insertResult, getResult)
+      insertResult @?= getResult
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

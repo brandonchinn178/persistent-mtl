@@ -19,19 +19,21 @@ module Example
 
     -- * Helper functions
   , person
+  , getPeople
   , getPeopleNames
   , getName
 
     -- * Models
   , Person(..)
   , Post(..)
+  , EntityField(..)
   , Unique(..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Text as Text
-import Database.Persist.Sql (Entity(..), Key, Unique, toSqlKey)
+import Database.Persist.Sql (Entity(..), EntityField, Key, Unique, toSqlKey)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
     ( mkDeleteCascade
@@ -103,5 +105,8 @@ person name = Person name 0
 getName :: Entity Person -> String
 getName = personName . entityVal
 
+getPeople :: MonadSqlQuery m => m [Person]
+getPeople = map entityVal <$> selectList [] []
+
 getPeopleNames :: MonadSqlQuery m => m [String]
-getPeopleNames = map getName <$> selectList [] []
+getPeopleNames = map personName <$> getPeople

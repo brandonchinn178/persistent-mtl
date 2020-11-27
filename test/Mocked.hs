@@ -5,7 +5,7 @@
 module Mocked where
 
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..))
+import Database.Persist.Sql (Entity(..), (=.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -21,7 +21,7 @@ tests = testGroup "Mocked tests"
 
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
-  [ testCase "withTransaction doesn't error" $
+  [ testCase "it doesn't error with MockSqlQueryT" $
       runMockSqlQueryT (withTransaction $ insert_ $ person "Alice")
         [ withRecord @Person $ \case
             Insert_ _ -> Just ()
@@ -94,6 +94,120 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       personName result @?= "Alice"
+
+  , testCase "insert" $ do
+      result <- runMockSqlQueryT (insert $ person "Alice")
+        [ withRecord @Person $ \case
+            Insert _ -> Just 1
+            _ -> Nothing
+        ]
+      result @?= 1
+
+  , testCase "insert_" $ do
+      result <- runMockSqlQueryT (insert_ $ person "Alice")
+        [ withRecord @Person $ \case
+            Insert_ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertMany" $ do
+      result <- runMockSqlQueryT (insertMany [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertMany records -> Just $ map fromIntegral [ 1 .. length records ]
+            _ -> Nothing
+        ]
+      result @?= [1, 2]
+
+  , testCase "insertMany_" $ do
+      result <- runMockSqlQueryT (insertMany_ [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            InsertMany_ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertEntityMany" $ do
+      result <- runMockSqlQueryT (insertEntityMany [Entity 1 $ person "Alice"])
+        [ withRecord @Person $ \case
+            InsertEntityMany _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "insertKey" $ do
+      result <- runMockSqlQueryT (insertKey 1 $ person "Alice")
+        [ withRecord @Person $ \case
+            InsertKey _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "repsert" $ do
+      result <- runMockSqlQueryT (repsert 1 $ person "Alice")
+        [ withRecord @Person $ \case
+            Repsert _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "repsertMany" $ do
+      result <- runMockSqlQueryT (repsertMany [(1, person "Alice")])
+        [ withRecord @Person $ \case
+            RepsertMany _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "replace" $ do
+      result <- runMockSqlQueryT (replace 1 $ person "Alice")
+        [ withRecord @Person $ \case
+            Replace _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "delete" $ do
+      result <- runMockSqlQueryT (delete @Person 1)
+        [ withRecord @Person $ \case
+            Delete _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "update" $ do
+      result <- runMockSqlQueryT (update 1 [PersonName =. "Alicia"])
+        [ withRecord @Person $ \case
+            Update _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "updateGet" $ do
+      result <- runMockSqlQueryT (updateGet 1 [PersonName =. "Alicia"])
+        [ withRecord @Person $ \case
+            UpdateGet _ _ -> Just $ person "Alicia"
+            _ -> Nothing
+        ]
+      personName result @?= "Alicia"
+
+  , testCase "insertEntity" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (insertEntity alice)
+        [ withRecord @Person $ \case
+            InsertEntity _ -> Just $ Entity 1 alice
+            _ -> Nothing
+        ]
+      entityVal result @?= alice
+
+  , testCase "insertRecord" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (insertRecord alice)
+        [ withRecord @Person $ \case
+            InsertRecord _ -> Just alice
+            _ -> Nothing
+        ]
+      result @?= alice
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
