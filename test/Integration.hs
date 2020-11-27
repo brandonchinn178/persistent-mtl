@@ -2,6 +2,8 @@
 
 module Integration where
 
+import Control.Arrow ((&&&))
+import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..), (=.))
 import Test.Tasty
@@ -304,6 +306,28 @@ testPersistentAPI = testGroup "Persistent API"
         [ ("Alice", 100)
         , ("Bob", 0)
         ]
+
+  , testCase "insertBy" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+        result1 <- insertBy alice
+        result2 <- insertBy $ alice { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      result1 @?= Right 1
+      first (entityKey &&& getName) result2 @?= Left (1, "Alice")
+      map nameAndAge people @?= [("Alice", 0)]
+
+  , testCase "insertUniqueEntity" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+        result1 <- insertUniqueEntity alice
+        result2 <- insertUniqueEntity $ alice { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      (entityKey &&& getName) <$> result1 @?= Just (1, "Alice")
+      result2 @?= Nothing
+      map nameAndAge people @?= [("Alice", 0)]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do
