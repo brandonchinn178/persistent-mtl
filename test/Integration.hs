@@ -216,6 +216,12 @@ testPersistentAPI = testGroup "Persistent API"
         return (insertResult, getResult)
       insertResult @?= getResult
 
+  , testCase "getBy" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        mapM getBy [UniqueName "Alice", UniqueName "Bob"]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
