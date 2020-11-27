@@ -265,6 +265,24 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= [Just 1, Nothing]
 
+  , testCase "upsert" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (upsert alice [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            Upsert _ _ -> Just $ Entity 1 alice
+            _ -> Nothing
+        ]
+      result @?= Entity 1 alice
+
+  , testCase "upsertBy" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT (upsertBy (UniqueName "Alice") alice [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            UpsertBy _ _ _ -> Just $ Entity 1 alice
+            _ -> Nothing
+        ]
+      result @?= Entity 1 alice
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case

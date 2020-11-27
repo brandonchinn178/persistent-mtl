@@ -269,6 +269,28 @@ testPersistentAPI = testGroup "Persistent API"
       result2 @?= Nothing
       people @?= ["Alice"]
 
+  , testCase "upsert" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- upsert (person "Alice") [PersonAge =. 0]
+        result2 <- upsert (person "Alice") [PersonAge =. 100]
+        people <- getPeople
+        return (result1, result2, people)
+      entityKey result1 @?= entityKey result2
+      nameAndAge (entityVal result1) @?= ("Alice", 0)
+      nameAndAge (entityVal result2) @?= ("Alice", 100)
+      map nameAndAge people @?= [("Alice", 100)]
+
+  , testCase "upsertBy" $ do
+      (result1, result2, people) <- runTestApp $ do
+        result1 <- upsertBy (UniqueName "Alice") (person "Alice") [PersonAge =. 0]
+        result2 <- upsertBy (UniqueName "Alice") (person "Alice") [PersonAge =. 100]
+        people <- getPeople
+        return (result1, result2, people)
+      entityKey result1 @?= entityKey result2
+      nameAndAge (entityVal result1) @?= ("Alice", 0)
+      nameAndAge (entityVal result2) @?= ("Alice", 100)
+      map nameAndAge people @?= [("Alice", 100)]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
