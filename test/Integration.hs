@@ -8,7 +8,7 @@ import Control.Arrow ((&&&))
 import qualified Data.Acquire as Acquire
 import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..), (=.))
+import Database.Persist (Entity(..), (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -356,6 +356,15 @@ testPersistentAPI = testGroup "Persistent API"
         Acquire.with acquire $ \conduit ->
           runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
       result @?= ["Alice", "Bob"]
+
+  , testCase "selectFirst" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        sequence
+          [ selectFirst [PersonName ==. "Alice"] []
+          , selectFirst [PersonName ==. "Bob"] []
+          ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

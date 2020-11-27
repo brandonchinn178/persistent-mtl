@@ -9,7 +9,7 @@ import Conduit (runConduit, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql (Entity(..), (=.))
+import Database.Persist.Sql (Entity(..), (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -342,6 +342,20 @@ testPersistentAPI = testGroup "Persistent API"
       result <- Acquire.with acquire $ \conduit ->
         runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
       result @?= ["Alice", "Bob"]
+
+  , testCase "selectFirst" $ do
+      result1 <- runMockSqlQueryT (selectFirst [PersonName ==. "Alice"] [])
+        [ withRecord @Person $ \case
+            SelectFirst _ _ -> Just $ Just $ Entity 1 $ person "Alice"
+            _ -> Nothing
+        ]
+      getName <$> result1 @?= Just "Alice"
+      result2 <- runMockSqlQueryT (selectFirst [PersonName ==. "Alice"] [])
+        [ withRecord @Person $ \case
+            SelectFirst _ _ -> Just Nothing
+            _ -> Nothing
+        ]
+      result2 @?= Nothing
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
