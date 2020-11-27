@@ -2,7 +2,7 @@ module Integration where
 
 import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..))
+import Database.Persist (Entity(..), (=.))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -178,6 +178,21 @@ testPersistentAPI = testGroup "Persistent API"
         delete aliceKey
         getPeople
       result @?= []
+
+  , testCase "update" $ do
+      result <- runTestApp $ do
+        key <- insert $ person "Alice"
+        update key [PersonName =. "Alicia"]
+        getPeopleNames
+      result @?= ["Alicia"]
+
+  , testCase "updateGet" $ do
+      (updateResult, getResult) <- runTestApp $ do
+        key <- insert $ person "Alice"
+        updateResult <- updateGet key [PersonName =. "Alicia"]
+        getResult <- getJust key
+        return (updateResult, getResult)
+      updateResult @?= getResult
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

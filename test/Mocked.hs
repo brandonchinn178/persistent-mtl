@@ -5,7 +5,7 @@
 module Mocked where
 
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..))
+import Database.Persist.Sql (Entity(..), (=.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -174,6 +174,22 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= ()
+
+  , testCase "update" $ do
+      result <- runMockSqlQueryT (update 1 [PersonName =. "Alicia"])
+        [ withRecord @Person $ \case
+            Update _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "updateGet" $ do
+      result <- runMockSqlQueryT (updateGet 1 [PersonName =. "Alicia"])
+        [ withRecord @Person $ \case
+            UpdateGet _ _ -> Just $ person "Alicia"
+            _ -> Nothing
+        ]
+      personName result @?= "Alicia"
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])

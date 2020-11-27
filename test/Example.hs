@@ -26,13 +26,14 @@ module Example
     -- * Models
   , Person(..)
   , Post(..)
+  , EntityField(..)
   , Unique(..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Text as Text
-import Database.Persist.Sql (Entity(..), Key, Unique, toSqlKey)
+import Database.Persist.Sql (Entity(..), EntityField, Key, Unique, toSqlKey)
 import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
     ( mkDeleteCascade
