@@ -2,7 +2,10 @@
 
 module Integration where
 
+import Conduit (runConduit, (.|))
+import qualified Conduit
 import Control.Arrow ((&&&))
+import qualified Data.Acquire as Acquire
 import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..), (=.))
@@ -345,6 +348,14 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "onlyUnique" $ do
       result <- runTestApp $ onlyUnique $ person "Alice"
       result @?= UniqueName "Alice"
+
+  , testCase "selectSourceRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- selectSourceRes [] []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

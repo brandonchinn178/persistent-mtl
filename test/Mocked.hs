@@ -5,6 +5,9 @@
 
 module Mocked where
 
+import Conduit (runConduit, (.|))
+import qualified Conduit
+import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
 import Database.Persist.Sql (Entity(..), (=.))
 import Test.Tasty
@@ -327,6 +330,18 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= UniqueName "Alice"
+
+  , testCase "selectSourceRes" $ do
+      acquire <- runMockSqlQueryT (selectSourceRes [] [])
+        [ withRecord @Person $ \case
+            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
