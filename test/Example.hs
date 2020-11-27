@@ -23,6 +23,7 @@ module Example
   , getPeople
   , getPeopleNames
   , getName
+  , nameAndAge
 
     -- * Models
   , Person(..)
@@ -31,6 +32,7 @@ module Example
   , Unique(..)
   ) where
 
+import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Text as Text
@@ -114,3 +116,6 @@ getPeople = map entityVal <$> selectList [] []
 
 getPeopleNames :: MonadSqlQuery m => m [String]
 getPeopleNames = map personName <$> getPeople
+
+nameAndAge :: Person -> (String, Int)
+nameAndAge = personName &&& personAge

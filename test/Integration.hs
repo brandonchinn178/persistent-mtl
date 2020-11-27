@@ -2,7 +2,6 @@
 
 module Integration where
 
-import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
 import Database.Persist (Entity(..), (=.))
 import Test.Tasty
@@ -147,7 +146,7 @@ testPersistentAPI = testGroup "Persistent API"
         repsert 1 $ alice { personAge = 100 }
         repsert 2 $ person "Bob"
         getPeople
-      map (personName &&& personAge) result @?=
+      map nameAndAge result @?=
         [ ("Alice", 100)
         , ("Bob", 0)
         ]
@@ -167,7 +166,7 @@ testPersistentAPI = testGroup "Persistent API"
         repsertMany [(2, person "Bob")]
 #endif
         getPeople
-      map (personName &&& personAge) result @?=
+      map nameAndAge result @?=
         [ ("Alice", 100)
         , ("Bob", 0)
         ]
