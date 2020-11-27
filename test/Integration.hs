@@ -194,6 +194,20 @@ testPersistentAPI = testGroup "Persistent API"
         return (updateResult, getResult)
       updateResult @?= getResult
 
+  , testCase "insertEntity" $ do
+      (insertResult, getResult) <- runTestApp $ do
+        insertResult <- insertEntity $ person "Alice"
+        getResult <- getJust $ entityKey insertResult
+        return (insertResult, getResult)
+      entityVal insertResult @?= getResult
+
+  , testCase "insertRecord" $ do
+      (insertResult, getResult) <- runTestApp $ do
+        insertResult <- insertRecord $ person "Alice"
+        getResult <- getJust 1
+        return (insertResult, getResult)
+      insertResult @?= getResult
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
