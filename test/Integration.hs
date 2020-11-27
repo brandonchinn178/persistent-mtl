@@ -329,6 +329,23 @@ testPersistentAPI = testGroup "Persistent API"
       result2 @?= Nothing
       map nameAndAge people @?= [("Alice", 0)]
 
+  , testCase "replaceUnique" $ do
+      (result1, result2, people) <- runTestApp $ do
+        let alice = person "Alice"
+            bob = person "Bob"
+        insertMany_ [alice, bob]
+        result1 <- replaceUnique 1 $ alice { personName = "Bob" }
+        result2 <- replaceUnique 2 $ bob { personAge = 100 }
+        people <- getPeople
+        return (result1, result2, people)
+      result1 @?= Just (UniqueName "Bob")
+      result2 @?= Nothing
+      map nameAndAge people @?= [("Alice", 0), ("Bob", 100)]
+
+  , testCase "onlyUnique" $ do
+      result <- runTestApp $ onlyUnique $ person "Alice"
+      result @?= UniqueName "Alice"
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

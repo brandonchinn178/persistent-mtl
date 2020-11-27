@@ -311,6 +311,23 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= [Nothing, Just $ Entity 1 bob]
 
+  , testCase "replaceUnique" $ do
+      result <- runMockSqlQueryT (mapM (uncurry replaceUnique) [(1, person "Alice"), (2, person "Bob")])
+        [ withRecord @Person $ \case
+            ReplaceUnique _ Person{personName = "Alice"} -> Just Nothing
+            ReplaceUnique _ Person{personName = "Bob"} -> Just $ Just $ UniqueName "Bob"
+            _ -> Nothing
+        ]
+      result @?= [Nothing, Just $ UniqueName "Bob"]
+
+  , testCase "onlyUnique" $ do
+      result <- runMockSqlQueryT (onlyUnique $ person "Alice")
+        [ withRecord @Person $ \case
+            OnlyUnique _ -> Just $ UniqueName "Alice"
+            _ -> Nothing
+        ]
+      result @?= UniqueName "Alice"
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
