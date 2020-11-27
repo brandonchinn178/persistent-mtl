@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -67,6 +68,9 @@ Post
 |]
 
 deriving instance Eq (Unique Person)
+#if !MIN_VERSION_persistent_template(2,6,0) || MIN_VERSION_persistent_template(2,9,0)
+deriving instance Show (Unique Person)
+#endif
 
 -- Let tests use a literal number for keys
 instance Num (Key Person) where

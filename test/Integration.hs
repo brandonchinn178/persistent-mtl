@@ -216,6 +216,43 @@ testPersistentAPI = testGroup "Persistent API"
         return (insertResult, getResult)
       insertResult @?= getResult
 
+  , testCase "getBy" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        mapM getBy [UniqueName "Alice", UniqueName "Bob"]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "getByValue" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        mapM getByValue [alice, person "Bob"]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "checkUnique" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        mapM checkUnique
+          [ alice
+          , person "Bob"
+          , (person "Alice"){ personAge = 100 }
+          ]
+      result @?= [Just (UniqueName "Alice"), Nothing, Just (UniqueName "Alice")]
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "checkUniqueUpdateable" $ do
+      result <- runTestApp $ do
+        let alice = person "Alice"
+        insert_ alice
+        mapM checkUniqueUpdateable
+          [ Entity 1 alice
+          , Entity 2 $ person "Bob"
+          , Entity 3 $ (person "Alice"){ personAge = 100 }
+          ]
+      result @?= [Nothing, Nothing, Just (UniqueName "Alice")]
+#endif
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

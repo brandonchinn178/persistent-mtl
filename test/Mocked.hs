@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
@@ -208,6 +209,44 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= alice
+
+  , testCase "getBy" $ do
+      result <- runMockSqlQueryT (mapM getBy [UniqueName "Alice", UniqueName "Bob"])
+        [ withRecord @Person $ \case
+            GetBy (UniqueName "Alice") -> Just $ Just $ Entity 1 $ person "Alice"
+            GetBy (UniqueName "Bob") -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "getByValue" $ do
+      result <- runMockSqlQueryT (mapM getByValue [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            GetByValue Person{personName = "Alice"} -> Just $ Just $ Entity 1 $ person "Alice"
+            GetByValue Person{personName = "Bob"} -> Just Nothing
+            _ -> Nothing
+        ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "checkUnique" $ do
+      result <- runMockSqlQueryT (mapM checkUnique [person "Alice", person "Bob"])
+        [ withRecord @Person $ \case
+            CheckUnique Person{personName = "Alice"} -> Just $ Just $ UniqueName "Alice"
+            CheckUnique Person{personName = "Bob"} -> Just Nothing
+            _ -> Nothing
+        ]
+      result @?= [Just $ UniqueName "Alice", Nothing]
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "checkUniqueUpdateable" $ do
+      result <- runMockSqlQueryT (mapM checkUniqueUpdateable [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
+        [ withRecord @Person $ \case
+            CheckUniqueUpdateable (Entity _ Person{personName = "Alice"}) -> Just $ Just $ UniqueName "Alice"
+            CheckUniqueUpdateable (Entity _ Person{personName = "Bob"}) -> Just Nothing
+            _ -> Nothing
+        ]
+      result @?= [Just $ UniqueName "Alice", Nothing]
+#endif
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
