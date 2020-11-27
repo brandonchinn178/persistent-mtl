@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Integration where
 
 import Control.Arrow ((&&&))
@@ -153,11 +155,17 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "repsertMany" $ do
       result <- runTestApp $ do
         let alice = person "Alice"
+-- https://github.com/yesodweb/persistent/issues/832
+#if MIN_VERSION_persistent(2,9,0)
         insert_ alice
         repsertMany
           [ (1, alice { personAge = 100 })
           , (2, person "Bob")
           ]
+#else
+        repsertMany [(1, alice { personAge = 100 })]
+        repsertMany [(2, person "Bob")]
+#endif
         getPeople
       map (personName &&& personAge) result @?=
         [ ("Alice", 100)
