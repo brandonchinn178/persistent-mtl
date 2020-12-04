@@ -389,6 +389,18 @@ testPersistentAPI = testGroup "Persistent API"
       result @?= True
 #endif
 
+  , testCase "selectSource" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeys" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ selectKeys @Person [] [] .| Conduit.sinkList
+      result @?= [1, 2]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

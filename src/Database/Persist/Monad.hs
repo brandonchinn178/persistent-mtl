@@ -55,6 +55,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
+import Control.Monad.Trans.Resource (MonadResource)
 import Data.Acquire (withAcquire)
 import Data.Pool (Pool)
 import Data.Pool.Acquire (poolToAcquire)
@@ -80,6 +81,7 @@ newtype SqlQueryT m a = SqlQueryT
     , Monad
     , MonadIO
     , MonadTrans
+    , MonadResource
     )
 
 instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where

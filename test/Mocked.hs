@@ -5,7 +5,7 @@
 
 module Mocked where
 
-import Conduit (runConduit, (.|))
+import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
@@ -387,6 +387,29 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= True
 #endif
+
+  , testCase "selectSource" $ do
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList)
+        [ withRecord @Person $ \case
+            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeys" $ do
+      let keys = [1, 2, 3]
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ selectKeys @Person [] [] .| Conduit.sinkList)
+        [ withRecord @Person $ \case
+            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany keys)
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result @?= keys
 
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
