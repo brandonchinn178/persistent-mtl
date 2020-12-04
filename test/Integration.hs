@@ -407,4 +407,11 @@ testPersistentAPI = testGroup "Persistent API"
         insert_ $ person "Bob"
         selectList [] []
       map getName result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeysList" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        insert_ $ person "Bob"
+        selectKeysList @Person [] []
+      result @?= [1, 2]
   ]

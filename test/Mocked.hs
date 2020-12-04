@@ -421,4 +421,13 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       map getName result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeysList" $ do
+      let keys = [1, 2, 3]
+      result <- runMockSqlQueryT (selectKeysList @Person [] [])
+        [ withRecord @Person $ \case
+            SelectKeysList _ _ -> Just keys
+            _ -> Nothing
+        ]
+      result @?= keys
   ]
