@@ -430,4 +430,20 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= keys
+
+  , testCase "updateWhere" $ do
+      result <- runMockSqlQueryT (updateWhere [] [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            UpdateWhere _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "deleteWhere" $ do
+      result <- runMockSqlQueryT (deleteWhere [PersonName ==. "Alice"])
+        [ withRecord @Person $ \case
+            DeleteWhere _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
   ]

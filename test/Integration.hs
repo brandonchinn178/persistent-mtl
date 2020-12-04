@@ -414,4 +414,18 @@ testPersistentAPI = testGroup "Persistent API"
         insert_ $ person "Bob"
         selectKeysList @Person [] []
       result @?= [1, 2]
+
+  , testCase "updateWhere" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        updateWhere [PersonName ==. "Alice"] [PersonAge =. 100]
+        getPeople
+      map nameAndAge result @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "deleteWhere" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        deleteWhere [PersonName ==. "Alice"]
+        getPeopleNames
+      result @?= ["Bob"]
   ]
