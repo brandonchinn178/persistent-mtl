@@ -66,6 +66,7 @@ share
 Person
   name String
   age Int
+  removedColumn String SafeToRemove
   UniqueName name
   deriving Show Eq
 

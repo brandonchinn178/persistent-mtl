@@ -3,6 +3,7 @@ repos:
     rev: v2.3.0
     hooks:
       - id: end-of-file-fixer
+        exclude: '\.golden$'
       - id: trailing-whitespace
       - id: no-commit-to-branch
       - id: check-merge-conflict
