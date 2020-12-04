@@ -35,6 +35,7 @@ module Example
 import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runNoLoggingT)
+import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
 import qualified Data.Text as Text
 import Database.Persist.Sql (Entity(..), EntityField, Key, Unique, toSqlKey)
 import Database.Persist.Sqlite (withSqlitePool)
@@ -82,13 +83,14 @@ instance Num (Key Post) where
   fromInteger = toSqlKey . fromInteger
 
 newtype TestApp a = TestApp
-  { unTestApp :: SqlQueryT IO a
+  { unTestApp :: SqlQueryT (ResourceT IO) a
   } deriving
     ( Functor
     , Applicative
     , Monad
     , MonadIO
     , MonadSqlQuery
+    , MonadResource
     )
 
 instance MonadUnliftIO TestApp where
@@ -99,7 +101,7 @@ runTestApp m =
   withSystemTempDirectory "persistent-mtl-testapp" $ \dir -> do
     let db = Text.pack $ dir ++ "/db.sqlite"
     runNoLoggingT $ withSqlitePool db 5 $ \pool ->
-      liftIO . runSqlQueryT pool . unTestApp $ do
+      liftIO . runResourceT . runSqlQueryT pool . unTestApp $ do
         _ <- runMigrationSilent migrate
         m
 

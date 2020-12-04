@@ -5,8 +5,11 @@
 
 module Mocked where
 
+import Conduit (runConduit, runResourceT, (.|))
+import qualified Conduit
+import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql (Entity(..), (=.))
+import Database.Persist.Sql (Entity(..), (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -328,6 +331,86 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= UniqueName "Alice"
 
+  , testCase "selectSourceRes" $ do
+      acquire <- runMockSqlQueryT (selectSourceRes [] [])
+        [ withRecord @Person $ \case
+            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectFirst" $ do
+      result1 <- runMockSqlQueryT (selectFirst [PersonName ==. "Alice"] [])
+        [ withRecord @Person $ \case
+            SelectFirst _ _ -> Just $ Just $ Entity 1 $ person "Alice"
+            _ -> Nothing
+        ]
+      getName <$> result1 @?= Just "Alice"
+      result2 <- runMockSqlQueryT (selectFirst [PersonName ==. "Alice"] [])
+        [ withRecord @Person $ \case
+            SelectFirst _ _ -> Just Nothing
+            _ -> Nothing
+        ]
+      result2 @?= Nothing
+
+  , testCase "selectKeysRes" $ do
+      let keys = [1, 2, 3]
+      acquire <- runMockSqlQueryT (selectKeysRes @_ @Person [] [])
+        [ withRecord @Person $ \case
+            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany keys)
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.sinkList
+      result @?= keys
+
+  , testCase "count" $ do
+      result <- runMockSqlQueryT (count @Person [])
+        [ withRecord @Person $ \case
+            Count _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "exists" $ do
+      result <- runMockSqlQueryT (exists @Person [])
+        [ withRecord @Person $ \case
+            Exists _ -> Just True
+            _ -> Nothing
+        ]
+      result @?= True
+#endif
+
+  , testCase "selectSource" $ do
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList)
+        [ withRecord @Person $ \case
+            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeys" $ do
+      let keys = [1, 2, 3]
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ selectKeys @Person [] [] .| Conduit.sinkList)
+        [ withRecord @Person $ \case
+            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany keys)
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result @?= keys
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
@@ -338,4 +421,13 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       map getName result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeysList" $ do
+      let keys = [1, 2, 3]
+      result <- runMockSqlQueryT (selectKeysList @Person [] [])
+        [ withRecord @Person $ \case
+            SelectKeysList _ _ -> Just keys
+            _ -> Nothing
+        ]
+      result @?= keys
   ]

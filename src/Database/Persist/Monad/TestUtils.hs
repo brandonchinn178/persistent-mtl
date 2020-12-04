@@ -22,6 +22,7 @@ module Database.Persist.Monad.TestUtils
 import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Trans.Resource (MonadResource)
 import Data.Typeable (Typeable, eqT, (:~:)(..))
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
@@ -35,6 +36,7 @@ newtype MockSqlQueryT m a = MockSqlQueryT
     , Applicative
     , Monad
     , MonadIO
+    , MonadResource
     )
 
 -- | Runs a 'MockSqlQueryT' monad transformer using the given mocks.

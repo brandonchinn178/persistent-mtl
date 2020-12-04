@@ -1,11 +1,15 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Integration where
 
+import Conduit (runConduit, (.|))
+import qualified Conduit
 import Control.Arrow ((&&&))
+import qualified Data.Acquire as Acquire
 import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..), (=.))
+import Database.Persist (Entity(..), (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -346,10 +350,68 @@ testPersistentAPI = testGroup "Persistent API"
       result <- runTestApp $ onlyUnique $ person "Alice"
       result @?= UniqueName "Alice"
 
+  , testCase "selectSourceRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- selectSourceRes [] []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectFirst" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        sequence
+          [ selectFirst [PersonName ==. "Alice"] []
+          , selectFirst [PersonName ==. "Bob"] []
+          ]
+      map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "selectKeysRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- selectKeysRes @_ @Person [] []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.sinkList
+      result @?= [1, 2]
+
+  , testCase "count" $ do
+      result <- runTestApp $ do
+        insertMany_ $ map (\p -> p{personAge = 100}) [person "Alice", person "Bob"]
+        count [PersonAge ==. 100]
+      result @?= 2
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "exists" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        exists [PersonName ==. "Alice"]
+      result @?= True
+#endif
+
+  , testCase "selectSource" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeys" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ selectKeys @Person [] [] .| Conduit.sinkList
+      result @?= [1, 2]
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"
         insert_ $ person "Bob"
         selectList [] []
       map getName result @?= ["Alice", "Bob"]
+
+  , testCase "selectKeysList" $ do
+      result <- runTestApp $ do
+        insert_ $ person "Alice"
+        insert_ $ person "Bob"
+        selectKeysList @Person [] []
+      result @?= [1, 2]
   ]
