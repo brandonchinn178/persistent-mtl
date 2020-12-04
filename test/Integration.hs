@@ -375,6 +375,20 @@ testPersistentAPI = testGroup "Persistent API"
           runConduit $ conduit .| Conduit.sinkList
       result @?= [1, 2]
 
+  , testCase "count" $ do
+      result <- runTestApp $ do
+        insertMany_ $ map (\p -> p{personAge = 100}) [person "Alice", person "Bob"]
+        count [PersonAge ==. 100]
+      result @?= 2
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "exists" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        exists [PersonName ==. "Alice"]
+      result @?= True
+#endif
+
   , testCase "selectList" $ do
       result <- runTestApp $ do
         insert_ $ person "Alice"

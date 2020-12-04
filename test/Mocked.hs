@@ -370,6 +370,24 @@ testPersistentAPI = testGroup "Persistent API"
         runConduit $ conduit .| Conduit.sinkList
       result @?= keys
 
+  , testCase "count" $ do
+      result <- runMockSqlQueryT (count @Person [])
+        [ withRecord @Person $ \case
+            Count _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
+
+#if MIN_VERSION_persistent(2,11,0)
+  , testCase "exists" $ do
+      result <- runMockSqlQueryT (exists @Person [])
+        [ withRecord @Person $ \case
+            Exists _ -> Just True
+            _ -> Nothing
+        ]
+      result @?= True
+#endif
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
