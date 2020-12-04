@@ -414,4 +414,66 @@ testPersistentAPI = testGroup "Persistent API"
         insert_ $ person "Bob"
         selectKeysList @Person [] []
       result @?= [1, 2]
+
+  , testCase "updateWhere" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        updateWhere [PersonName ==. "Alice"] [PersonAge =. 100]
+        getPeople
+      map nameAndAge result @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "deleteWhere" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        deleteWhere [PersonName ==. "Alice"]
+        getPeopleNames
+      result @?= ["Bob"]
+
+  , testCase "updateWhereCount" $ do
+      (rowsUpdated, people) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsUpdated <- updateWhereCount [PersonName ==. "Alice"] [PersonAge =. 100]
+        people <- getPeople
+        return (rowsUpdated, people)
+      rowsUpdated @?= 1
+      map nameAndAge people @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "deleteWhereCount" $ do
+      (rowsDeleted, names) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsDeleted <- deleteWhereCount [PersonName ==. "Alice"]
+        names <- getPeopleNames
+        return (rowsDeleted, names)
+      rowsDeleted @?= 1
+      names @?= ["Bob"]
+
+  , testCase "deleteCascade" $ do
+      (people, posts) <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        bobKey <- insert $ person "Bob"
+        insertMany_
+          [ post "Post #1" aliceKey
+          , post "Post #2" bobKey
+          ]
+        deleteCascade aliceKey
+        people <- getPeopleNames
+        posts <- getPostTitles
+        return (people, posts)
+      people @?= ["Bob"]
+      posts @?= ["Post #2"]
+
+  , testCase "deleteCascadeWhere" $ do
+      (people, posts) <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        bobKey <- insert $ person "Bob"
+        insertMany_
+          [ post "Post #1" aliceKey
+          , post "Post #2" bobKey
+          ]
+        deleteCascadeWhere [PersonName ==. "Alice"]
+        people <- getPeopleNames
+        posts <- getPostTitles
+        return (people, posts)
+      people @?= ["Bob"]
+      posts @?= ["Post #2"]
   ]

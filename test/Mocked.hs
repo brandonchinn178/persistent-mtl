@@ -430,4 +430,52 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= keys
+
+  , testCase "updateWhere" $ do
+      result <- runMockSqlQueryT (updateWhere [] [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            UpdateWhere _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "deleteWhere" $ do
+      result <- runMockSqlQueryT (deleteWhere [PersonName ==. "Alice"])
+        [ withRecord @Person $ \case
+            DeleteWhere _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "updateWhereCount" $ do
+      result <- runMockSqlQueryT (updateWhereCount [] [PersonAge =. 100])
+        [ withRecord @Person $ \case
+            UpdateWhereCount _ _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
+
+  , testCase "deleteWhereCount" $ do
+      result <- runMockSqlQueryT (deleteWhereCount [PersonName ==. "Alice"])
+        [ withRecord @Person $ \case
+            DeleteWhereCount _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
+
+  , testCase "deleteCascade" $ do
+      result <- runMockSqlQueryT (deleteCascade @Person 1)
+        [ withRecord @Person $ \case
+            DeleteCascade _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "deleteCascadeWhere" $ do
+      result <- runMockSqlQueryT (deleteCascadeWhere [PersonName ==. "Alice"])
+        [ withRecord @Person $ \case
+            DeleteCascadeWhere _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
   ]
