@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Integration where
@@ -9,13 +10,16 @@ import Control.Arrow ((&&&))
 import qualified Data.Acquire as Acquire
 import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
-import Database.Persist (Entity(..), (=.), (==.))
+import Data.Text (Text)
+import qualified Data.Text as Text
+import Database.Persist.Sql (Entity(..), Single(..), (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
 
 import Database.Persist.Monad
 import Example
+import TestUtils.Match (Match(..), (@?~))
 
 data TestError = TestError
   deriving (Show, Eq)
@@ -476,4 +480,149 @@ testPersistentAPI = testGroup "Persistent API"
         return (people, posts)
       people @?= ["Bob"]
       posts @?= ["Post #2"]
+
+  , testCase "parseMigration" $ do
+      result <- runTestApp $ do
+        setupUnsafeMigration
+        parseMigration migration
+      result @?~ Right @[Text]
+        [ Match
+            ( False
+            , Text.concat
+                [ "CREATE TEMP TABLE \"person_backup\"("
+                , "\"id\" INTEGER PRIMARY KEY,"
+                , "\"name\" VARCHAR NOT NULL,"
+                , "\"age\" INTEGER NOT NULL,"
+                , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
+                ]
+            )
+        , Anything
+        , Match (True, "DROP TABLE \"person\"")
+        , Anything
+        , Anything
+        , Match (False, "DROP TABLE \"person_backup\"")
+        ]
+
+  , testCase "parseMigration'" $ do
+      let action f = runTestApp $ do
+            setupUnsafeMigration
+            f migration
+
+      result <- action parseMigration
+      result' <- action parseMigration'
+      Right result' @?= result
+
+  , testCase "printMigration" $
+      runTestApp $ do
+        setupUnsafeMigration
+        printMigration migration
+
+  , testCase "showMigration" $ do
+      result <- runTestApp $ do
+        setupUnsafeMigration
+        showMigration migration
+      result @?~
+        [ Match $ Text.concat
+            [ "CREATE TEMP TABLE \"person_backup\"("
+            , "\"id\" INTEGER PRIMARY KEY,"
+            , "\"name\" VARCHAR NOT NULL,"
+            , "\"age\" INTEGER NOT NULL,"
+            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
+            ]
+        , Anything
+        , Match "DROP TABLE \"person\";"
+        , Anything
+        , Anything
+        , Match "DROP TABLE \"person_backup\";"
+        ]
+
+  , testCase "getMigration" $ do
+      result <- runTestApp $ do
+        setupUnsafeMigration
+        getMigration migration
+      result @?~
+        [ Match $ Text.concat
+            [ "CREATE TEMP TABLE \"person_backup\"("
+            , "\"id\" INTEGER PRIMARY KEY,"
+            , "\"name\" VARCHAR NOT NULL,"
+            , "\"age\" INTEGER NOT NULL,"
+            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
+            ]
+        , Anything
+        , Match "DROP TABLE \"person\""
+        , Anything
+        , Anything
+        , Match "DROP TABLE \"person_backup\""
+        ]
+
+  , testCase "runMigration" $ do
+      result <- runTestApp $ do
+        setupSafeMigration
+        runMigration migration
+        getSchemaColumnNames "person"
+      assertNotIn "removed_column" result
+
+#if MIN_VERSION_persistent(2,10,2)
+  , testCase "runMigrationQuiet" $ do
+      (withQuiet, cols) <- runTestApp $ do
+        setupSafeMigration
+        sql <- runMigrationQuiet migration
+        cols <- getSchemaColumnNames "person"
+        return (sql, cols)
+      withSilent <- runTestApp $ do
+        setupSafeMigration
+        runMigrationSilent migration
+      assertNotIn "removed_column" cols
+      withQuiet @?= withSilent
+#endif
+
+  , testCase "runMigrationSilent" $ do
+      (sqlPlanned, sqlExecuted, cols) <- runTestApp $ do
+        setupSafeMigration
+        sqlPlanned <- getMigration migration
+        sqlExecuted <- runMigrationSilent migration
+        cols <- getSchemaColumnNames "person"
+        return (sqlPlanned, sqlExecuted, cols)
+      assertNotIn "removed_column" cols
+      sqlExecuted @?= sqlPlanned
+
+  , testCase "runMigrationUnsafe" $ do
+      result <- runTestApp $ do
+        setupUnsafeMigration
+        runMigrationUnsafe migration
+        getSchemaColumnNames "person"
+      assertNotIn "removed_column" result
+
+#if MIN_VERSION_persistent(2,10,2)
+  , testCase "runMigrationUnsafeQuiet" $ do
+      (sqlPlanned, sqlExecuted, cols) <- runTestApp $ do
+        setupUnsafeMigration
+        sqlPlanned <- getMigration migration
+        sqlExecuted <- runMigrationUnsafeQuiet migration
+        cols <- getSchemaColumnNames "person"
+        return (sqlPlanned, sqlExecuted, cols)
+      assertNotIn "removed_column" cols
+      sqlExecuted @?= sqlPlanned
+#endif
   ]
+
+{- Meta SQL helpers -}
+
+-- | Put the database in a state where running a migration is safe.
+setupSafeMigration :: MonadSqlQuery m => m ()
+setupSafeMigration = rawExecute "ALTER TABLE person ADD COLUMN removed_column VARCHAR" []
+
+-- | Put the database in a state where running a migration is unsafe.
+setupUnsafeMigration :: MonadSqlQuery m => m ()
+setupUnsafeMigration = rawExecute "ALTER TABLE person ADD COLUMN foo VARCHAR" []
+
+-- | Get the names of all columns in the given table.
+getSchemaColumnNames :: MonadSqlQuery m => String -> m [String]
+getSchemaColumnNames tableName = map unSingle <$> rawSql sql []
+  where
+    sql = Text.pack $ "SELECT name FROM pragma_table_info('" ++ tableName ++ "')"
+
+{- Test helpers -}
+
+assertNotIn :: (Eq a, Show a) => a -> [a] -> Assertion
+assertNotIn a as = as @?= filter (/= a) as
