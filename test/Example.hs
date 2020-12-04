@@ -35,6 +35,7 @@ module Example
     -- * Persistent
   , EntityField(..)
   , Unique(..)
+  , migration
   ) where
 
 import Control.Arrow ((&&&))
@@ -59,7 +60,7 @@ import Database.Persist.Monad
 share
   [ mkPersist sqlSettings
   , mkDeleteCascade sqlSettings
-  , mkMigrate "migrate"
+  , mkMigrate "migration"
   ]
   [persistLowerCase|
 Person
@@ -107,7 +108,7 @@ runTestApp m =
     let db = Text.pack $ dir ++ "/db.sqlite"
     runNoLoggingT $ withSqlitePool db 5 $ \pool ->
       liftIO . runResourceT . runSqlQueryT pool . unTestApp $ do
-        _ <- runMigrationSilent migrate
+        _ <- runMigrationSilent migration
         m
 
 {- Person functions -}
