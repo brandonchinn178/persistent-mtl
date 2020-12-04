@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Integration where
 
@@ -365,6 +366,14 @@ testPersistentAPI = testGroup "Persistent API"
           , selectFirst [PersonName ==. "Bob"] []
           ]
       map (fmap getName) result @?= [Just "Alice", Nothing]
+
+  , testCase "selectKeysRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- selectKeysRes @_ @Person [] []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.sinkList
+      result @?= [1, 2]
 
   , testCase "selectList" $ do
       result <- runTestApp $ do

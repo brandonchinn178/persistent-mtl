@@ -357,6 +357,19 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result2 @?= Nothing
 
+  , testCase "selectKeysRes" $ do
+      let keys = [1, 2, 3]
+      acquire <- runMockSqlQueryT (selectKeysRes @_ @Person [] [])
+        [ withRecord @Person $ \case
+            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
+              (pure $ Conduit.yieldMany keys)
+              (\_ -> pure ())
+            _ -> Nothing
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.sinkList
+      result @?= keys
+
   , testCase "selectList" $ do
       result <- runMockSqlQueryT (selectList [] [])
         [ withRecord @Person $ \case
