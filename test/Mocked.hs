@@ -462,4 +462,12 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= 10
+
+  , testCase "deleteCascade" $ do
+      result <- runMockSqlQueryT (deleteCascade @Person 1)
+        [ withRecord @Person $ \case
+            DeleteCascade _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
   ]

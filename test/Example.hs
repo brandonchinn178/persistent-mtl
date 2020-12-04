@@ -18,16 +18,21 @@ module Example
   ( TestApp
   , runTestApp
 
-    -- * Helper functions
+    -- * Person
+  , Person(..)
   , person
   , getPeople
   , getPeopleNames
   , getName
   , nameAndAge
 
-    -- * Models
-  , Person(..)
+    -- * Post
   , Post(..)
+  , post
+  , getPosts
+  , getPostTitles
+
+    -- * Persistent
   , EntityField(..)
   , Unique(..)
   ) where
@@ -105,7 +110,7 @@ runTestApp m =
         _ <- runMigrationSilent migrate
         m
 
-{- Helper functions -}
+{- Person functions -}
 
 person :: String -> Person
 person name = Person name 0
@@ -121,3 +126,14 @@ getPeopleNames = map personName <$> getPeople
 
 nameAndAge :: Person -> (String, Int)
 nameAndAge = personName &&& personAge
+
+{- Post functions -}
+
+post :: String -> Key Person -> Post
+post title author = Post title author Nothing
+
+getPosts :: MonadSqlQuery m => m [Post]
+getPosts = map entityVal <$> selectList [] []
+
+getPostTitles :: MonadSqlQuery m => m [String]
+getPostTitles = map postTitle <$> getPosts
