@@ -461,4 +461,19 @@ testPersistentAPI = testGroup "Persistent API"
         return (people, posts)
       people @?= ["Bob"]
       posts @?= ["Post #2"]
+
+  , testCase "deleteCascadeWhere" $ do
+      (people, posts) <- runTestApp $ do
+        aliceKey <- insert $ person "Alice"
+        bobKey <- insert $ person "Bob"
+        insertMany_
+          [ post "Post #1" aliceKey
+          , post "Post #2" bobKey
+          ]
+        deleteCascadeWhere [PersonName ==. "Alice"]
+        people <- getPeopleNames
+        posts <- getPostTitles
+        return (people, posts)
+      people @?= ["Bob"]
+      posts @?= ["Post #2"]
   ]
