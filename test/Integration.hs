@@ -428,4 +428,22 @@ testPersistentAPI = testGroup "Persistent API"
         deleteWhere [PersonName ==. "Alice"]
         getPeopleNames
       result @?= ["Bob"]
+
+  , testCase "updateWhereCount" $ do
+      (rowsUpdated, people) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsUpdated <- updateWhereCount [PersonName ==. "Alice"] [PersonAge =. 100]
+        people <- getPeople
+        return (rowsUpdated, people)
+      rowsUpdated @?= 1
+      map nameAndAge people @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "deleteWhereCount" $ do
+      (rowsDeleted, names) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsDeleted <- deleteWhereCount [PersonName ==. "Alice"]
+        names <- getPeopleNames
+        return (rowsDeleted, names)
+      rowsDeleted @?= 1
+      names @?= ["Bob"]
   ]
