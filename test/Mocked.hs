@@ -10,7 +10,7 @@ import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql (Entity(..), (=.), (==.))
+import Database.Persist.Sql (Entity(..), toPersistValue, (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -495,4 +495,17 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= "\"person\""
+
+  , testCase "withRawQuery" $ do
+      let query = "SELECT name FROM person"
+          row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      result <- runMockSqlQueryT (withRawQuery query [] Conduit.sinkList)
+        [ mockWithRawQuery $ \sql _ ->
+            if sql == query
+              then Just rows
+              else Nothing
+        ]
+      result @?= rows
   ]

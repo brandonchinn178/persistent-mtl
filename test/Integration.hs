@@ -12,7 +12,15 @@ import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Database.Persist.Sql (Entity(..), Single(..), (=.), (==.))
+import Database.Persist.Sql
+    ( Entity(..)
+    , PersistField
+    , PersistValue
+    , Single(..)
+    , fromPersistValue
+    , (=.)
+    , (==.)
+    )
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
@@ -614,7 +622,20 @@ testPersistentAPI = testGroup "Persistent API"
       result <- runTestApp $
         getTableName $ person "Alice"
       result @?= "\"person\""
+
+  , testCase "withRawQuery" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        withRawQuery "SELECT name FROM person" [] $
+          Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+
+      result @?= ["Alice", "Bob"]
   ]
+
+{- Persistent helpers -}
+
+fromPersistValue' :: PersistField a => PersistValue -> a
+fromPersistValue' = either (error . Text.unpack) id . fromPersistValue
 
 {- Meta SQL helpers -}
 

@@ -7,6 +7,7 @@ Defines 'MockSqlQueryT', which one can use in tests in order to mock out
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -16,17 +17,22 @@ module Database.Persist.Monad.TestUtils
   , runMockSqlQueryT
   , withRecord
   , mockQuery
+  , mockWithRawQuery
   , MockQuery
   ) where
 
+import Conduit ((.|))
+import qualified Conduit
 import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Resource (MonadResource)
+import Data.Text (Text)
 import Data.Typeable (Typeable, eqT, (:~:)(..))
+import Database.Persist.Sql (PersistValue)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
-import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
+import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
 -- | A monad transformer for testing functions that use 'MonadSqlQuery'.
 newtype MockSqlQueryT m a = MockSqlQueryT
@@ -71,10 +77,10 @@ newtype MockSqlQueryT m a = MockSqlQueryT
 runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
 runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
 
-instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
+instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
   runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
-    maybe (error $ "Could not find mock for query: " ++ show rep) return
+    maybe (error $ "Could not find mock for query: " ++ show rep) liftIO
       $ msum $ map tryMockQuery mockQueries
     where
       tryMockQuery (MockQuery f) = f rep
@@ -84,7 +90,7 @@ instance Monad m => MonadSqlQuery (MockSqlQueryT m) where
 -- | A mocked query to use in 'runMockSqlQueryT'.
 --
 -- Use 'withRecord' or 'mockQuery' to create a 'MockQuery'.
-data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe a)
+data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe (IO a))
 
 -- | A helper for defining a mocked database query against a specific @record@
 -- type. Designed to be used with TypeApplications.
@@ -110,7 +116,7 @@ data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep reco
 withRecord :: forall record. Typeable record => (forall a. SqlQueryRep record a -> Maybe a) -> MockQuery
 withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
   case eqT @record @someRecord of
-    Just Refl -> f rep
+    Just Refl -> pure <$> f rep
     Nothing -> Nothing
 
 -- | A helper for defining a mocked database query.
@@ -119,4 +125,24 @@ withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
 -- for queries that don't use the @record@ type, like
 -- 'Database.Persist.Monad.Shim.rawSql'.
 mockQuery :: (forall record a. Typeable record => SqlQueryRep record a -> Maybe a) -> MockQuery
-mockQuery = MockQuery
+mockQuery f = MockQuery (fmap pure . f)
+
+-- | A helper for defining a mocked database query for withRawQuery.
+--
+-- Usage:
+--
+-- @
+-- mockWithRawQuery $ \\sql vals ->
+--   if sql == "SELECT id, name FROM person"
+--     then
+--       let row1 = [toPersistValue 1, toPersistValue "Alice"]
+--           row2 = [toPersistValue 2, toPersistValue "Bob"]
+--       in Just [row1, row2]
+--     else Nothing
+-- @
+mockWithRawQuery :: (Text -> [PersistValue] -> Maybe [[PersistValue]]) -> MockQuery
+mockWithRawQuery f = MockQuery $ \case
+  WithRawQuery sql vals conduit ->
+    let outputRows rows = Conduit.runConduit $ Conduit.yieldMany rows .| conduit
+    in outputRows <$> f sql vals
+  _ -> Nothing
