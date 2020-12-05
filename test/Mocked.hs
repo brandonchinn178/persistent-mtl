@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Mocked where
@@ -478,4 +479,20 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= ()
+
+  , testCase "getFieldName" $ do
+      result <- runMockSqlQueryT (getFieldName PersonName)
+        [ withRecord @Person $ \case
+            GetFieldName PersonName -> Just "\"name\""
+            _ -> Nothing
+        ]
+      result @?= "\"name\""
+
+  , testCase "getTableName" $ do
+      result <- runMockSqlQueryT (getTableName $ person "Alice")
+        [ withRecord @Person $ \case
+            GetTableName _ -> Just "\"person\""
+            _ -> Nothing
+        ]
+      result @?= "\"person\""
   ]

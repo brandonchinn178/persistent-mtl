@@ -604,6 +604,16 @@ testPersistentAPI = testGroup "Persistent API"
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
 #endif
+
+  , testCase "getFieldName" $ do
+      result <- runTestApp $
+        getFieldName PersonName
+      result @?= "\"name\""
+
+  , testCase "getTableName" $ do
+      result <- runTestApp $
+        getTableName $ person "Alice"
+      result @?= "\"person\""
   ]
 
 {- Meta SQL helpers -}
