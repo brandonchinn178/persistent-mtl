@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Mocked where
@@ -9,7 +10,8 @@ import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql (Entity(..), (=.), (==.))
+import Database.Persist.Sql
+    (Entity(..), Single(..), toPersistValue, (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -333,11 +335,10 @@ testPersistentAPI = testGroup "Persistent API"
 
   , testCase "selectSourceRes" $ do
       acquire <- runMockSqlQueryT (selectSourceRes [] [])
-        [ withRecord @Person $ \case
-            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectSource $ \_ _ -> Just
+            [ Entity 1 $ person "Alice"
+            , Entity 2 $ person "Bob"
+            ]
         ]
       result <- Acquire.with acquire $ \conduit ->
         runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
@@ -360,11 +361,7 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "selectKeysRes" $ do
       let keys = [1, 2, 3]
       acquire <- runMockSqlQueryT (selectKeysRes @_ @Person [] [])
-        [ withRecord @Person $ \case
-            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany keys)
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectKeys $ \_ _ -> Just keys
         ]
       result <- Acquire.with acquire $ \conduit ->
         runConduit $ conduit .| Conduit.sinkList
@@ -391,11 +388,10 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "selectSource" $ do
       result <- runResourceT $ runMockSqlQueryT
         (runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList)
-        [ withRecord @Person $ \case
-            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectSource $ \_ _ -> Just
+            [ Entity 1 $ person "Alice"
+            , Entity 2 $ person "Bob"
+            ]
         ]
       result @?= ["Alice", "Bob"]
 
@@ -403,11 +399,7 @@ testPersistentAPI = testGroup "Persistent API"
       let keys = [1, 2, 3]
       result <- runResourceT $ runMockSqlQueryT
         (runConduit $ selectKeys @Person [] [] .| Conduit.sinkList)
-        [ withRecord @Person $ \case
-            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany keys)
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectKeys $ \_ _ -> Just keys
         ]
       result @?= keys
 
@@ -478,4 +470,77 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= ()
+
+  , testCase "getFieldName" $ do
+      result <- runMockSqlQueryT (getFieldName PersonName)
+        [ withRecord @Person $ \case
+            GetFieldName PersonName -> Just "\"name\""
+            _ -> Nothing
+        ]
+      result @?= "\"name\""
+
+  , testCase "getTableName" $ do
+      result <- runMockSqlQueryT (getTableName $ person "Alice")
+        [ withRecord @Person $ \case
+            GetTableName _ -> Just "\"person\""
+            _ -> Nothing
+        ]
+      result @?= "\"person\""
+
+  , testCase "withRawQuery" $ do
+      let query = "SELECT name FROM person"
+          row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      result <- runMockSqlQueryT (withRawQuery query [] Conduit.sinkList)
+        [ mockWithRawQuery $ \sql _ ->
+            if sql == query
+              then Just rows
+              else Nothing
+        ]
+      result @?= rows
+
+  , testCase "rawQueryRes" $ do
+      let row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      acquire <- runMockSqlQueryT (rawQueryRes "SELECT name FROM person" [])
+        [ mockRawQuery $ \_ _ -> Just rows
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.sinkList
+      result @?= rows
+
+  , testCase "rawQuery" $ do
+      let row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.sinkList)
+        [ mockRawQuery $ \_ _ -> Just rows
+        ]
+      result @?= rows
+
+  , testCase "rawExecute" $ do
+      result <- runMockSqlQueryT (rawExecute "DELETE FROM person" [])
+        [ mockQuery $ \case
+            RawExecute _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "rawExecuteCount" $ do
+      result <- runMockSqlQueryT (rawExecuteCount "DELETE FROM person" [])
+        [ mockQuery $ \case
+            RawExecuteCount _ _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
+
+  , testCase "rawSql" $ do
+      let names = ["Alice", "Bob"] :: [String]
+      result <- runMockSqlQueryT (rawSql "SELECT name FROM person" [])
+        [ mockRawSql $ \_ _ -> Just $ map ((:[]) . toPersistValue) names
+        ]
+      map unSingle result @?= names
   ]

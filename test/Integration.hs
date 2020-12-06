@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Integration where
 
@@ -12,19 +13,28 @@ import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Database.Persist.Sql (Entity(..), Single(..), (=.), (==.))
+import Data.Typeable (Typeable)
+import Database.Persist.Sql
+    ( Entity(..)
+    , PersistField
+    , PersistRecordBackend
+    , PersistValue
+    , Single(..)
+    , SqlBackend
+    , fromPersistValue
+    , (=.)
+    , (==.)
+    )
+#if MIN_VERSION_persistent(2,9,0)
+import Database.Persist.Sql (IsolationLevel(..))
+#endif
 import Test.Tasty
 import Test.Tasty.HUnit
-import UnliftIO (Exception, liftIO, throwIO, try)
+import UnliftIO (Exception, MonadIO, MonadUnliftIO, liftIO, throwIO, try)
 
 import Database.Persist.Monad
 import Example
 import TestUtils.Match (Match(..), (@?~))
-
-data TestError = TestError
-  deriving (Show, Eq)
-
-instance Exception TestError
 
 tests :: TestTree
 tests = testGroup "Integration tests"
@@ -35,22 +45,15 @@ tests = testGroup "Integration tests"
 testWithTransaction :: TestTree
 testWithTransaction = testGroup "withTransaction"
   [ testCase "it uses the same transaction" $ do
-      let catchTestError m = do
-            result <- try m
-            liftIO $ result @?= Left TestError
-
-          insertAndFail :: TestApp ()
-          insertAndFail = insert_ (person "Alice") >> throwIO TestError
-
       -- without transactions, the INSERT shouldn't be rolled back
       runTestApp $ do
-        catchTestError insertAndFail
+        catchTestError $ insertAndFail $ person "Alice"
         result <- getPeopleNames
         liftIO $ result @?= ["Alice"]
 
       -- with transactions, the INSERT should be rolled back
       runTestApp $ do
-        catchTestError $ withTransaction insertAndFail
+        catchTestError $ withTransaction $ insertAndFail $ person "Alice"
         result <- getPeopleNames
         liftIO $ result @?= []
   ]
@@ -604,7 +607,116 @@ testPersistentAPI = testGroup "Persistent API"
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
 #endif
+
+  , testCase "getFieldName" $ do
+      result <- runTestApp $
+        getFieldName PersonName
+      result @?= "\"name\""
+
+  , testCase "getTableName" $ do
+      result <- runTestApp $
+        getTableName $ person "Alice"
+      result @?= "\"person\""
+
+  , testCase "withRawQuery" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        withRawQuery "SELECT name FROM person" [] $
+          Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+
+      result @?= ["Alice", "Bob"]
+
+  , testCase "rawQueryRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- rawQueryRes "SELECT name FROM person" []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "rawQuery" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "rawExecute" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rawExecute "UPDATE person SET age = 100 WHERE name = 'Alice'" []
+        getPeople
+      map nameAndAge result @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "rawExecuteCount" $ do
+      (rowsUpdated, people) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsUpdated <- rawExecuteCount "UPDATE person SET age = 100 WHERE name = 'Alice'" []
+        people <- getPeople
+        return (rowsUpdated, people)
+      rowsUpdated @?= 1
+      map nameAndAge people @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "rawSql" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rawSql @(Single String) "SELECT name FROM person" []
+      map unSingle result @?= ["Alice", "Bob"]
+
+  , testCase "transactionSave" $ do
+      result1 <- runTestApp $ do
+        catchTestError $ withTransaction $ do
+          insert_ $ person "Alice"
+          insertAndFail $ person "Bob"
+        getPeopleNames
+      result1 @?= []
+
+      result2 <- runTestApp $ do
+        catchTestError $ withTransaction $ do
+          insert_ $ person "Alice"
+          transactionSave
+          insertAndFail $ person "Bob"
+        getPeopleNames
+      result2 @?= ["Alice"]
+
+#if MIN_VERSION_persistent(2,9,0)
+  , testCase "transactionSaveWithIsolation" $ do
+      result1 <- runTestApp $ do
+        catchTestError $ withTransaction $ do
+          insert_ $ person "Alice"
+          insertAndFail $ person "Bob"
+        getPeopleNames
+      result1 @?= []
+
+      result2 <- runTestApp $ do
+        catchTestError $ withTransaction $ do
+          insert_ $ person "Alice"
+          transactionSaveWithIsolation Serializable
+          insertAndFail $ person "Bob"
+        getPeopleNames
+      result2 @?= ["Alice"]
+#endif
+
+  , testCase "transactionUndo" $ do
+      result <- runTestApp $ withTransaction $ do
+        insert_ $ person "Alice"
+        transactionUndo
+        getPeopleNames
+      result @?= []
+
+#if MIN_VERSION_persistent(2,9,0)
+  , testCase "transactionUndoWithIsolation" $ do
+      result <- runTestApp $ withTransaction $ do
+        insert_ $ person "Alice"
+        transactionUndoWithIsolation Serializable
+        getPeopleNames
+      result @?= []
+#endif
   ]
+
+{- Persistent helpers -}
+
+fromPersistValue' :: PersistField a => PersistValue -> a
+fromPersistValue' = either (error . Text.unpack) id . fromPersistValue
 
 {- Meta SQL helpers -}
 
@@ -623,6 +735,27 @@ getSchemaColumnNames tableName = map unSingle <$> rawSql sql []
     sql = Text.pack $ "SELECT name FROM pragma_table_info('" ++ tableName ++ "')"
 
 {- Test helpers -}
+
+data TestError = TestError
+  deriving (Show, Eq)
+
+instance Exception TestError
+
+catchTestError :: (MonadUnliftIO m, Eq a, Show a) => m a -> m ()
+catchTestError m = do
+  result <- try m
+  liftIO $ result @?= Left TestError
+
+insertAndFail ::
+  ( MonadIO m
+  , MonadSqlQuery m
+  , PersistRecordBackend record SqlBackend
+  , Typeable record
+  )
+  => record -> m ()
+insertAndFail record = do
+  insert_ record
+  throwIO TestError
 
 assertNotIn :: (Eq a, Show a) => a -> [a] -> Assertion
 assertNotIn a as = as @?= filter (/= a) as
