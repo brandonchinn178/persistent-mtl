@@ -20,6 +20,7 @@ module Database.Persist.Monad.TestUtils
   , MockQuery
   -- * Specialized helpers
   , mockSelectSource
+  , mockSelectKeys
   , mockWithRawQuery
   ) where
 
@@ -32,7 +33,7 @@ import Control.Monad.Trans.Resource (MonadResource)
 import qualified Data.Acquire as Acquire
 import Data.Text (Text)
 import Data.Typeable (Typeable, eqT, (:~:)(..))
-import Database.Persist.Sql (Entity, Filter, PersistValue, SelectOpt)
+import Database.Persist.Sql (Entity, Filter, Key, PersistValue, SelectOpt)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
@@ -147,6 +148,23 @@ mockSelectSource :: forall record. Typeable record => ([Filter record] -> [Selec
 mockSelectSource f = withRecord @record $ \case
   SelectSourceRes filters opts ->
     let toAcquire entities = Acquire.mkAcquire (pure $ Conduit.yieldMany entities) (\_ -> pure ())
+    in toAcquire <$> f filters opts
+  _ -> Nothing
+
+-- | A helper for mocking a 'selectKeys' or 'selectKeysRes' call.
+--
+-- Usage:
+--
+-- @
+-- mockSelectKeys $ \\filters opts ->
+--   if null filters && null opts
+--     then Just $ map toSqlKey [1, 2]
+--     else Nothing
+-- @
+mockSelectKeys :: forall record. Typeable record => ([Filter record] -> [SelectOpt record] -> Maybe [Key record]) -> MockQuery
+mockSelectKeys f = withRecord @record $ \case
+  SelectKeysRes filters opts ->
+    let toAcquire keys = Acquire.mkAcquire (pure $ Conduit.yieldMany keys) (\_ -> pure ())
     in toAcquire <$> f filters opts
   _ -> Nothing
 

@@ -360,11 +360,7 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "selectKeysRes" $ do
       let keys = [1, 2, 3]
       acquire <- runMockSqlQueryT (selectKeysRes @_ @Person [] [])
-        [ withRecord @Person $ \case
-            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany keys)
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectKeys $ \_ _ -> Just keys
         ]
       result <- Acquire.with acquire $ \conduit ->
         runConduit $ conduit .| Conduit.sinkList
@@ -402,11 +398,7 @@ testPersistentAPI = testGroup "Persistent API"
       let keys = [1, 2, 3]
       result <- runResourceT $ runMockSqlQueryT
         (runConduit $ selectKeys @Person [] [] .| Conduit.sinkList)
-        [ withRecord @Person $ \case
-            SelectKeysRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany keys)
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectKeys $ \_ _ -> Just keys
         ]
       result @?= keys
 
