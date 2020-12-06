@@ -57,11 +57,10 @@ newtype MockSqlQueryT m a = MockSqlQueryT
 --
 -- When a database query is executed, the first mock that returns a 'Just' is
 -- returned. If no mocks match the query, an error is thrown. See 'SqlQueryRep'
--- for the constructors available to match against. Use `withRecord` to only
--- match queries against a specific @record@ type
--- (e.g. 'Database.Persist.Monad.Shim.selectList'), or `mockQuery` to match
--- queries that don't reference a specific @record@ type
--- (e.g. 'Database.Persist.Monad.Shim.rawSql').
+-- for the constructors available to match against. Most of the time, you'll
+-- want to use 'withRecord' to only match queries against a specific @record@
+-- type (e.g. only match 'Database.Persist.Monad.Shim.selectList' calls for
+-- the @Person@ entity).
 --
 -- Usage:
 --
@@ -97,7 +96,7 @@ instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
 
 -- | A mocked query to use in 'runMockSqlQueryT'.
 --
--- Use 'withRecord' or 'mockQuery' to create a 'MockQuery'.
+-- Use 'withRecord' or another helper to create a 'MockQuery'.
 data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe (IO a))
 
 -- | A helper for defining a mocked database query against a specific @record@
@@ -131,11 +130,12 @@ withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
 --
 -- This does not do any matching on the @record@ type, so it is mostly useful
 -- for queries that don't use the @record@ type, like
--- 'Database.Persist.Monad.Shim.rawSql'.
+-- 'Database.Persist.Monad.Shim.rawExecute'.
 mockQuery :: (forall record a. Typeable record => SqlQueryRep record a -> Maybe a) -> MockQuery
 mockQuery f = MockQuery (fmap pure . f)
 
--- | A helper for mocking a 'selectSource' or 'selectSourceRes' call.
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.selectSource' or
+-- 'Database.Persist.Monad.Shim.selectSourceRes' call.
 --
 -- Usage:
 --
@@ -155,7 +155,8 @@ mockSelectSource f = withRecord @record $ \case
     in toAcquire <$> f filters opts
   _ -> Nothing
 
--- | A helper for mocking a 'selectKeys' or 'selectKeysRes' call.
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.selectKeys' or
+-- 'Database.Persist.Monad.Shim.selectKeysRes' call.
 --
 -- Usage:
 --
@@ -172,7 +173,7 @@ mockSelectKeys f = withRecord @record $ \case
     in toAcquire <$> f filters opts
   _ -> Nothing
 
--- | A helper for mocking a 'withRawQuery' call.
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.withRawQuery' call.
 --
 -- Usage:
 --
@@ -192,7 +193,8 @@ mockWithRawQuery f = MockQuery $ \case
     in outputRows <$> f sql vals
   _ -> Nothing
 
--- | A helper for mocking a 'rawQuery' or 'rawQueryRes' call.
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.rawQuery' or
+-- 'Database.Persist.Monad.Shim.rawQueryRes' call.
 --
 -- Usage:
 --
@@ -212,7 +214,7 @@ mockRawQuery f = MockQuery $ \case
     in pure . toAcquire <$> f sql vals
   _ -> Nothing
 
--- | A helper for mocking a 'rawSql' call.
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.rawSql' call.
 --
 -- Usage:
 --
