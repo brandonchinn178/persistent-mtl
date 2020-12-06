@@ -45,6 +45,7 @@ tests:
       - persistent-mtl
       - persistent-sqlite
       - persistent-template
+      - resource-pool
       - resourcet
       - tasty
       - tasty-golden

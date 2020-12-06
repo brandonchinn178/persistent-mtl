@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9b6ae20631ee5ad633b82ab405f64730ea1603ef8da2099ea41ef126cab9d817
+-- hash: c93079d4e94bfa14d838290e31d21b54fb68cc459c5ad647713fb4064c5aa62e
 
 name:           persistent-mtl
 version:        0.1.0.1
@@ -66,6 +66,7 @@ test-suite persistent-mtl-test
       Mocked
       MockSqlQueryT
       SqlQueryRepTest
+      TestUtils.DB
       TestUtils.Match
       Paths_persistent_mtl
   hs-source-dirs:
@@ -81,6 +82,7 @@ test-suite persistent-mtl-test
     , persistent-mtl
     , persistent-sqlite
     , persistent-template
+    , resource-pool
     , resourcet
     , tasty
     , tasty-golden

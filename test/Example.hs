@@ -53,7 +53,7 @@ import Database.Persist.TH
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Database.Persist.Monad
-import TestUtils.DB (withTestDB)
+import TestUtils.DB (BackendType(..), withTestDB)
 
 share
   [ mkPersist sqlSettings
@@ -101,9 +101,9 @@ newtype TestApp a = TestApp
 instance MonadUnliftIO TestApp where
   withRunInIO = wrappedWithRunInIO TestApp unTestApp
 
-runTestApp :: TestApp a -> IO a
-runTestApp m =
-  withTestDB $ \pool ->
+runTestApp :: BackendType -> TestApp a -> IO a
+runTestApp backendType m =
+  withTestDB backendType $ \pool ->
     runResourceT . runSqlQueryT pool . unTestApp $ do
       _ <- runMigrationSilent migration
       m
