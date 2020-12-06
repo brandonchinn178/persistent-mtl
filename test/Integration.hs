@@ -644,6 +644,22 @@ testPersistentAPI = testGroup "Persistent API"
         insertMany_ [person "Alice", person "Bob"]
         runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
       result @?= ["Alice", "Bob"]
+
+  , testCase "rawExecute" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rawExecute "UPDATE person SET age = 100 WHERE name = 'Alice'" []
+        getPeople
+      map nameAndAge result @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "rawExecuteCount" $ do
+      (rowsUpdated, people) <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rowsUpdated <- rawExecuteCount "UPDATE person SET age = 100 WHERE name = 'Alice'" []
+        people <- getPeople
+        return (rowsUpdated, people)
+      rowsUpdated @?= 1
+      map nameAndAge people @?= [("Alice", 100), ("Bob", 0)]
   ]
 
 {- Persistent helpers -}

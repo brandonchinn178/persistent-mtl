@@ -519,4 +519,20 @@ testPersistentAPI = testGroup "Persistent API"
         [ mockRawQuery $ \_ _ -> Just rows
         ]
       result @?= rows
+
+  , testCase "rawExecute" $ do
+      result <- runMockSqlQueryT (rawExecute "DELETE FROM person" [])
+        [ mockQuery $ \case
+            RawExecute _ _ -> Just ()
+            _ -> Nothing
+        ]
+      result @?= ()
+
+  , testCase "rawExecuteCount" $ do
+      result <- runMockSqlQueryT (rawExecuteCount "DELETE FROM person" [])
+        [ mockQuery $ \case
+            RawExecuteCount _ _ -> Just 10
+            _ -> Nothing
+        ]
+      result @?= 10
   ]
