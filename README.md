@@ -32,7 +32,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Logger (runStderrLoggingT)
 import Database.Persist.Sql (Entity(..), toSqlKey, (<.))
 import Database.Persist.Monad
-import Database.Persist.Sqlite (withSqliteConn)
+import Database.Persist.Sqlite (withSqlitePool)
 import Database.Persist.TH
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
@@ -58,8 +58,8 @@ getYoungPeople :: (MonadIO m, MonadSqlQuery m) => m [Entity Person]
 getYoungPeople = selectList [PersonAge <. 18] []
 
 main :: IO ()
-main = runStderrLoggingT $ withSqliteConn ":memory:" $ \conn ->
-  liftIO $ runSqlQueryT (BackendSingle conn) $ unMyApp $ do
+main = runStderrLoggingT $ withSqlitePool "db.sqlite" 5 $ \conn ->
+  liftIO $ runSqlQueryT conn $ unMyApp $ do
     runMigration migrate
     insert_ $ Person "Alice" 25
     insert_ $ Person "Bob" 10
