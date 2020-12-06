@@ -10,7 +10,8 @@ import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql (Entity(..), toPersistValue, (=.), (==.))
+import Database.Persist.Sql
+    (Entity(..), Single(..), toPersistValue, (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -535,4 +536,11 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= 10
+
+  , testCase "rawSql" $ do
+      let names = ["Alice", "Bob"] :: [String]
+      result <- runMockSqlQueryT (rawSql "SELECT name FROM person" [])
+        [ mockRawSql $ \_ _ -> Just $ map ((:[]) . toPersistValue) names
+        ]
+      map unSingle result @?= names
   ]

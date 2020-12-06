@@ -23,6 +23,7 @@ module Database.Persist.Monad.TestUtils
   , mockSelectKeys
   , mockWithRawQuery
   , mockRawQuery
+  , mockRawSql
   ) where
 
 import Conduit ((.|))
@@ -33,8 +34,10 @@ import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Resource (MonadResource)
 import qualified Data.Acquire as Acquire
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Typeable (Typeable, eqT, (:~:)(..))
-import Database.Persist.Sql (Entity, Filter, Key, PersistValue, SelectOpt)
+import Database.Persist.Sql
+    (Entity, Filter, Key, PersistValue, SelectOpt, rawSqlProcessRow)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
@@ -207,4 +210,24 @@ mockRawQuery f = MockQuery $ \case
   RawQueryRes sql vals ->
     let toAcquire rows = Acquire.mkAcquire (pure $ Conduit.yieldMany rows) (\_ -> pure ())
     in pure . toAcquire <$> f sql vals
+  _ -> Nothing
+
+-- | A helper for mocking a 'rawSql' call.
+--
+-- Usage:
+--
+-- @
+-- mockRawSql $ \\sql vals ->
+--   if sql == "SELECT id, name FROM person"
+--     then
+--       let row1 = [toPersistValue 1, toPersistValue \"Alice\"]
+--           row2 = [toPersistValue 2, toPersistValue \"Bob\"]
+--       in Just [row1, row2]
+--     else Nothing
+-- @
+mockRawSql :: (Text -> [PersistValue] -> Maybe [[PersistValue]]) -> MockQuery
+mockRawSql f = MockQuery $ \case
+  RawSql sql vals ->
+    let fromRow = either (error . Text.unpack) id . rawSqlProcessRow
+    in pure . map fromRow <$> f sql vals
   _ -> Nothing

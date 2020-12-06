@@ -660,6 +660,12 @@ testPersistentAPI = testGroup "Persistent API"
         return (rowsUpdated, people)
       rowsUpdated @?= 1
       map nameAndAge people @?= [("Alice", 100), ("Bob", 0)]
+
+  , testCase "rawSql" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        rawSql @(Single String) "SELECT name FROM person" []
+      map unSingle result @?= ["Alice", "Bob"]
   ]
 
 {- Persistent helpers -}
