@@ -9,16 +9,12 @@ executors:
       stack_yaml:
         type: string
         default: stack.yaml
-      latest:
-        type: boolean
-        default: false
 
     docker:
       - image: cimg/base:2020.01
     shell: /bin/bash -eux -o pipefail
     environment:
       STACK_YAML: << parameters.stack_yaml >>
-      CI_LATEST: <<# parameters.latest >>1<</ parameters.latest >>
 
 commands:
   install_stack:
@@ -103,7 +99,6 @@ jobs:
     executor:
       name: ubuntu
       stack_yaml: << parameters.stack_yaml >>
-      latest: << parameters.latest >>
 
     steps:
       - checkout
