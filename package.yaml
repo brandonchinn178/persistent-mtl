@@ -1,8 +1,20 @@
 name: persistent-mtl
 version: 0.1.0.0
 maintainer: Brandon Chinn <brandonchinn178@gmail.com>
+synopsis: Monad transformer for the persistent API
+description: |
+  A monad transformer and mtl-style type class for using the
+  persistent API directly in your monad transformer stack.
+category: Database
+license: BSD3
+extra-source-files:
+  - CHANGELOG.md
+  - README.md
+  - test/goldens/**/*.golden
 
 ghc-options: -Wall
+
+github: brandonchinn178/persistent-mtl
 
 library:
   source-dirs: src

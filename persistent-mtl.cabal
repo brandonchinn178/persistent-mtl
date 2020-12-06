@@ -4,12 +4,31 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e778c01c12d7cd9d6afd05ad2fc3b688916dfa7f3bc4d24583d8e401a117eb1b
+-- hash: b4cebf2dfec7ddb84809e77bf7c91ea81fd89f22a13763b7ee032b13313dfebd
 
 name:           persistent-mtl
 version:        0.1.0.0
+synopsis:       Monad transformer for the persistent API
+description:    A monad transformer and mtl-style type class for using the
+                persistent API directly in your monad transformer stack.
+category:       Database
+homepage:       https://github.com/brandonchinn178/persistent-mtl#readme
+bug-reports:    https://github.com/brandonchinn178/persistent-mtl/issues
 maintainer:     Brandon Chinn <brandonchinn178@gmail.com>
+license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+    README.md
+    test/goldens/persistent-2.10/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.11/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.8/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.9/sqlqueryrep_show_representation.golden
+
+source-repository head
+  type: git
+  location: https://github.com/brandonchinn178/persistent-mtl
 
 library
   exposed-modules:
