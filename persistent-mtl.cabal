@@ -4,12 +4,27 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e778c01c12d7cd9d6afd05ad2fc3b688916dfa7f3bc4d24583d8e401a117eb1b
+-- hash: ecc5c26df5e3a8ea1319ec34679397ab5a6faf5d560d5da21796f3c1bdaf9bb3
 
 name:           persistent-mtl
 version:        0.1.0.0
+synopsis:       Monad transformer for the persistent API
+description:    A monad transformer and mtl-style type class for using the
+                persistent API directly in your monad transformer stack.
+category:       Database
+homepage:       https://github.com/brandonchinn178/persistent-mtl#readme
+bug-reports:    https://github.com/brandonchinn178/persistent-mtl/issues
 maintainer:     Brandon Chinn <brandonchinn178@gmail.com>
+license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/brandonchinn178/persistent-mtl
 
 library
   exposed-modules:
