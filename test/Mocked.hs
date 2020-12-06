@@ -334,11 +334,10 @@ testPersistentAPI = testGroup "Persistent API"
 
   , testCase "selectSourceRes" $ do
       acquire <- runMockSqlQueryT (selectSourceRes [] [])
-        [ withRecord @Person $ \case
-            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectSource $ \_ _ -> Just
+            [ Entity 1 $ person "Alice"
+            , Entity 2 $ person "Bob"
+            ]
         ]
       result <- Acquire.with acquire $ \conduit ->
         runConduit $ conduit .| Conduit.mapC getName .| Conduit.sinkList
@@ -392,11 +391,10 @@ testPersistentAPI = testGroup "Persistent API"
   , testCase "selectSource" $ do
       result <- runResourceT $ runMockSqlQueryT
         (runConduit $ selectSource [] [] .| Conduit.mapC getName .| Conduit.sinkList)
-        [ withRecord @Person $ \case
-            SelectSourceRes _ _ -> Just $ Acquire.mkAcquire
-              (pure $ Conduit.yieldMany [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
-              (\_ -> pure ())
-            _ -> Nothing
+        [ mockSelectSource $ \_ _ -> Just
+            [ Entity 1 $ person "Alice"
+            , Entity 2 $ person "Bob"
+            ]
         ]
       result @?= ["Alice", "Bob"]
 

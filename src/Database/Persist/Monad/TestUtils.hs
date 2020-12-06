@@ -17,8 +17,10 @@ module Database.Persist.Monad.TestUtils
   , runMockSqlQueryT
   , withRecord
   , mockQuery
-  , mockWithRawQuery
   , MockQuery
+  -- * Specialized helpers
+  , mockSelectSource
+  , mockWithRawQuery
   ) where
 
 import Conduit ((.|))
@@ -27,9 +29,10 @@ import Control.Monad (msum)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Resource (MonadResource)
+import qualified Data.Acquire as Acquire
 import Data.Text (Text)
 import Data.Typeable (Typeable, eqT, (:~:)(..))
-import Database.Persist.Sql (PersistValue)
+import Database.Persist.Sql (Entity, Filter, PersistValue, SelectOpt)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
@@ -127,6 +130,26 @@ withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
 mockQuery :: (forall record a. Typeable record => SqlQueryRep record a -> Maybe a) -> MockQuery
 mockQuery f = MockQuery (fmap pure . f)
 
+-- | A helper for mocking a 'selectSource' or 'selectSourceRes' call.
+--
+-- Usage:
+--
+-- @
+-- mockSelectSource $ \\filters opts ->
+--   if null filters && null opts
+--     then
+--       let person1 = [Entity (toSqlKey 1) $ Person \"Alice\"]
+--           person2 = [Entity (toSqlKey 2) $ Person \"Bob\"]
+--       in Just [person1, person2]
+--     else Nothing
+-- @
+mockSelectSource :: forall record. Typeable record => ([Filter record] -> [SelectOpt record] -> Maybe [Entity record]) -> MockQuery
+mockSelectSource f = withRecord @record $ \case
+  SelectSourceRes filters opts ->
+    let toAcquire entities = Acquire.mkAcquire (pure $ Conduit.yieldMany entities) (\_ -> pure ())
+    in toAcquire <$> f filters opts
+  _ -> Nothing
+
 -- | A helper for defining a mocked database query for withRawQuery.
 --
 -- Usage:
@@ -135,8 +158,8 @@ mockQuery f = MockQuery (fmap pure . f)
 -- mockWithRawQuery $ \\sql vals ->
 --   if sql == "SELECT id, name FROM person"
 --     then
---       let row1 = [toPersistValue 1, toPersistValue "Alice"]
---           row2 = [toPersistValue 2, toPersistValue "Bob"]
+--       let row1 = [toPersistValue 1, toPersistValue \"Alice\"]
+--           row2 = [toPersistValue 2, toPersistValue \"Bob\"]
 --       in Just [row1, row2]
 --     else Nothing
 -- @
