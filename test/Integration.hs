@@ -35,13 +35,12 @@ import UnliftIO (Exception, MonadIO, MonadUnliftIO, liftIO, throwIO, try)
 
 import Database.Persist.Monad
 import Example
-import TestUtils.DB (BackendType(..))
+import TestUtils.DB (BackendType(..), allBackendTypes)
 import TestUtils.Match (Match(..), (@?~))
 
 tests :: TestTree
-tests = testGroup "Integration tests"
-  [ testsWithBackend Sqlite
-  ]
+tests = testGroup "Integration tests" $
+  map testsWithBackend allBackendTypes
 
 testsWithBackend :: BackendType -> TestTree
 testsWithBackend backendType = testGroup (show backendType)
@@ -495,23 +494,30 @@ testPersistentAPI backendType = testGroup "Persistent API"
       result <- runTestApp backendType $ do
         setupUnsafeMigration
         parseMigration migration
-      result @?~ Right @[Text]
-        [ Match
-            ( False
-            , Text.concat
-                [ "CREATE TEMP TABLE \"person_backup\"("
-                , "\"id\" INTEGER PRIMARY KEY,"
-                , "\"name\" VARCHAR NOT NULL,"
-                , "\"age\" INTEGER NOT NULL,"
-                , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
-                ]
-            )
-        , Anything
-        , Match (True, "DROP TABLE \"person\"")
-        , Anything
-        , Anything
-        , Match (False, "DROP TABLE \"person_backup\"")
-        ]
+
+      let sql = case backendType of
+            Sqlite ->
+              [ Match
+                  ( False
+                  , Text.concat
+                      [ "CREATE TEMP TABLE \"person_backup\"("
+                      , "\"id\" INTEGER PRIMARY KEY,"
+                      , "\"name\" VARCHAR NOT NULL,"
+                      , "\"age\" INTEGER NOT NULL,"
+                      , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
+                      ]
+                  )
+              , Anything
+              , Match (True, "DROP TABLE \"person\"")
+              , Anything
+              , Anything
+              , Match (False, "DROP TABLE \"person_backup\"")
+              ]
+            Postgresql ->
+              [ Match (True, "ALTER TABLE \"person\" DROP COLUMN \"foo\"")
+              ]
+
+      result @?~ Right @[Text] sql
 
   , testCase "parseMigration'" $ do
       let action :: (Migration -> TestApp a) -> IO a
@@ -532,45 +538,59 @@ testPersistentAPI backendType = testGroup "Persistent API"
       result <- runTestApp backendType $ do
         setupUnsafeMigration
         showMigration migration
-      result @?~
-        [ Match $ Text.concat
-            [ "CREATE TEMP TABLE \"person_backup\"("
-            , "\"id\" INTEGER PRIMARY KEY,"
-            , "\"name\" VARCHAR NOT NULL,"
-            , "\"age\" INTEGER NOT NULL,"
-            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
-            ]
-        , Anything
-        , Match "DROP TABLE \"person\";"
-        , Anything
-        , Anything
-        , Match "DROP TABLE \"person_backup\";"
-        ]
+
+      let sql = case backendType of
+            Sqlite ->
+              [ Match $ Text.concat
+                  [ "CREATE TEMP TABLE \"person_backup\"("
+                  , "\"id\" INTEGER PRIMARY KEY,"
+                  , "\"name\" VARCHAR NOT NULL,"
+                  , "\"age\" INTEGER NOT NULL,"
+                  , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
+                  ]
+              , Anything
+              , Match "DROP TABLE \"person\";"
+              , Anything
+              , Anything
+              , Match "DROP TABLE \"person_backup\";"
+              ]
+            Postgresql ->
+              [ Match "ALTER TABLE \"person\" DROP COLUMN \"foo\";"
+              ]
+
+      result @?~ sql
 
   , testCase "getMigration" $ do
       result <- runTestApp backendType $ do
         setupUnsafeMigration
         getMigration migration
-      result @?~
-        [ Match $ Text.concat
-            [ "CREATE TEMP TABLE \"person_backup\"("
-            , "\"id\" INTEGER PRIMARY KEY,"
-            , "\"name\" VARCHAR NOT NULL,"
-            , "\"age\" INTEGER NOT NULL,"
-            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
-            ]
-        , Anything
-        , Match "DROP TABLE \"person\""
-        , Anything
-        , Anything
-        , Match "DROP TABLE \"person_backup\""
-        ]
+
+      let sql = case backendType of
+            Sqlite ->
+              [ Match $ Text.concat
+                  [ "CREATE TEMP TABLE \"person_backup\"("
+                  , "\"id\" INTEGER PRIMARY KEY,"
+                  , "\"name\" VARCHAR NOT NULL,"
+                  , "\"age\" INTEGER NOT NULL,"
+                  , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
+                  ]
+              , Anything
+              , Match "DROP TABLE \"person\""
+              , Anything
+              , Anything
+              , Match "DROP TABLE \"person_backup\""
+              ]
+            Postgresql ->
+              [ Match "ALTER TABLE \"person\" DROP COLUMN \"foo\""
+              ]
+
+      result @?~ sql
 
   , testCase "runMigration" $ do
       result <- runTestApp backendType $ do
         setupSafeMigration
         runMigration migration
-        getSchemaColumnNames "person"
+        getSchemaColumnNames backendType "person"
       assertNotIn "removed_column" result
 
 #if MIN_VERSION_persistent(2,10,2)
@@ -578,7 +598,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
       (withQuiet, cols) <- runTestApp backendType $ do
         setupSafeMigration
         sql <- runMigrationQuiet migration
-        cols <- getSchemaColumnNames "person"
+        cols <- getSchemaColumnNames backendType "person"
         return (sql, cols)
       withSilent <- runTestApp backendType $ do
         setupSafeMigration
@@ -592,7 +612,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
         setupSafeMigration
         sqlPlanned <- getMigration migration
         sqlExecuted <- runMigrationSilent migration
-        cols <- getSchemaColumnNames "person"
+        cols <- getSchemaColumnNames backendType "person"
         return (sqlPlanned, sqlExecuted, cols)
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
@@ -601,7 +621,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
       result <- runTestApp backendType $ do
         setupUnsafeMigration
         runMigrationUnsafe migration
-        getSchemaColumnNames "person"
+        getSchemaColumnNames backendType "person"
       assertNotIn "removed_column" result
 
 #if MIN_VERSION_persistent(2,10,2)
@@ -610,7 +630,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
         setupUnsafeMigration
         sqlPlanned <- getMigration migration
         sqlExecuted <- runMigrationUnsafeQuiet migration
-        cols <- getSchemaColumnNames "person"
+        cols <- getSchemaColumnNames backendType "person"
         return (sqlPlanned, sqlExecuted, cols)
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
@@ -737,10 +757,15 @@ setupUnsafeMigration :: MonadSqlQuery m => m ()
 setupUnsafeMigration = rawExecute "ALTER TABLE person ADD COLUMN foo VARCHAR" []
 
 -- | Get the names of all columns in the given table.
-getSchemaColumnNames :: MonadSqlQuery m => String -> m [String]
-getSchemaColumnNames tableName = map unSingle <$> rawSql sql []
+getSchemaColumnNames :: MonadSqlQuery m => BackendType -> String -> m [String]
+getSchemaColumnNames backendType tableName = map unSingle <$> rawSql sql []
   where
-    sql = Text.pack $ "SELECT name FROM pragma_table_info('" ++ tableName ++ "')"
+    sql = Text.pack $ case backendType of
+      Sqlite -> "SELECT name FROM pragma_table_info('" ++ tableName ++ "')"
+      Postgresql -> unlines
+        [ "SELECT column_name FROM information_schema.columns"
+        , "WHERE table_schema = 'public' AND table_name = '" ++ tableName ++ "'"
+        ]
 
 {- Test helpers -}
 

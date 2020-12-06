@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c93079d4e94bfa14d838290e31d21b54fb68cc459c5ad647713fb4064c5aa62e
+-- hash: a6b1252a25af52e3ddd10e843b4818e0255c269dfbc6a399eb29e41093ef0408
 
 name:           persistent-mtl
 version:        0.1.0.1
@@ -80,6 +80,7 @@ test-suite persistent-mtl-test
     , monad-logger
     , persistent
     , persistent-mtl
+    , persistent-postgresql
     , persistent-sqlite
     , persistent-template
     , resource-pool

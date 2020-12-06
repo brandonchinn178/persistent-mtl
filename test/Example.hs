@@ -41,7 +41,8 @@ module Example
 import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
-import Database.Persist.Sql (Entity(..), EntityField, Key, Unique, toSqlKey)
+import Database.Persist.Sql
+    (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
     ( mkDeleteCascade
     , mkMigrate
@@ -117,7 +118,7 @@ getName :: Entity Person -> String
 getName = personName . entityVal
 
 getPeople :: MonadSqlQuery m => m [Person]
-getPeople = map entityVal <$> selectList [] []
+getPeople = map entityVal <$> selectList [] [Asc PersonId]
 
 getPeopleNames :: MonadSqlQuery m => m [String]
 getPeopleNames = map personName <$> getPeople
