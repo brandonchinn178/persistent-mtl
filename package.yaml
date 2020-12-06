@@ -10,6 +10,7 @@ license: BSD3
 extra-source-files:
   - CHANGELOG.md
   - README.md
+  - test/goldens/**/*.golden
 
 ghc-options: -Wall
 

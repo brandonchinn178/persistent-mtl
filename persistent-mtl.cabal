@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ecc5c26df5e3a8ea1319ec34679397ab5a6faf5d560d5da21796f3c1bdaf9bb3
+-- hash: b4cebf2dfec7ddb84809e77bf7c91ea81fd89f22a13763b7ee032b13313dfebd
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -21,6 +21,10 @@ build-type:     Simple
 extra-source-files:
     CHANGELOG.md
     README.md
+    test/goldens/persistent-2.10/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.11/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.8/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.9/sqlqueryrep_show_representation.golden
 
 source-repository head
   type: git
