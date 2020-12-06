@@ -40,11 +40,9 @@ module Example
 
 import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Logger (runNoLoggingT)
 import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
-import qualified Data.Text as Text
-import Database.Persist.Sql (Entity(..), EntityField, Key, Unique, toSqlKey)
-import Database.Persist.Sqlite (withSqlitePool)
+import Database.Persist.Sql
+    (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
     ( mkDeleteCascade
     , mkMigrate
@@ -53,9 +51,10 @@ import Database.Persist.TH
     , share
     , sqlSettings
     )
-import UnliftIO (MonadUnliftIO(..), withSystemTempDirectory, wrappedWithRunInIO)
+import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Database.Persist.Monad
+import TestUtils.DB (BackendType(..), withTestDB)
 
 share
   [ mkPersist sqlSettings
@@ -103,14 +102,12 @@ newtype TestApp a = TestApp
 instance MonadUnliftIO TestApp where
   withRunInIO = wrappedWithRunInIO TestApp unTestApp
 
-runTestApp :: TestApp a -> IO a
-runTestApp m =
-  withSystemTempDirectory "persistent-mtl-testapp" $ \dir -> do
-    let db = Text.pack $ dir ++ "/db.sqlite"
-    runNoLoggingT $ withSqlitePool db 5 $ \pool ->
-      liftIO . runResourceT . runSqlQueryT pool . unTestApp $ do
-        _ <- runMigrationSilent migration
-        m
+runTestApp :: BackendType -> TestApp a -> IO a
+runTestApp backendType m =
+  withTestDB backendType $ \pool ->
+    runResourceT . runSqlQueryT pool . unTestApp $ do
+      _ <- runMigrationSilent migration
+      m
 
 {- Person functions -}
 
@@ -121,7 +118,7 @@ getName :: Entity Person -> String
 getName = personName . entityVal
 
 getPeople :: MonadSqlQuery m => m [Person]
-getPeople = map entityVal <$> selectList [] []
+getPeople = map entityVal <$> selectList [] [Asc PersonId]
 
 getPeopleNames :: MonadSqlQuery m => m [String]
 getPeopleNames = map personName <$> getPeople

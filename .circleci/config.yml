@@ -9,16 +9,28 @@ executors:
       stack_yaml:
         type: string
         default: stack.yaml
-      latest:
-        type: boolean
-        default: false
 
     docker:
       - image: cimg/base:2020.01
     shell: /bin/bash -eux -o pipefail
     environment:
       STACK_YAML: << parameters.stack_yaml >>
-      CI_LATEST: <<# parameters.latest >>1<</ parameters.latest >>
+
+  ubuntu_with_databases:
+    parameters:
+      stack_yaml:
+        type: string
+        default: stack.yaml
+
+    docker:
+      - image: cimg/base:2020.01
+      - image: postgres:13.1
+        environment:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: persistent_mtl
+    shell: /bin/bash -eux -o pipefail
+    environment:
+      STACK_YAML: << parameters.stack_yaml >>
 
 commands:
   install_stack:
@@ -29,6 +41,17 @@ commands:
             sudo apt-get update
             curl -sSL https://get.haskellstack.org/ | sh
             stack --version
+
+  build_stack_deps:
+    steps:
+      - run:
+          name: Install system dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y postgresql libpq-dev
+      - run:
+          name: Build stack dependencies
+          command: stack build --test --only-dependencies
 
   with_stack_cache:
     parameters:
@@ -101,18 +124,15 @@ jobs:
         default: false
 
     executor:
-      name: ubuntu
+      name: ubuntu_with_databases
       stack_yaml: << parameters.stack_yaml >>
-      latest: << parameters.latest >>
 
     steps:
       - checkout
       - install_stack
       - with_stack_cache:
           install_deps:
-            - run:
-                name: Build external dependencies
-                command: stack build --test --only-dependencies
+            - build_stack_deps
             - when:
                 condition: << parameters.latest >>
                 steps:
@@ -140,6 +160,8 @@ jobs:
                 <<# parameters.latest >>--coverage<</ parameters.latest >>
             )
             stack build "${STACK_ARGS[@]}"
+          environment:
+            TEST_POSTGRESQL: 1
       - when:
           condition: << parameters.latest >>
           steps:
@@ -156,9 +178,7 @@ jobs:
       - install_stack
       - with_stack_cache:
           install_deps:
-            - run:
-                name: Build external dependencies
-                command: stack build --test --only-dependencies
+            - build_stack_deps
       - run:
           name: Build haddock
           command: stack haddock --no-haddock-deps

@@ -43,8 +43,10 @@ tests:
       - monad-logger
       - persistent
       - persistent-mtl
+      - persistent-postgresql
       - persistent-sqlite
       - persistent-template
+      - resource-pool
       - resourcet
       - tasty
       - tasty-golden
