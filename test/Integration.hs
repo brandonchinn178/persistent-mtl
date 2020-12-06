@@ -695,6 +695,22 @@ testPersistentAPI = testGroup "Persistent API"
         getPeopleNames
       result2 @?= ["Alice"]
 #endif
+
+  , testCase "transactionUndo" $ do
+      result <- runTestApp $ withTransaction $ do
+        insert_ $ person "Alice"
+        transactionUndo
+        getPeopleNames
+      result @?= []
+
+#if MIN_VERSION_persistent(2,9,0)
+  , testCase "transactionUndoWithIsolation" $ do
+      result <- runTestApp $ withTransaction $ do
+        insert_ $ person "Alice"
+        transactionUndoWithIsolation Serializable
+        getPeopleNames
+      result @?= []
+#endif
   ]
 
 {- Persistent helpers -}
