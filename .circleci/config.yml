@@ -184,6 +184,26 @@ jobs:
           name: Check if generated code not up to date
           command: git diff --exit-code *.hs
 
+  run_sdist:
+    executor: ubuntu
+    steps:
+      - checkout
+      - install_stack
+      - with_stack_cache:
+          install_deps:
+            - run:
+                name: Install GHC
+                command: stack setup
+      - run: stack sdist
+      - run:
+          name: Copy package archive
+          command: |
+            mkdir -p .ci/
+            cp $(stack path --dist-dir)/persistent-mtl-*.tar.gz .ci/
+      - store_artifacts:
+          path: .ci/
+          destination: .
+
 workflows:
   version: 2
 
@@ -192,6 +212,7 @@ workflows:
       - lint
       - haddock
       - check_codegen
+      - run_sdist
       - run_build_and_test:
           name: test_latest
           latest: true
