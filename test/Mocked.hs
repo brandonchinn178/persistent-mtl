@@ -498,4 +498,25 @@ testPersistentAPI = testGroup "Persistent API"
               else Nothing
         ]
       result @?= rows
+
+  , testCase "rawQueryRes" $ do
+      let row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      acquire <- runMockSqlQueryT (rawQueryRes "SELECT name FROM person" [])
+        [ mockRawQuery $ \_ _ -> Just rows
+        ]
+      result <- Acquire.with acquire $ \conduit ->
+        runConduit $ conduit .| Conduit.sinkList
+      result @?= rows
+
+  , testCase "rawQuery" $ do
+      let row1 = [toPersistValue @String "Alice"]
+          row2 = [toPersistValue @String "Bob"]
+          rows = [row1, row2]
+      result <- runResourceT $ runMockSqlQueryT
+        (runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.sinkList)
+        [ mockRawQuery $ \_ _ -> Just rows
+        ]
+      result @?= rows
   ]

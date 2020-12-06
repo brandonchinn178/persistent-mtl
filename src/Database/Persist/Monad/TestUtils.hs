@@ -22,6 +22,7 @@ module Database.Persist.Monad.TestUtils
   , mockSelectSource
   , mockSelectKeys
   , mockWithRawQuery
+  , mockRawQuery
   ) where
 
 import Conduit ((.|))
@@ -168,7 +169,7 @@ mockSelectKeys f = withRecord @record $ \case
     in toAcquire <$> f filters opts
   _ -> Nothing
 
--- | A helper for defining a mocked database query for withRawQuery.
+-- | A helper for mocking a 'withRawQuery' call.
 --
 -- Usage:
 --
@@ -186,4 +187,24 @@ mockWithRawQuery f = MockQuery $ \case
   WithRawQuery sql vals conduit ->
     let outputRows rows = Conduit.runConduit $ Conduit.yieldMany rows .| conduit
     in outputRows <$> f sql vals
+  _ -> Nothing
+
+-- | A helper for mocking a 'rawQuery' or 'rawQueryRes' call.
+--
+-- Usage:
+--
+-- @
+-- mockRawQuery $ \\sql vals ->
+--   if sql == "SELECT id, name FROM person"
+--     then
+--       let row1 = [toPersistValue 1, toPersistValue \"Alice\"]
+--           row2 = [toPersistValue 2, toPersistValue \"Bob\"]
+--       in Just [row1, row2]
+--     else Nothing
+-- @
+mockRawQuery :: (Text -> [PersistValue] -> Maybe [[PersistValue]]) -> MockQuery
+mockRawQuery f = MockQuery $ \case
+  RawQueryRes sql vals ->
+    let toAcquire rows = Acquire.mkAcquire (pure $ Conduit.yieldMany rows) (\_ -> pure ())
+    in pure . toAcquire <$> f sql vals
   _ -> Nothing

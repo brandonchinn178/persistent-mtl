@@ -630,6 +630,20 @@ testPersistentAPI = testGroup "Persistent API"
           Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
 
       result @?= ["Alice", "Bob"]
+
+  , testCase "rawQueryRes" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        acquire <- rawQueryRes "SELECT name FROM person" []
+        Acquire.with acquire $ \conduit ->
+          runConduit $ conduit .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
+
+  , testCase "rawQuery" $ do
+      result <- runTestApp $ do
+        insertMany_ [person "Alice", person "Bob"]
+        runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+      result @?= ["Alice", "Bob"]
   ]
 
 {- Persistent helpers -}
