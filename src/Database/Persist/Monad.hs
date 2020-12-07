@@ -51,7 +51,13 @@ module Database.Persist.Monad
   -- * SqlQueryT monad transformer
   , SqlQueryT
   , runSqlQueryT
+  , runSqlQueryTWith
+  , SqlQueryEnv(..)
+  , mkSqlQueryEnv
+
+  -- * Transactions
   , SqlTransaction
+  , TransactionError(..)
 
   -- * Lifted functions
   , module Database.Persist.Monad.Shim
@@ -67,6 +73,8 @@ import Data.Pool (Pool)
 import Data.Pool.Acquire (poolToAcquire)
 import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
 import qualified GHC.TypeLits as GHC
+import UnliftIO.Concurrent (threadDelay)
+import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Database.Persist.Monad.Class
@@ -110,10 +118,45 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
 
+data TransactionError
+  = RetryLimitExceeded
+    -- ^ The retry limit was reached when retrying a transaction.
+  deriving (Show)
+
+instance Exception TransactionError
+
 {- SqlQueryT monad -}
 
 data SqlQueryEnv = SqlQueryEnv
   { backendPool :: Pool SqlBackend
+    -- ^ The pool for your persistent backend. Get this from 'withSqlitePool'
+    -- or the equivalent for your backend.
+
+  , retryIf     :: SomeException -> Bool
+    -- ^ Retry a transaction when an exception matches this predicate. Will
+    -- retry with an exponential backoff.
+    --
+    -- Defaults to always returning False (i.e. never retry)
+
+  , retryLimit  :: Int
+    -- ^ The number of times to retry, if 'retryIf' is satisfied.
+    --
+    -- Defaults to 10.
+  }
+
+-- | Build a SqlQueryEnv from the default.
+--
+-- Usage:
+--
+-- @
+-- let env = mkSqlQueryEnv pool $ \env -> env { retryIf = 10 }
+-- in runSqlQueryTWith env m
+-- @
+mkSqlQueryEnv :: Pool SqlBackend -> (SqlQueryEnv -> SqlQueryEnv) -> SqlQueryEnv
+mkSqlQueryEnv backendPool f = f SqlQueryEnv
+  { backendPool
+  , retryIf = const False
+  , retryLimit = 10
   }
 
 -- | The monad transformer that implements 'MonadSqlQuery'.
@@ -137,9 +180,16 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
 
   -- Start a new transaction and run the given 'SqlTransaction'
   withTransaction m = do
-    SqlQueryEnv{backendPool} <- SqlQueryT ask
+    SqlQueryEnv{..} <- SqlQueryT ask
     withAcquire (poolToAcquire backendPool) $ \conn ->
-      runSqlTransaction conn m
+      let filterRetry e = if retryIf e then Just e else Nothing
+          loop i = catchJust filterRetry (runSqlTransaction conn m) $ \_ ->
+            if i < retryLimit
+              then do
+                threadDelay $ 1000 * 2^i
+                loop $! i + 1
+              else throwIO RetryLimitExceeded
+      in loop 0
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
@@ -148,6 +198,9 @@ instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
 
 -- | Run the 'SqlQueryT' monad transformer with the given backend.
 runSqlQueryT :: Pool SqlBackend -> SqlQueryT m a -> m a
-runSqlQueryT backendPool = (`runReaderT` env) . unSqlQueryT
-  where
-    env = SqlQueryEnv{..}
+runSqlQueryT backendPool = runSqlQueryTWith $ mkSqlQueryEnv backendPool id
+
+-- | Run the 'SqlQueryT' monad transformer with the explicitly provided
+-- environment.
+runSqlQueryTWith :: SqlQueryEnv -> SqlQueryT m a -> m a
+runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT
