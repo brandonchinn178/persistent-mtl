@@ -54,12 +54,12 @@ newtype MyApp a = MyApp
 instance MonadUnliftIO MyApp where
   withRunInIO = wrappedWithRunInIO MyApp unMyApp
 
-getYoungPeople :: (MonadIO m, MonadSqlQuery m) => m [Entity Person]
+getYoungPeople :: MonadSqlQuery m => m [Entity Person]
 getYoungPeople = selectList [PersonAge <. 18] []
 
 main :: IO ()
-main = runStderrLoggingT $ withSqlitePool "db.sqlite" 5 $ \conn ->
-  liftIO $ runSqlQueryT conn $ unMyApp $ do
+main = runStderrLoggingT $ withSqlitePool "db.sqlite" 5 $ \pool ->
+  liftIO $ runSqlQueryT pool $ unMyApp $ do
     runMigration migrate
     insert_ $ Person "Alice" 25
     insert_ $ Person "Bob" 10
