@@ -6,6 +6,7 @@ in order to interpret how to run a
 'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
 @Database.Persist.Monad.Shim@.
 -}
+{-# LANGUAGE TypeFamilies #-}
 
 module Database.Persist.Monad.Class
   ( MonadSqlQuery(..)
@@ -22,61 +23,69 @@ import qualified Control.Monad.Trans.State.Lazy as State.Lazy
 import qualified Control.Monad.Trans.State.Strict as State.Strict
 import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
 import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
+import Data.Kind (Type)
 import Data.Typeable (Typeable)
 
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
 
 -- | The type-class for monads that can run persistent database queries.
 class Monad m => MonadSqlQuery m where
-  -- | The main function that interprets a SQL query operation and runs it
-  -- in the monadic context.
+  type TransactionM m :: Type -> Type
+
+  -- | Interpret the given SQL query operation.
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a
 
   -- | Run all queries in the given action using the same database connection.
-  --
-  -- You should make sure to not fork any threads within this action. This
-  -- will almost certainly cause problems.
-  -- https://github.com/brandonchinn178/persistent-mtl/issues/7
-  withTransaction :: m a -> m a
+  withTransaction :: TransactionM m a -> m a
 
 {- Instances for common monad transformers -}
 
 instance MonadSqlQuery m => MonadSqlQuery (Reader.ReaderT r m) where
+  type TransactionM (Reader.ReaderT r m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Reader.mapReaderT withTransaction
+  withTransaction = lift . withTransaction
 
 instance MonadSqlQuery m => MonadSqlQuery (Except.ExceptT e m) where
+  type TransactionM (Except.ExceptT e m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Except.mapExceptT withTransaction
+  withTransaction = lift . withTransaction
 
 instance MonadSqlQuery m => MonadSqlQuery (Identity.IdentityT m) where
+  type TransactionM (Identity.IdentityT m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Identity.mapIdentityT withTransaction
+  withTransaction = lift . withTransaction
 
 instance MonadSqlQuery m => MonadSqlQuery (Maybe.MaybeT m) where
+  type TransactionM (Maybe.MaybeT m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Maybe.mapMaybeT withTransaction
+  withTransaction = lift . withTransaction
 
 instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Lazy.RWST r w s m) where
+  type TransactionM (RWS.Lazy.RWST r w s m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = RWS.Lazy.mapRWST withTransaction
+  withTransaction = lift . withTransaction
 
 instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Strict.RWST r w s m) where
+  type TransactionM (RWS.Strict.RWST r w s m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = RWS.Strict.mapRWST withTransaction
+  withTransaction = lift . withTransaction
 
 instance MonadSqlQuery m => MonadSqlQuery (State.Lazy.StateT s m) where
+  type TransactionM (State.Lazy.StateT s m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = State.Lazy.mapStateT withTransaction
+  withTransaction = lift . withTransaction
 
 instance MonadSqlQuery m => MonadSqlQuery (State.Strict.StateT s m) where
+  type TransactionM (State.Strict.StateT s m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = State.Strict.mapStateT withTransaction
+  withTransaction = lift . withTransaction
 
 instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Lazy.WriterT w m) where
+  type TransactionM (Writer.Lazy.WriterT w m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Writer.Lazy.mapWriterT withTransaction
+  withTransaction = lift . withTransaction
 
 instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Strict.WriterT w m) where
+  type TransactionM (Writer.Strict.WriterT w m) = TransactionM m
   runQueryRep = lift . runQueryRep
-  withTransaction = Writer.Strict.mapWriterT withTransaction
+  withTransaction = lift . withTransaction
