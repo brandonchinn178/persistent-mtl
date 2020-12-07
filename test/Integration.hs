@@ -32,7 +32,7 @@ import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Tasty
 import Test.Tasty.HUnit
-import UnliftIO (MonadUnliftIO, liftIO)
+import UnliftIO (MonadIO, MonadUnliftIO, liftIO)
 import UnliftIO.Exception
     ( Exception
     , SomeException
@@ -57,6 +57,7 @@ tests = testGroup "Integration tests" $
 testsWithBackend :: BackendType -> TestTree
 testsWithBackend backendType = testGroup (show backendType)
   [ testWithTransaction backendType
+  , testComposability backendType
   , testPersistentAPI backendType
   ]
 
@@ -102,6 +103,45 @@ testWithTransaction backendType = testGroup "withTransaction"
 
       result @?= Left RetryLimitExceeded
   ]
+
+-- this should compile
+testComposability :: BackendType -> TestTree
+testComposability backendType = testCase "Operations can be composed" $ do
+  let onlySql :: MonadSqlQuery m => m ()
+      onlySql = do
+        _ <- getPeople
+        return ()
+
+      sqlAndRerunnableIO :: (MonadSqlQuery m, MonadRerunnableIO m) => m ()
+      sqlAndRerunnableIO = do
+        _ <- getPeopleNames
+        _ <- rerunnableIO $ newIORef True
+        return ()
+
+      onlyRerunnableIO :: MonadRerunnableIO m => m ()
+      onlyRerunnableIO = do
+        _ <- rerunnableIO $ newIORef True
+        return ()
+
+      arbitraryIO :: MonadIO m => m ()
+      arbitraryIO = do
+        _ <- liftIO $ newIORef True
+        return ()
+
+  -- everything should compose naturally by default
+  runTestApp backendType $ do
+    onlySql
+    sqlAndRerunnableIO
+    onlyRerunnableIO
+    arbitraryIO
+
+  -- in a transaction, you can compose everything except arbitrary IO
+  runTestApp backendType $ withTransaction $ do
+    onlySql
+    sqlAndRerunnableIO
+    onlyRerunnableIO
+    -- uncomment this to get compile error
+    -- arbitraryIO
 
 testPersistentAPI :: BackendType -> TestTree
 testPersistentAPI backendType = testGroup "Persistent API"
