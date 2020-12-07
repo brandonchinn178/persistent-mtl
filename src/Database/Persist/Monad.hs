@@ -2,9 +2,10 @@
 Module: Database.Persist.Monad
 
 Defines the 'SqlQueryT' monad transformer, which has a 'MonadSqlQuery' instance
-to execute @persistent@ database operations, and the `SqlTransaction` monad,
-which tracks transaction state to ensure @persistent@ database operations are
-run in a single transaction.
+to execute @persistent@ database operations. Also provides easy transaction
+management with 'withTransaction', which supports retrying with exponential
+backoff and restricts IO actions to only allow IO actions explicitly marked
+as rerunnable.
 
 Usage:
 
@@ -20,10 +21,15 @@ myFunction = do
   liftIO $ print (personList :: [Person])
 
   -- everything in here will run in a transaction
-  withTransaction $
+  withTransaction $ do
     selectFirst [PersonAge >. 30] [] >>= \\case
       Nothing -> insert_ $ Person { name = \"Claire\", age = Just 50 }
       Just (Entity key person) -> replace key person{ age = Just (age person - 10) }
+
+    -- liftIO doesn't work in here, since transactions can be retried.
+    -- Use rerunnableIO to run IO actions, after verifying that the IO action
+    -- can be rerun if the transaction needs to be retried.
+    rerunnableIO $ putStrLn "Transaction is finished!"
 
   -- some more business logic
 
@@ -118,6 +124,7 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
 
+-- | Errors that can occur within a SQL transaction.
 data TransactionError
   = RetryLimitExceeded
     -- ^ The retry limit was reached when retrying a transaction.
@@ -127,9 +134,14 @@ instance Exception TransactionError
 
 {- SqlQueryT monad -}
 
+-- | Environment to configure running 'SqlQueryT'.
+--
+-- For simple usage, you can just use 'runSqlQueryT', but for more advanced
+-- usage, including the ability to retry transactions, use 'mkSqlQueryEnv' with
+-- 'runSqlQueryTWith'.
 data SqlQueryEnv = SqlQueryEnv
   { backendPool :: Pool SqlBackend
-    -- ^ The pool for your persistent backend. Get this from 'withSqlitePool'
+    -- ^ The pool for your persistent backend. Get this from @withSqlitePool@
     -- or the equivalent for your backend.
 
   , retryIf     :: SomeException -> Bool
@@ -149,7 +161,7 @@ data SqlQueryEnv = SqlQueryEnv
 -- Usage:
 --
 -- @
--- let env = mkSqlQueryEnv pool $ \env -> env { retryIf = 10 }
+-- let env = mkSqlQueryEnv pool $ \\env -> env { retryIf = 10 }
 -- in runSqlQueryTWith env m
 -- @
 mkSqlQueryEnv :: Pool SqlBackend -> (SqlQueryEnv -> SqlQueryEnv) -> SqlQueryEnv

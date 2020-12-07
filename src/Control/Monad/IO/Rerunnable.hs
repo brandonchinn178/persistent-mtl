@@ -2,8 +2,8 @@
 Module: Control.Monad.IO.Rerunnable
 
 Defines the 'MonadRerunnableIO' type class that is functionally equivalent
-to 'MonadIO', but use of it requires the user to explicitly acknowledge that
-the given IO operation can be rerun.
+to 'Control.Monad.IO.Class.MonadIO', but use of it requires the user to
+explicitly acknowledge that the given IO operation can be rerun.
 -}
 
 module Control.Monad.IO.Rerunnable
@@ -23,12 +23,12 @@ import qualified Control.Monad.Trans.State.Strict as State.Strict
 import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
 import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 
--- | A copy of 'MonadIO' to explicitly allow only IO operations that are
--- rerunnable, e.g. in the context of a SQL transaction.
+-- | A copy of 'Control.Monad.IO.Class.MonadIO' to explicitly allow only IO
+-- operations that are rerunnable, e.g. in the context of a SQL transaction.
 class Monad m => MonadRerunnableIO m where
-  -- | Lift the given IO operation to 'm'.
+  -- | Lift the given IO operation to @m@.
   --
-  -- The given IO operation may be rerun, so use this function requires
+  -- The given IO operation may be rerun, so use of this function requires
   -- manually verifying that the given IO operation is rerunnable.
   rerunnableIO :: IO a -> m a
 
