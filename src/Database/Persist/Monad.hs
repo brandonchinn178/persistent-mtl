@@ -121,7 +121,7 @@ runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
 data TransactionError
   = RetryLimitExceeded
     -- ^ The retry limit was reached when retrying a transaction.
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance Exception TransactionError
 

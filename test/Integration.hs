@@ -93,6 +93,14 @@ testWithTransaction backendType = testGroup "withTransaction"
       case result of
         Right () -> return ()
         Left e -> error $ "Got unexpected error: " ++ show e
+
+  , testCase "throws error when retry hits limit" $ do
+      let setRetry env = env { retryIf = const True, retryLimit = 2 }
+
+      result <- try @_ @TransactionError @() $ runTestAppWith backendType setRetry $
+        withTransaction $ rerunnableIO $ throwString "retry me"
+
+      result @?= Left RetryLimitExceeded
   ]
 
 testPersistentAPI :: BackendType -> TestTree
