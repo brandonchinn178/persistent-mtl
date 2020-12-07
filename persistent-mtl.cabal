@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 23b70b22e78b3739cc334cf365c6827b4ae9db9b086d83e1542c81ae9d37ad53
+-- hash: 9c53e0610dea4ca814133d0596978b961b85fd54cb6df7a82eccb6d260824dde
 
 name:           persistent-mtl
-version:        0.1.0.1
+version:        0.2.0.0
 synopsis:       Monad transformer for the persistent API
 description:    A monad transformer and mtl-style type class for using the
                 persistent API directly in your monad transformer stack.
