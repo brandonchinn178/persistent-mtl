@@ -1,3 +1,7 @@
+# Unreleased
+
+* Add `rerunnableLift` for `SqlTransaction`
+
 # 0.2.0.0
 
 * Use a separate monad within `withTransaction` to prevent unsafe/arbitrary IO actions ([#7](https://github.com/brandonchinn178/persistent-mtl/issues/7), [#28](https://github.com/brandonchinn178/persistent-mtl/issues/28))
