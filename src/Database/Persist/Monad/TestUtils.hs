@@ -19,12 +19,16 @@ module Database.Persist.Monad.TestUtils
   , withRecord
   , mockQuery
   , MockQuery
+
   -- * Specialized helpers
   , mockSelectSource
   , mockSelectKeys
   , mockWithRawQuery
   , mockRawQuery
   , mockRawSql
+
+  -- * Re-exports
+  , SqlQueryRep(..)
   ) where
 
 import Conduit ((.|))
