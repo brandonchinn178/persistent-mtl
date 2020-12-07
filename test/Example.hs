@@ -53,6 +53,7 @@ import Database.Persist.TH
     )
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Database.Persist.Monad
 import TestUtils.DB (BackendType(..), withTestDB)
 
@@ -95,6 +96,7 @@ newtype TestApp a = TestApp
     , Applicative
     , Monad
     , MonadIO
+    , MonadRerunnableIO
     , MonadSqlQuery
     , MonadResource
     )

@@ -31,8 +31,9 @@ import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Tasty
 import Test.Tasty.HUnit
-import UnliftIO (Exception, MonadIO, MonadUnliftIO, liftIO, throwIO, try)
+import UnliftIO (Exception, MonadUnliftIO, liftIO, throwIO, try)
 
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad
 import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
@@ -780,7 +781,7 @@ catchTestError m = do
   liftIO $ result @?= Left TestError
 
 insertAndFail ::
-  ( MonadIO m
+  ( MonadRerunnableIO m
   , MonadSqlQuery m
   , PersistRecordBackend record SqlBackend
   , Typeable record
@@ -788,7 +789,7 @@ insertAndFail ::
   => record -> m ()
 insertAndFail record = do
   insert_ record
-  throwIO TestError
+  rerunnableIO $ throwIO TestError
 
 assertNotIn :: (Eq a, Show a) => a -> [a] -> Assertion
 assertNotIn a as = as @?= filter (/= a) as
