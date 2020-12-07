@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -31,7 +32,17 @@ import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Tasty
 import Test.Tasty.HUnit
-import UnliftIO (Exception, MonadUnliftIO, liftIO, throwIO, try)
+import UnliftIO (MonadUnliftIO, liftIO)
+import UnliftIO.Exception
+    ( Exception
+    , SomeException
+    , StringException(..)
+    , fromException
+    , throwIO
+    , throwString
+    , try
+    )
+import UnliftIO.IORef (atomicModifyIORef, newIORef)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad
@@ -63,6 +74,25 @@ testWithTransaction backendType = testGroup "withTransaction"
         catchTestError $ withTransaction $ insertAndFail $ person "Alice"
         result <- getPeopleNames
         liftIO $ result @?= []
+
+  , testCase "retries transactions" $ do
+      let retryIf e = case fromException e of
+            Just (StringException "retry me" _) -> True
+            _ -> False
+          setRetry env = env { retryIf, retryLimit = 5 }
+
+      counter <- newIORef (0 :: Int)
+
+      result <- try @_ @SomeException $ runTestAppWith backendType setRetry $
+        withTransaction $ rerunnableIO $ do
+          x <- atomicModifyIORef counter $ \x -> (x + 1, x)
+          if x > 2
+            then return ()
+            else throwString "retry me"
+
+      case result of
+        Right () -> return ()
+        Left e -> error $ "Got unexpected error: " ++ show e
   ]
 
 testPersistentAPI :: BackendType -> TestTree

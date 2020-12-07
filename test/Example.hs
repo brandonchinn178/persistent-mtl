@@ -17,6 +17,7 @@
 module Example
   ( TestApp
   , runTestApp
+  , runTestAppWith
 
     -- * Person
   , Person(..)
@@ -108,6 +109,14 @@ runTestApp :: BackendType -> TestApp a -> IO a
 runTestApp backendType m =
   withTestDB backendType $ \pool ->
     runResourceT . runSqlQueryT pool . unTestApp $ do
+      _ <- runMigrationSilent migration
+      m
+
+runTestAppWith :: BackendType -> (SqlQueryEnv -> SqlQueryEnv) -> TestApp a -> IO a
+runTestAppWith backendType f m =
+  withTestDB backendType $ \pool -> do
+    let env = mkSqlQueryEnv pool f
+    runResourceT . runSqlQueryTWith env . unTestApp $ do
       _ <- runMigrationSilent migration
       m
 
