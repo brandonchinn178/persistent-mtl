@@ -229,6 +229,59 @@ So what does `persistent-mtl` do differently?
 
 In summary, `persistent-mtl` takes all the good things about option 2, implements them out of the box (so you don't have to do it yourself), and makes your business logic functions composable with transactions behaving the way YOU want.
 
+### Easy transaction management
+
+Some databases will throw an error if two transactions conflict (e.g. [PostgreSQL](https://www.postgresql.org/docs/9.5/transaction-iso.html)). The client is expected to retry transactions if this error is thrown. `persistent` doesn't easily support this out of the box, but `persistent-mtl` does!
+
+```hs
+import Database.PostgreSQL.Simple.Errors (isSerializationError)
+
+main :: IO ()
+main = withPostgresqlPool "..." 5 $ \pool -> do
+  let env = mkSqlQueryEnv pool $ \env -> env
+        { retryIf = isSerializationError . fromException
+        , retryLimit = 100 -- defaults to 10
+        }
+
+  -- in any of the marked transactions below, if someone else is querying
+  -- the postgresql database at the same time with queries that conflict
+  -- with yours, your operations will automatically be retried
+  runSqlQueryTWith env $ do
+    -- transaction 1
+    insert_ $ ...
+
+    -- transaction 2
+    withTransaction $ do
+      insert_ $ ...
+
+      -- transaction 2.5: transaction-within-a-transaction is supported in PostgreSQL
+      withTransaction $ do
+        insert_ $ ...
+
+      insert_ $ ...
+
+    -- transaction 3
+    insert_ $ ...
+```
+
+Because of this built-in retry support, any IO actions inside `withTransaction` have to be explicitly marked with `rerunnableIO`. If you try to use a function with a `MonadIO m` constraint, you'll get a compile-time error!
+
+```
+.../Foo.hs:100:5: error:
+    • Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO
+    • In a stmt of a 'do' block: arbitraryIO
+      In the second argument of ‘($)’, namely
+        ‘withTransaction
+           $ do insert_ record1
+                arbitraryIO
+                insert_ record2’
+    |
+100 |     arbitraryIO
+    |     ^^^^^^^^^^^
+```
+
+Note that this **only** applies for transactions, so `MonadIO` and `MonadSqlQuery` constraints can still co-exist (for a function with IO actions that are not rerunnable) as long as the function is never called within `withTransaction`.
+
 ### Testing functions that use `persistent` operations
 
 Generally, I would recommend someone using `persistent` in their application to make a monad type class containing the API for their domain, like
