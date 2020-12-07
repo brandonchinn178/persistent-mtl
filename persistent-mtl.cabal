@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a6b1252a25af52e3ddd10e843b4818e0255c269dfbc6a399eb29e41093ef0408
+-- hash: 9c53e0610dea4ca814133d0596978b961b85fd54cb6df7a82eccb6d260824dde
 
 name:           persistent-mtl
-version:        0.1.0.1
+version:        0.2.0.0
 synopsis:       Monad transformer for the persistent API
 description:    A monad transformer and mtl-style type class for using the
                 persistent API directly in your monad transformer stack.
@@ -32,6 +32,7 @@ source-repository head
 
 library
   exposed-modules:
+      Control.Monad.IO.Rerunnable
       Database.Persist.Monad
       Database.Persist.Monad.Class
       Database.Persist.Monad.Shim
@@ -53,6 +54,7 @@ library
     , resourcet-pool >=0.1.0.0 && <0.2
     , text >=1.2.3.0 && <2
     , transformers >=0.5.2.0 && <0.6
+    , unliftio >=0.2.7.0 && <0.3
     , unliftio-core >=0.1.2.0 && <0.3
   default-language: Haskell2010
 

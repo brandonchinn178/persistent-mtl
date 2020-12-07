@@ -10,7 +10,6 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (SomeException, try)
 
-import Database.Persist.Monad
 import Database.Persist.Monad.TestUtils
 import Example
 

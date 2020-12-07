@@ -1,3 +1,10 @@
+# 0.2.0.0
+
+* Use a separate monad within `withTransaction` to prevent unsafe/arbitrary IO actions ([#7](https://github.com/brandonchinn178/persistent-mtl/issues/7), [#28](https://github.com/brandonchinn178/persistent-mtl/issues/28))
+* Add `MonadRerunnableIO` to support IO actions within `withTransaction` only if the IO action is determined to be rerunnable
+* Add built-in support for retrying transactions if a serialization error occurs
+* Remove `SqlQueryRep` as an export from `Database.Persist.Monad`. You shouldn't ever need it for normal usage. It is now re-exported by `Database.Persist.Monad.TestUtils`, since most of the usage of `SqlQueryRep` is in mocking queries. If you need it otherwise, you can import it directly from `Database.Persist.Monad.SqlQueryRep`.
+
 # 0.1.0.1
 
 Fix quickstart

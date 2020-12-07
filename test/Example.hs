@@ -17,6 +17,7 @@
 module Example
   ( TestApp
   , runTestApp
+  , runTestAppWith
 
     -- * Person
   , Person(..)
@@ -53,6 +54,7 @@ import Database.Persist.TH
     )
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Database.Persist.Monad
 import TestUtils.DB (BackendType(..), withTestDB)
 
@@ -95,6 +97,7 @@ newtype TestApp a = TestApp
     , Applicative
     , Monad
     , MonadIO
+    , MonadRerunnableIO
     , MonadSqlQuery
     , MonadResource
     )
@@ -106,6 +109,14 @@ runTestApp :: BackendType -> TestApp a -> IO a
 runTestApp backendType m =
   withTestDB backendType $ \pool ->
     runResourceT . runSqlQueryT pool . unTestApp $ do
+      _ <- runMigrationSilent migration
+      m
+
+runTestAppWith :: BackendType -> (SqlQueryEnv -> SqlQueryEnv) -> TestApp a -> IO a
+runTestAppWith backendType f m =
+  withTestDB backendType $ \pool -> do
+    let env = mkSqlQueryEnv pool f
+    runResourceT . runSqlQueryTWith env . unTestApp $ do
       _ <- runMigrationSilent migration
       m
 

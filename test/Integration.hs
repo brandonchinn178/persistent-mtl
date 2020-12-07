@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -31,8 +32,19 @@ import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Tasty
 import Test.Tasty.HUnit
-import UnliftIO (Exception, MonadIO, MonadUnliftIO, liftIO, throwIO, try)
+import UnliftIO (MonadIO, MonadUnliftIO, liftIO)
+import UnliftIO.Exception
+    ( Exception
+    , SomeException
+    , StringException(..)
+    , fromException
+    , throwIO
+    , throwString
+    , try
+    )
+import UnliftIO.IORef (atomicModifyIORef, newIORef)
 
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad
 import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
@@ -45,6 +57,7 @@ tests = testGroup "Integration tests" $
 testsWithBackend :: BackendType -> TestTree
 testsWithBackend backendType = testGroup (show backendType)
   [ testWithTransaction backendType
+  , testComposability backendType
   , testPersistentAPI backendType
   ]
 
@@ -62,7 +75,73 @@ testWithTransaction backendType = testGroup "withTransaction"
         catchTestError $ withTransaction $ insertAndFail $ person "Alice"
         result <- getPeopleNames
         liftIO $ result @?= []
+
+  , testCase "retries transactions" $ do
+      let retryIf e = case fromException e of
+            Just (StringException "retry me" _) -> True
+            _ -> False
+          setRetry env = env { retryIf, retryLimit = 5 }
+
+      counter <- newIORef (0 :: Int)
+
+      result <- try @_ @SomeException $ runTestAppWith backendType setRetry $
+        withTransaction $ rerunnableIO $ do
+          x <- atomicModifyIORef counter $ \x -> (x + 1, x)
+          if x > 2
+            then return ()
+            else throwString "retry me"
+
+      case result of
+        Right () -> return ()
+        Left e -> error $ "Got unexpected error: " ++ show e
+
+  , testCase "throws error when retry hits limit" $ do
+      let setRetry env = env { retryIf = const True, retryLimit = 2 }
+
+      result <- try @_ @TransactionError @() $ runTestAppWith backendType setRetry $
+        withTransaction $ rerunnableIO $ throwString "retry me"
+
+      result @?= Left RetryLimitExceeded
   ]
+
+-- this should compile
+testComposability :: BackendType -> TestTree
+testComposability backendType = testCase "Operations can be composed" $ do
+  let onlySql :: MonadSqlQuery m => m ()
+      onlySql = do
+        _ <- getPeople
+        return ()
+
+      sqlAndRerunnableIO :: (MonadSqlQuery m, MonadRerunnableIO m) => m ()
+      sqlAndRerunnableIO = do
+        _ <- getPeopleNames
+        _ <- rerunnableIO $ newIORef True
+        return ()
+
+      onlyRerunnableIO :: MonadRerunnableIO m => m ()
+      onlyRerunnableIO = do
+        _ <- rerunnableIO $ newIORef True
+        return ()
+
+      arbitraryIO :: MonadIO m => m ()
+      arbitraryIO = do
+        _ <- liftIO $ newIORef True
+        return ()
+
+  -- everything should compose naturally by default
+  runTestApp backendType $ do
+    onlySql
+    sqlAndRerunnableIO
+    onlyRerunnableIO
+    arbitraryIO
+
+  -- in a transaction, you can compose everything except arbitrary IO
+  runTestApp backendType $ withTransaction $ do
+    onlySql
+    sqlAndRerunnableIO
+    onlyRerunnableIO
+    -- uncomment this to get compile error
+    -- arbitraryIO
 
 testPersistentAPI :: BackendType -> TestTree
 testPersistentAPI backendType = testGroup "Persistent API"
@@ -780,7 +859,7 @@ catchTestError m = do
   liftIO $ result @?= Left TestError
 
 insertAndFail ::
-  ( MonadIO m
+  ( MonadRerunnableIO m
   , MonadSqlQuery m
   , PersistRecordBackend record SqlBackend
   , Typeable record
@@ -788,7 +867,7 @@ insertAndFail ::
   => record -> m ()
 insertAndFail record = do
   insert_ record
-  throwIO TestError
+  rerunnableIO $ throwIO TestError
 
 assertNotIn :: (Eq a, Show a) => a -> [a] -> Assertion
 assertNotIn a as = as @?= filter (/= a) as

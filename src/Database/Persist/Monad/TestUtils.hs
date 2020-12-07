@@ -11,6 +11,7 @@ Defines 'MockSqlQueryT', which one can use in tests in order to mock out
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Database.Persist.Monad.TestUtils
   ( MockSqlQueryT
@@ -18,12 +19,16 @@ module Database.Persist.Monad.TestUtils
   , withRecord
   , mockQuery
   , MockQuery
+
   -- * Specialized helpers
   , mockSelectSource
   , mockSelectKeys
   , mockWithRawQuery
   , mockRawQuery
   , mockRawSql
+
+  -- * Re-exports
+  , SqlQueryRep(..)
   ) where
 
 import Conduit ((.|))
@@ -85,6 +90,8 @@ runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
 runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
 
 instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
+  type TransactionM (MockSqlQueryT m) = MockSqlQueryT m
+
   runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
     maybe (error $ "Could not find mock for query: " ++ show rep) liftIO

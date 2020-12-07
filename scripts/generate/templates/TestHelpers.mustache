@@ -12,9 +12,9 @@ import Data.Int (Int64)
 import Data.Map (Map)
 import Data.Text (Text)
 import Data.Void (Void)
-import Database.Persist.Sql hiding (pattern Update)
+import Database.Persist.Sql (CautiousMigration, Entity, Key, PersistValue, Sql)
 
-import Database.Persist.Monad
+import Database.Persist.Monad.TestUtils (SqlQueryRep(..))
 import Example
 
 {-# ANN module "HLint: ignore" #-}
