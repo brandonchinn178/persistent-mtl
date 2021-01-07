@@ -62,6 +62,7 @@ module Database.Persist.Monad
 
   -- * Transactions
   , SqlTransaction
+  , rerunnableLift
   , TransactionError(..)
 
   -- * Lifted functions
@@ -81,7 +82,7 @@ import qualified GHC.TypeLits as GHC
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
 
-import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.Shim
 import Database.Persist.Monad.SqlQueryRep
@@ -122,6 +123,12 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
+
+-- | 'SqlTransaction' does not have an instance for 'MonadTrans' to prevent
+-- accidental lifting of unsafe monadic actions. Use this function to explicitly
+-- mark a monadic action as rerunnable.
+rerunnableLift :: MonadUnliftIO m => m a -> SqlTransaction m a
+rerunnableLift m = SqlTransaction $ lift $ withRunInIO $ \runInIO -> rerunnableIO $ runInIO m
 
 -- | Errors that can occur within a SQL transaction.
 data TransactionError
