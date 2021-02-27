@@ -101,13 +101,13 @@ jobs:
           environment:
             STYLISH_VERSION: 0.12.2.0
       - run:
-          name: Install Python
+          name: Install pre-commit
           command: |
             sudo apt-get update
-            sudo apt-get install -y python
-      - run:
-          name: Install pre-commit
-          command: curl https://pre-commit.com/install-local.py | python -
+            sudo apt-get install -y python3-venv
+            python3 -m venv ~/.venv
+            ~/.venv/bin/pip install pre-commit
+            sudo ln -sf ~/.venv/bin/pre-commit /usr/local/bin/
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files -v --show-diff-on-failure

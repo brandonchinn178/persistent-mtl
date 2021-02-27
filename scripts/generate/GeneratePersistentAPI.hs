@@ -12,7 +12,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 import Control.Monad (forM_)
 import Data.Aeson (FromJSON(..), withObject, (.!=), (.:), (.:?))
@@ -98,14 +97,15 @@ instance ToMustache FunctionContext where
     , "sqlQueryRepRecord" ~> sqlQueryRepRecord
     , "recordTypeVars" ~> recordTypeVars
     , "result" ~> if hasConduitFrom then result else "m " <> result
-    , "withCondition" ~> \stree -> pure @Mustache.SubM $
+    , "withCondition" ~> Mustache.overText (\t ->
         case condition of
-          Nothing -> stree
-          Just cond -> concat
-            [ [Mustache.TextBlock $ "#if " <> cond <>"\n"]
-            , stree
-            , [Mustache.TextBlock "#endif\n"]
+          Nothing -> t
+          Just cond -> Text.concat
+            [ "#if " <> cond <> "\n"
+            , t
+            , "#endif\n"
             ]
+      )
     , "conduitFrom?" ~> hasConduitFrom
     , "conduitFrom" ~> conduitFrom
 
