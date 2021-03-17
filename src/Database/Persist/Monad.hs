@@ -74,13 +74,12 @@ import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Resource (MonadResource)
-import Data.Acquire (withAcquire)
 import Data.Pool (Pool)
-import Data.Pool.Acquire (poolToAcquire)
 import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
 import qualified GHC.TypeLits as GHC
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
+import UnliftIO.Pool (withResource)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad.Class
@@ -199,7 +198,7 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   -- Start a new transaction and run the given 'SqlTransaction'
   withTransaction m = do
     SqlQueryEnv{..} <- SqlQueryT ask
-    withAcquire (poolToAcquire backendPool) $ \conn ->
+    withResource backendPool $ \conn ->
       let filterRetry e = if retryIf e then Just e else Nothing
           loop i = catchJust filterRetry (runSqlTransaction conn m) $ \_ ->
             if i < retryLimit
