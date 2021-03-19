@@ -1,6 +1,9 @@
 # Unreleased
 
+# 0.2.1.0
+
 * Add `rerunnableLift` for `SqlTransaction`
+* Use `unliftio-pool` instead of `resourcet-pool`, which has better async exeception safety
 
 # 0.2.0.0
 
