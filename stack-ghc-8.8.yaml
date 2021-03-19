@@ -1,7 +1,4 @@
-resolver: lts-16.23
-
-extra-deps:
-  - resourcet-pool-0.1.0.0
+resolver: lts-16.31
 
 ghc-options:
   "$locals": -Werror

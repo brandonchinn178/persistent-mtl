@@ -1,8 +1,8 @@
 resolver: lts-11.22
 
 extra-deps:
-  - resourcet-pool-0.1.0.0
   - unliftio-core-0.1.2.0
+  - unliftio-pool-0.2.0.0
 
 ghc-options:
   "$locals": -Werror
