@@ -21,6 +21,7 @@ extra-source-files:
     README.md
     test/goldens/persistent-2.10/sqlqueryrep_show_representation.golden
     test/goldens/persistent-2.11/sqlqueryrep_show_representation.golden
+    test/goldens/persistent-2.12/sqlqueryrep_show_representation.golden
     test/goldens/persistent-2.8/sqlqueryrep_show_representation.golden
     test/goldens/persistent-2.9/sqlqueryrep_show_representation.golden
 
