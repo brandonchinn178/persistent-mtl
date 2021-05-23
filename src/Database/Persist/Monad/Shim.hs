@@ -360,17 +360,21 @@ updateWhereCount
   => [Filter record] -> [Update record] -> m Int64
 updateWhereCount a1 a2 = runQueryRep $ UpdateWhereCount a1 a2
 
+#if !MIN_VERSION_persistent(2,13,0)
 -- | The lifted version of 'Database.Persist.Sql.deleteCascade'
 deleteCascade
   :: (DeleteCascade record SqlBackend, Typeable record, MonadSqlQuery m)
   => Key record -> m ()
 deleteCascade a1 = runQueryRep $ DeleteCascade a1
+#endif
 
+#if !MIN_VERSION_persistent(2,13,0)
 -- | The lifted version of 'Database.Persist.Sql.deleteCascadeWhere'
 deleteCascadeWhere
   :: (DeleteCascade record SqlBackend, Typeable record, MonadSqlQuery m)
   => [Filter record] -> m ()
 deleteCascadeWhere a1 = runQueryRep $ DeleteCascadeWhere a1
+#endif
 
 -- | The lifted version of 'Database.Persist.Sql.parseMigration'
 parseMigration

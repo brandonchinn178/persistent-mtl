@@ -313,15 +313,19 @@ data SqlQueryRep record a where
     :: (PersistRecordBackend record SqlBackend)
     => [Filter record] -> [Update record] -> SqlQueryRep record Int64
 
+#if !MIN_VERSION_persistent(2,13,0)
   -- | Constructor corresponding to 'Persist.deleteCascade'
   DeleteCascade
     :: (DeleteCascade record SqlBackend)
     => Key record -> SqlQueryRep record ()
+#endif
 
+#if !MIN_VERSION_persistent(2,13,0)
   -- | Constructor corresponding to 'Persist.deleteCascadeWhere'
   DeleteCascadeWhere
     :: (DeleteCascade record SqlBackend)
     => [Filter record] -> SqlQueryRep record ()
+#endif
 
   -- | Constructor corresponding to 'Persist.parseMigration'
   ParseMigration
@@ -507,8 +511,12 @@ instance Typeable record => Show (SqlQueryRep record a) where
     DeleteWhere{} -> "DeleteWhere{..}" ++ record
     DeleteWhereCount{} -> "DeleteWhereCount{..}" ++ record
     UpdateWhereCount{} -> "UpdateWhereCount{..}" ++ record
+#if !MIN_VERSION_persistent(2,13,0)
     DeleteCascade{} -> "DeleteCascade{..}" ++ record
+#endif
+#if !MIN_VERSION_persistent(2,13,0)
     DeleteCascadeWhere{} -> "DeleteCascadeWhere{..}" ++ record
+#endif
     ParseMigration{} -> "ParseMigration{..}" ++ record
     ParseMigration'{} -> "ParseMigration'{..}" ++ record
     PrintMigration{} -> "PrintMigration{..}" ++ record
@@ -619,8 +627,12 @@ runSqlQueryRep = \case
   DeleteWhere a1 -> Persist.deleteWhere a1
   DeleteWhereCount a1 -> Persist.deleteWhereCount a1
   UpdateWhereCount a1 a2 -> Persist.updateWhereCount a1 a2
+#if !MIN_VERSION_persistent(2,13,0)
   DeleteCascade a1 -> Persist.deleteCascade a1
+#endif
+#if !MIN_VERSION_persistent(2,13,0)
   DeleteCascadeWhere a1 -> Persist.deleteCascadeWhere a1
+#endif
   ParseMigration a1 -> Persist.parseMigration a1
   ParseMigration' a1 -> Persist.parseMigration' a1
   PrintMigration a1 -> Persist.printMigration a1

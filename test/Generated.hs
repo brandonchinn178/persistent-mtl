@@ -90,8 +90,12 @@ allSqlQueryRepShowRepresentations =
   , show (DeleteWhere undefined :: SqlQueryRep Person ())
   , show (DeleteWhereCount undefined :: SqlQueryRep Person Int64)
   , show (UpdateWhereCount undefined undefined :: SqlQueryRep Person Int64)
+#if !MIN_VERSION_persistent(2,13,0)
   , show (DeleteCascade undefined :: SqlQueryRep Person ())
+#endif
+#if !MIN_VERSION_persistent(2,13,0)
   , show (DeleteCascadeWhere undefined :: SqlQueryRep Person ())
+#endif
   , show (ParseMigration undefined :: SqlQueryRep Void (Either [Text] CautiousMigration))
   , show (ParseMigration' undefined :: SqlQueryRep Void CautiousMigration)
   , show (PrintMigration undefined :: SqlQueryRep Void ())
