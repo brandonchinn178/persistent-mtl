@@ -1,10 +1,8 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 1c982d6beda7cf991f9c302b1cbcb030441f7956de96f1d4080e3776fb192b33
 
 name:           persistent-mtl
 version:        0.2.1.0
