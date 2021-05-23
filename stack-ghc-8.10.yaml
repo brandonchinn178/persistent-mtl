@@ -1,4 +1,10 @@
-resolver: lts-17.6
+resolver: nightly-2021-05-20
+
+extra-deps:
+- persistent-2.12.0.1
+- persistent-postgresql-2.12.0.0
+- persistent-sqlite-2.12.0.0
+- persistent-template-2.12.0.0
 
 ghc-options:
   "$locals": -Werror
