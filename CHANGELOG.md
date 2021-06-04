@@ -1,5 +1,9 @@
 # Unreleased
 
+# 0.2.2.0
+
+* Fix for persistent 2.13
+
 # 0.2.1.0
 
 * Add `rerunnableLift` for `SqlTransaction`
