@@ -416,6 +416,7 @@
 # DeleteCascade
 
 - name: deleteCascade
+  condition: '!MIN_VERSION_persistent(2,13,0)'
   constraints:
     - 'DeleteCascade record SqlBackend'
   args:
@@ -423,6 +424,7 @@
   result: '()'
 
 - name: deleteCascadeWhere
+  condition: '!MIN_VERSION_persistent(2,13,0)'
   constraints:
     - 'DeleteCascade record SqlBackend'
   args:

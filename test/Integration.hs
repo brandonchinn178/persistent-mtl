@@ -539,6 +539,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
       rowsDeleted @?= 1
       names @?= ["Bob"]
 
+#if !MIN_VERSION_persistent(2,13,0)
   , testCase "deleteCascade" $ do
       (people, posts) <- runTestApp backendType $ do
         aliceKey <- insert $ person "Alice"
@@ -568,6 +569,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
         return (people, posts)
       people @?= ["Bob"]
       posts @?= ["Post #2"]
+#endif
 
   , testCase "parseMigration" $ do
       result <- runTestApp backendType $ do

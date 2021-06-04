@@ -45,13 +45,10 @@ import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
 import Database.Persist.Sql
     (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
-    ( mkDeleteCascade
-    , mkMigrate
-    , mkPersist
-    , persistLowerCase
-    , share
-    , sqlSettings
-    )
+    (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
+#if !MIN_VERSION_persistent(2,13,0)
+import qualified Database.Persist.TH
+#endif
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
@@ -60,21 +57,28 @@ import TestUtils.DB (BackendType(..), withTestDB)
 
 share
   [ mkPersist sqlSettings
-  , mkDeleteCascade sqlSettings
+#if !MIN_VERSION_persistent(2,13,0)
+  , Database.Persist.TH.mkDeleteCascade sqlSettings
+#endif
   , mkMigrate "migration"
   ]
   [persistLowerCase|
 Person
-  name String
-  age Int
+  name          String
+  age           Int
   removedColumn String SafeToRemove
   UniqueName name
   deriving Show Eq
 
 Post
-  title String
+  title  String
+#if MIN_VERSION_persistent(2,13,0)
   author PersonId
   editor PersonId Maybe
+#else
+  author PersonId       OnDeleteCascade
+  editor PersonId Maybe OnDeleteCascade
+#endif
   deriving Show Eq
 |]
 

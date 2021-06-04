@@ -455,6 +455,7 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= 10
 
+#if !MIN_VERSION_persistent(2,13,0)
   , testCase "deleteCascade" $ do
       result <- runMockSqlQueryT (deleteCascade @Person 1)
         [ withRecord @Person $ \case
@@ -470,6 +471,7 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= ()
+#endif
 
   , testCase "getFieldName" $ do
       result <- runMockSqlQueryT (getFieldName PersonName)
