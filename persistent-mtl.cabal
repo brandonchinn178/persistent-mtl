@@ -69,6 +69,7 @@ test-suite persistent-mtl-test
       MockSqlQueryT
       SqlQueryRepTest
       TestUtils.DB
+      TestUtils.Esqueleto
       TestUtils.Match
       Paths_persistent_mtl
   hs-source-dirs:
@@ -79,6 +80,7 @@ test-suite persistent-mtl-test
     , bytestring
     , conduit
     , containers
+    , esqueleto
     , monad-logger
     , persistent
     , persistent-mtl
