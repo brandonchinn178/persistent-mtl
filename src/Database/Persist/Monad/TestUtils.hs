@@ -104,7 +104,7 @@ instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
 -- | A mocked query to use in 'runMockSqlQueryT'.
 --
 -- Use 'withRecord' or another helper to create a 'MockQuery'.
-data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe (IO a))
+data MockQuery = MockQuery (forall record a. (Typeable record, Typeable a) => SqlQueryRep record a -> Maybe (IO a))
 
 -- | A helper for defining a mocked database query against a specific @record@
 -- type. Designed to be used with TypeApplications.
@@ -240,3 +240,16 @@ mockRawSql f = MockQuery $ \case
     let fromRow = either (error . Text.unpack) id . rawSqlProcessRow
     in pure . map fromRow <$> f sql vals
   _ -> Nothing
+
+-- | A helper for mocking a 'Database.Persist.Monad.Shim.unsafeLiftSql' call.
+--
+-- Usage:
+--
+-- @
+-- mockUnsafeLiftSql "esqueleto-select" $ return ([] :: [Entity Person])
+-- @
+mockUnsafeLiftSql :: forall a. Typeable a => Text -> IO a -> MockQuery
+mockUnsafeLiftSql label action = MockQuery $ \(rep :: SqlQueryRep record b) ->
+  case (rep, eqT @a @b) of
+    (UnsafeLiftSql l _, Just Refl) | label == l -> Just action
+    _ -> Nothing

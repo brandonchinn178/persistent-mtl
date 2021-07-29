@@ -23,6 +23,7 @@ tests :: TestTree
 tests = testGroup "Mocked tests"
   [ testWithTransaction
   , testPersistentAPI
+  , testInterop
   ]
 
 testWithTransaction :: TestTree
@@ -545,4 +546,15 @@ testPersistentAPI = testGroup "Persistent API"
         [ mockRawSql $ \_ _ -> Just $ map ((:[]) . toPersistValue) names
         ]
       map unSingle result @?= names
+  ]
+
+testInterop :: TestTree
+testInterop = testGroup "Interop with third-party Persistent libraries"
+  [ testCase "unsafeLiftSql" $ do
+      let alice = person "Alice"
+      result <- runMockSqlQueryT
+        (esqueletoSelect $ E.from $ \p -> return p)
+        [ mockUnsafeLiftSql "esqueleto-select" $ return [alice]
+        ]
+      result @?= [alice]
   ]

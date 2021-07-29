@@ -33,7 +33,7 @@ class Monad m => MonadSqlQuery m where
   type TransactionM m :: Type -> Type
 
   -- | Interpret the given SQL query operation.
-  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
+  runQueryRep :: (Typeable record, Typeable a) => SqlQueryRep record a -> m a
 
   -- | Run all queries in the given action using the same database connection.
   withTransaction :: TransactionM m a -> m a
