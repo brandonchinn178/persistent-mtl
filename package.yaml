@@ -1,5 +1,5 @@
 name: persistent-mtl
-version: 0.2.2.0
+version: 0.3.0.0
 maintainer: Brandon Chinn <brandonchinn178@gmail.com>
 synopsis: Monad transformer for the persistent API
 description: |
@@ -41,6 +41,7 @@ tests:
       - bytestring
       - conduit
       - containers
+      - esqueleto
       - monad-logger
       - persistent
       - persistent-mtl

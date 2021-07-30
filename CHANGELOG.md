@@ -1,5 +1,9 @@
 # Unreleased
 
+# 0.3.0.0
+
+* Add `unsafeLiftSql` ([#38](https://github.com/brandonchinn178/persistent-mtl/pull/38))
+
 # 0.2.2.0
 
 * Fix for persistent 2.13

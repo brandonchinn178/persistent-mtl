@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           persistent-mtl
-version:        0.2.2.0
+version:        0.3.0.0
 synopsis:       Monad transformer for the persistent API
 description:    A monad transformer and mtl-style type class for using the
                 persistent API directly in your monad transformer stack.
@@ -69,6 +69,7 @@ test-suite persistent-mtl-test
       MockSqlQueryT
       SqlQueryRepTest
       TestUtils.DB
+      TestUtils.Esqueleto
       TestUtils.Match
       Paths_persistent_mtl
   hs-source-dirs:
@@ -79,6 +80,7 @@ test-suite persistent-mtl-test
     , bytestring
     , conduit
     , containers
+    , esqueleto
     , monad-logger
     , persistent
     , persistent-mtl
