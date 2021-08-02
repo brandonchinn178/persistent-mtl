@@ -69,7 +69,7 @@ module Database.Persist.Monad
   , module Database.Persist.Monad.Shim
   ) where
 
-import Control.Monad.Catch (MonadThrow, MonadCatch, MonadMask)
+import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
