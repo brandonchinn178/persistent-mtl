@@ -74,9 +74,11 @@ import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Resource (MonadResource)
+import Control.Monad.Catch (MonadThrow(..), MonadCatch(..), MonadMask(..), ExitCase(..))
 import Data.Pool (Pool)
 import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
 import qualified GHC.TypeLits as GHC
+import qualified UnliftIO
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
 import UnliftIO.Pool (withResource)
@@ -210,6 +212,23 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
+
+instance MonadThrow m => MonadThrow (SqlQueryT m) where
+    throwM = lift . throwM
+
+instance (MonadUnliftIO m, MonadCatch m) => MonadCatch (SqlQueryT m) where
+    catch  = UnliftIO.catch
+
+instance (MonadUnliftIO m, MonadMask m) => MonadMask (SqlQueryT m) where
+    mask = UnliftIO.mask
+    uninterruptibleMask = UnliftIO.uninterruptibleMask
+    generalBracket acquire release use = mask $ \unmasked -> do
+        resource <- acquire
+        b <- unmasked (use resource) `catch` \e -> do
+            _ <- release resource (ExitCaseException e)
+            throwM e
+        c <- release resource (ExitCaseSuccess b)
+        return (b, c)
 
 {- Running SqlQueryT -}
 
