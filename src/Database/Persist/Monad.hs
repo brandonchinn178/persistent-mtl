@@ -38,8 +38,10 @@ myFunction = do
 -}
 
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -74,6 +76,7 @@ import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
 import Control.Monad.Reader (ReaderT(..), mapReaderT)
+import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Resource (MonadResource)
 import Data.Pool (Pool)
@@ -218,6 +221,10 @@ instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
 
 mapSqlQueryT :: (m a -> n b) -> SqlQueryT m a -> SqlQueryT n b
 mapSqlQueryT f = SqlQueryT . mapReaderT f . unSqlQueryT
+
+instance MonadReader r m => MonadReader r (SqlQueryT m) where
+    ask = lift ask
+    local = mapSqlQueryT . local
 
 {- Running SqlQueryT -}
 
