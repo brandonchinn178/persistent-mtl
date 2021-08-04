@@ -55,6 +55,7 @@ module Database.Persist.Monad
 
   -- * SqlQueryT monad transformer
   , SqlQueryT
+  , mapSqlQueryT
   , runSqlQueryT
   , runSqlQueryTWith
   , SqlQueryEnv(..)
@@ -72,7 +73,7 @@ module Database.Persist.Monad
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
-import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Reader (ReaderT(..), mapReaderT)
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Resource (MonadResource)
 import Data.Pool (Pool)
@@ -214,6 +215,9 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
+
+mapSqlQueryT :: (m a -> n b) -> SqlQueryT m a -> SqlQueryT n b
+mapSqlQueryT f = SqlQueryT . mapReaderT f . unSqlQueryT
 
 {- Running SqlQueryT -}
 
