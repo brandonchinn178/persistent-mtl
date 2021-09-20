@@ -83,6 +83,7 @@ test-suite persistent-mtl-test
     , conduit
     , containers
     , esqueleto
+    , explainable-predicates
     , monad-logger
     , persistent
     , persistent-mtl
