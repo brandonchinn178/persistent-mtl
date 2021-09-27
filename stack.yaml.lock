@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: explainable-predicates-0.1.0.0@sha256:f15cff6d6cb711072cc103c7001d28715f7a1371aa6e61cd658e4488b1c974d1,2391
+    hackage: explainable-predicates-0.1.2.0@sha256:f50494313c1a303271fff01c3e858b7ac364521abb879898b36a10e3b7b678ab,3749
     pantry-tree:
-      size: 677
-      sha256: c0c28c41e7acc2f80a162a2b162b7ead52c2fbf537e6276f08a69e8d68f8f508
+      size: 818
+      sha256: b7423cfba1171b8c2a500e337b66eb40bbb5d4a6a99e6ce6463d637fe118ebe0
   original:
-    hackage: explainable-predicates-0.1.0.0
+    hackage: explainable-predicates-0.1.2.0
 - completed:
     hackage: syb-0.7.2.1@sha256:bf42655a213402215299e435c52f799e76cbec0b984cd7153d6b9af8a1c0803f,3815
     pantry-tree:
