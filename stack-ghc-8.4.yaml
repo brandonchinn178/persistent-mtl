@@ -1,8 +1,0 @@
-resolver: lts-12.26
-
-extra-deps:
-  - unliftio-pool-0.2.1.0
-  - esqueleto-3.0.0
-
-ghc-options:
-  "$locals": -Werror

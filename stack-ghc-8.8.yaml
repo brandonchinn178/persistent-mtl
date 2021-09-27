@@ -1,4 +1,12 @@
 resolver: lts-16.31
 
+extra-deps:
+  - explainable-predicates-0.1.2.0
+  - syb-0.7.2.1
+
+flags:
+  explainable-predicates:
+    regex: false
+
 ghc-options:
   "$locals": -Werror

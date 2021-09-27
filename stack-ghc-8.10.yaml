@@ -2,6 +2,11 @@ resolver: lts-18.4
 
 extra-deps:
 - persistent-postgresql-2.13.0.2
+- explainable-predicates-0.1.2.0
+
+flags:
+  explainable-predicates:
+    regex: false
 
 ghc-options:
   "$locals": -Werror

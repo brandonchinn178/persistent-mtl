@@ -3,7 +3,21 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: explainable-predicates-0.1.2.0@sha256:f50494313c1a303271fff01c3e858b7ac364521abb879898b36a10e3b7b678ab,3749
+    pantry-tree:
+      size: 818
+      sha256: b7423cfba1171b8c2a500e337b66eb40bbb5d4a6a99e6ce6463d637fe118ebe0
+  original:
+    hackage: explainable-predicates-0.1.2.0
+- completed:
+    hackage: syb-0.7.2.1@sha256:bf42655a213402215299e435c52f799e76cbec0b984cd7153d6b9af8a1c0803f,3815
+    pantry-tree:
+      size: 3396
+      sha256: 3ee55cc33d69da2953e7093f99199fbc0bfa9d90dccd19cac101d09befa5bbb3
+  original:
+    hackage: syb-0.7.2.1
 snapshots:
 - completed:
     size: 534126

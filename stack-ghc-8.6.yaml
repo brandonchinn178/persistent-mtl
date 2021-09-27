@@ -2,6 +2,12 @@ resolver: lts-14.27
 
 extra-deps:
   - esqueleto-3.0.0
+  - explainable-predicates-0.1.2.0
+  - syb-0.7.2.1
+
+flags:
+  explainable-predicates:
+    regex: false
 
 ghc-options:
   "$locals": -Werror

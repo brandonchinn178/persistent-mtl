@@ -35,6 +35,8 @@ import Database.Persist.Sql
 #if MIN_VERSION_persistent(2,9,0)
 import Database.Persist.Sql (IsolationLevel(..))
 #endif
+import Test.Predicates (anything, elemsAre, eq, right)
+import Test.Predicates.HUnit ((@?~))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (MonadIO, MonadUnliftIO, liftIO)
@@ -54,7 +56,6 @@ import Database.Persist.Monad
 import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
 import TestUtils.Esqueleto (esqueletoSelect)
-import TestUtils.Match (Match(..), (@?~))
 
 tests :: TestTree
 tests = testGroup "Integration tests" $
@@ -585,7 +586,7 @@ testPersistentAPI backendType = testGroup "Persistent API"
 
       let sql = case backendType of
             Sqlite ->
-              [ Match
+              [ eq
                   ( False
                   , Text.concat
                       [ "CREATE TEMP TABLE \"person_backup\"("
@@ -595,17 +596,17 @@ testPersistentAPI backendType = testGroup "Persistent API"
                       , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
                       ]
                   )
-              , Anything
-              , Match (True, "DROP TABLE \"person\"")
-              , Anything
-              , Anything
-              , Match (False, "DROP TABLE \"person_backup\"")
+              , anything
+              , eq (True, "DROP TABLE \"person\"")
+              , anything
+              , anything
+              , eq (False, "DROP TABLE \"person_backup\"")
               ]
             Postgresql ->
-              [ Match (True, "ALTER TABLE \"person\" DROP COLUMN \"foo\"")
+              [ eq (True, "ALTER TABLE \"person\" DROP COLUMN \"foo\"")
               ]
 
-      result @?~ Right @[Text] sql
+      result @?~ right (elemsAre sql)
 
   , testCase "parseMigration'" $ do
       let action :: (Migration -> TestApp a) -> IO a
@@ -629,24 +630,24 @@ testPersistentAPI backendType = testGroup "Persistent API"
 
       let sql = case backendType of
             Sqlite ->
-              [ Match $ Text.concat
+              [ eq $ Text.concat
                   [ "CREATE TEMP TABLE \"person_backup\"("
                   , "\"id\" INTEGER PRIMARY KEY,"
                   , "\"name\" VARCHAR NOT NULL,"
                   , "\"age\" INTEGER NOT NULL,"
                   , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
                   ]
-              , Anything
-              , Match "DROP TABLE \"person\";"
-              , Anything
-              , Anything
-              , Match "DROP TABLE \"person_backup\";"
+              , anything
+              , eq "DROP TABLE \"person\";"
+              , anything
+              , anything
+              , eq "DROP TABLE \"person_backup\";"
               ]
             Postgresql ->
-              [ Match "ALTER TABLE \"person\" DROP COLUMN \"foo\";"
+              [ eq "ALTER TABLE \"person\" DROP COLUMN \"foo\";"
               ]
 
-      result @?~ sql
+      result @?~ elemsAre sql
 
   , testCase "getMigration" $ do
       result <- runTestApp backendType $ do
@@ -655,24 +656,24 @@ testPersistentAPI backendType = testGroup "Persistent API"
 
       let sql = case backendType of
             Sqlite ->
-              [ Match $ Text.concat
+              [ eq $ Text.concat
                   [ "CREATE TEMP TABLE \"person_backup\"("
                   , "\"id\" INTEGER PRIMARY KEY,"
                   , "\"name\" VARCHAR NOT NULL,"
                   , "\"age\" INTEGER NOT NULL,"
                   , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
                   ]
-              , Anything
-              , Match "DROP TABLE \"person\""
-              , Anything
-              , Anything
-              , Match "DROP TABLE \"person_backup\""
+              , anything
+              , eq "DROP TABLE \"person\""
+              , anything
+              , anything
+              , eq "DROP TABLE \"person_backup\""
               ]
             Postgresql ->
-              [ Match "ALTER TABLE \"person\" DROP COLUMN \"foo\""
+              [ eq "ALTER TABLE \"person\" DROP COLUMN \"foo\""
               ]
 
-      result @?~ sql
+      result @?~ elemsAre sql
 
   , testCase "runMigration" $ do
       result <- runTestApp backendType $ do
