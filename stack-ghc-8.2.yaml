@@ -4,7 +4,7 @@ extra-deps:
   - unliftio-core-0.1.2.0
   - unliftio-pool-0.2.0.0
   - esqueleto-3.0.0
-  - explainable-predicates-0.1.0.0
+  - explainable-predicates-0.1.2.0
 
 ghc-options:
   "$locals": -Werror

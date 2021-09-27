@@ -36,6 +36,7 @@ import Database.Persist.Sql
 import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Predicates (anything, elemsAre, eq, right)
+import Test.Predicates.HUnit ((@?~))
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (MonadIO, MonadUnliftIO, liftIO)
@@ -55,7 +56,6 @@ import Database.Persist.Monad
 import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
 import TestUtils.Esqueleto (esqueletoSelect)
-import TestUtils.Match ((@?~))
 
 tests :: TestTree
 tests = testGroup "Integration tests" $

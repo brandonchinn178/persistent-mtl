@@ -1,7 +1,7 @@
 resolver: lts-16.31
 
 extra-deps:
-  - explainable-predicates-0.1.0.0
+  - explainable-predicates-0.1.2.0
   - syb-0.7.2.1
 
 ghc-options:

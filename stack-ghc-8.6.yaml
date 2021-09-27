@@ -2,7 +2,7 @@ resolver: lts-14.27
 
 extra-deps:
   - esqueleto-3.0.0
-  - explainable-predicates-0.1.0.0
+  - explainable-predicates-0.1.2.0
 
 ghc-options:
   "$locals": -Werror
