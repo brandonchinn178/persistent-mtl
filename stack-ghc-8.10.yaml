@@ -1,6 +1,7 @@
 resolver: lts-18.4
 
 extra-deps:
+- explainable-predicates-0.1.0.0
 - persistent-postgresql-2.13.0.2
 
 ghc-options:
