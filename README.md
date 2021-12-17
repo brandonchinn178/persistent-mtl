@@ -239,7 +239,7 @@ import Database.PostgreSQL.Simple.Errors (isSerializationError)
 main :: IO ()
 main = withPostgresqlPool "..." 5 $ \pool -> do
   let env = mkSqlQueryEnv pool $ \env -> env
-        { retryIf = isSerializationError . fromException
+        { retryIf = maybe False isSerializationError . fromException
         , retryLimit = 100 -- defaults to 10
         }
 
