@@ -1,5 +1,6 @@
 import Test.Tasty
 
+import qualified Basic
 import qualified Integration
 import qualified MockSqlQueryT
 import qualified Mocked
@@ -10,7 +11,8 @@ main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "persistent-mtl"
-  [ Mocked.tests
+  [ Basic.tests
+  , Mocked.tests
   , Integration.tests
   , MockSqlQueryT.tests
   , SqlQueryRepTest.tests

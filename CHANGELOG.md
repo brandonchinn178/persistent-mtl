@@ -1,5 +1,11 @@
 # Unreleased
 
+# 0.4.0.0
+
+* Add some mtl instances: `MonadThrow`, `MonadCatch`, `MonadMask`, `MonadLogger`, `MonadReader`
+* Removed support for GHC 8.2, 8.4
+* Add `MonadSqlQuery (TransactionM m)` superclass constraint to allow writing functions generic on some `MonadSqlQuery m` using `withTransaction`, as shown in examples in README
+
 # 0.3.0.0
 
 * Add `unsafeLiftSql` ([#38](https://github.com/brandonchinn178/persistent-mtl/pull/38))

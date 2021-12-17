@@ -1,4 +1,4 @@
-resolver: lts-18.18
+resolver: nightly-2021-12-16
 
 extra-deps:
   - explainable-predicates-0.1.2.0

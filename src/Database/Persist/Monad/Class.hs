@@ -6,7 +6,9 @@ in order to interpret how to run a
 'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
 @Database.Persist.Monad.Shim@.
 -}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
 
 module Database.Persist.Monad.Class
   ( MonadSqlQuery(..)
@@ -29,7 +31,7 @@ import Data.Typeable (Typeable)
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
 
 -- | The type-class for monads that can run persistent database queries.
-class Monad m => MonadSqlQuery m where
+class (Monad m, MonadSqlQuery (TransactionM m)) => MonadSqlQuery m where
   type TransactionM m :: Type -> Type
 
   -- | Interpret the given SQL query operation.
