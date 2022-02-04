@@ -38,6 +38,7 @@ library
       Database.Persist.Monad.Shim
       Database.Persist.Monad.SqlQueryRep
       Database.Persist.Monad.TestUtils
+      Database.Persist.Sql.Shim
   other-modules:
       Paths_persistent_mtl
   hs-source-dirs:
