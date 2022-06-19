@@ -8,8 +8,6 @@ import Test.Tasty.Golden
 
 import Generated
 
-{-# ANN module "HLint: ignore" #-}
-
 persistentVersionDir :: FilePath
 #if MIN_VERSION_persistent(2,14,0)
 persistentVersionDir = error "Running tests against persistent > 2.13 is not supported"

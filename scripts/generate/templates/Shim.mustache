@@ -33,8 +33,6 @@ import GHC.Stack (HasCallStack)
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
-{-# ANN module "HLint: ignore" #-}
-
 {{#functions}}
 {{#withCondition}}
 -- | The lifted version of 'Database.Persist.Sql.{{{name}}}'
