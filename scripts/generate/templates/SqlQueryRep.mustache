@@ -38,8 +38,6 @@ import Data.Void (Void)
 import Database.Persist.Sql as Persist hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
-{-# ANN module "HLint: ignore" #-}
-
 -- | The data type containing a constructor for each persistent function we'd
 -- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.
 --

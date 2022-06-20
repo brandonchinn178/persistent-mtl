@@ -7,15 +7,24 @@ repos:
       - id: trailing-whitespace
       - id: no-commit-to-branch
       - id: check-merge-conflict
+
   - repo: local
     hooks:
       - id: hlint
         name: hlint
         language: system
-        files: '\.hs$'
         entry: hlint
+        files: '\.hs$'
+        exclude: |
+          (?x)^(
+              src/Database/Persist/Monad/Shim.hs
+            | src/Database/Persist/Monad/SqlQueryRep.hs
+            | test/Generated.hs
+            | test/SqlQueryRepTest.hs
+          )$
+
       - id: stylish-haskell
         name: stylish-haskell
         language: system
-        files: '\.hs$'
         entry: stylish-haskell -i
+        files: '\.hs$'

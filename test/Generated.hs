@@ -17,8 +17,6 @@ import Database.Persist.Sql (CautiousMigration, Entity, Key, PersistValue, Sql)
 import Database.Persist.Monad.TestUtils (SqlQueryRep(..))
 import Example
 
-{-# ANN module "HLint: ignore" #-}
-
 allSqlQueryRepShowRepresentations :: [String]
 allSqlQueryRepShowRepresentations =
   [ show (Get undefined :: SqlQueryRep Person (Maybe Person))

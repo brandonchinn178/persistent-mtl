@@ -98,6 +98,7 @@ import Database.Persist.Monad.SqlQueryRep
 --
 -- Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
 -- IO operations, for two reasons:
+--
 --   1. Forking a thread that uses the same 'SqlBackend' as the current thread
 --      causes Bad Things to happen.
 --   2. Transactions may need to be retried, in which case IO operations in
