@@ -1,5 +1,7 @@
 # Unreleased
 
+* Export `SqlQueryT` constructor ([#46](https://github.com/brandonchinn178/persistent-mtl/pull/46))
+
 # 0.4.0.0
 
 * Add some mtl instances: `MonadThrow`, `MonadCatch`, `MonadMask`, `MonadLogger`, `MonadReader`
