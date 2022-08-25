@@ -10,46 +10,57 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Example
-  ( TestApp
-  , runTestApp
-  , runTestAppWith
+module Example (
+  TestApp,
+  runTestApp,
+  runTestAppWith,
 
-    -- * Person
-  , Person(..)
-  , person
-  , getPeople
-  , getPeopleNames
-  , getName
-  , nameAndAge
+  -- * Person
+  Person (..),
+  person,
+  getPeople,
+  getPeopleNames,
+  getName,
+  nameAndAge,
 
-    -- * Post
-  , Post(..)
-  , post
-  , getPosts
-  , getPostTitles
+  -- * Post
+  Post (..),
+  post,
+  getPosts,
+  getPostTitles,
 
-    -- * Persistent
-  , EntityField(..)
-  , Unique(..)
-  , migration
-  ) where
+  -- * Persistent
+  EntityField (..),
+  Unique (..),
+  migration,
+) where
 
 import Control.Arrow ((&&&))
-import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
-import Database.Persist.Sql
-    (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
-import Database.Persist.TH
-    (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
-import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
+import Database.Persist.Sql (
+  Entity (..),
+  EntityField,
+  Key,
+  SelectOpt (..),
+  Unique,
+  toSqlKey,
+ )
+import Database.Persist.TH (
+  mkMigrate,
+  mkPersist,
+  persistLowerCase,
+  share,
+  sqlSettings,
+ )
+import UnliftIO (MonadUnliftIO (..), wrappedWithRunInIO)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Database.Persist.Monad
-import TestUtils.DB (BackendType(..), withTestDB)
+import TestUtils.DB (BackendType (..), withTestDB)
 
 share
   [ mkPersist sqlSettings
@@ -82,7 +93,8 @@ instance Num (Key Post) where
 
 newtype TestApp a = TestApp
   { unTestApp :: SqlQueryT (ResourceT IO) a
-  } deriving
+  }
+  deriving
     ( Functor
     , Applicative
     , Monad

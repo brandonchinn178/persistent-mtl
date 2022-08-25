@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TestUtils.Esqueleto
-  ( esqueletoSelect
-  ) where
+module TestUtils.Esqueleto (
+  esqueletoSelect,
+) where
 
 import qualified Database.Esqueleto.Experimental as E
 import qualified Database.Esqueleto.Internal.Internal as E

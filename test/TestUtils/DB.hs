@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TestUtils.DB
-  ( BackendType(..)
-  , allBackendTypes
-  , withTestDB
-  ) where
+module TestUtils.DB (
+  BackendType (..),
+  allBackendTypes,
+  withTestDB,
+) where
 
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.ByteString.Char8 as Char8

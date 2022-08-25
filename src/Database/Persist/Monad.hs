@@ -1,3 +1,15 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 {-|
 Module: Database.Persist.Monad
 
@@ -36,49 +48,35 @@ myFunction = do
   return ()
 @
 -}
-
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
-
-module Database.Persist.Monad
-  (
+module Database.Persist.Monad (
   -- * Type class for executing database queries
-    MonadSqlQuery
-  , withTransaction
+  MonadSqlQuery,
+  withTransaction,
 
   -- * SqlQueryT monad transformer
-  , SqlQueryT(..)
-  , mapSqlQueryT
-  , runSqlQueryT
-  , runSqlQueryTWith
-  , SqlQueryEnv(..)
-  , mkSqlQueryEnv
+  SqlQueryT (..),
+  mapSqlQueryT,
+  runSqlQueryT,
+  runSqlQueryTWith,
+  SqlQueryEnv (..),
+  mkSqlQueryEnv,
 
   -- * Transactions
-  , SqlTransaction
-  , rerunnableLift
-  , TransactionError(..)
+  SqlTransaction,
+  rerunnableLift,
+  TransactionError (..),
 
   -- * Lifted functions
-  , module Database.Persist.Monad.Shim
-  ) where
+  module Database.Persist.Monad.Shim,
+) where
 
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
-import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.IO.Unlift (MonadUnliftIO(..), wrappedWithRunInIO)
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.IO.Unlift (MonadUnliftIO (..), wrappedWithRunInIO)
 import Control.Monad.Logger (MonadLogger)
-import Control.Monad.Reader (ReaderT(..), mapReaderT)
-import Control.Monad.Reader.Class (MonadReader(..))
-import Control.Monad.Trans.Class (MonadTrans(..))
+import Control.Monad.Reader (ReaderT (..), mapReaderT)
+import Control.Monad.Reader.Class (MonadReader (..))
+import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Resource (MonadResource)
 import Data.Pool (Pool)
 import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
@@ -94,28 +92,30 @@ import Database.Persist.Monad.SqlQueryRep
 
 {- SqlTransaction -}
 
--- | The monad that tracks transaction state.
---
--- Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
--- IO operations, for two reasons:
---
---   1. Forking a thread that uses the same 'SqlBackend' as the current thread
---      causes Bad Things to happen.
---   2. Transactions may need to be retried, in which case IO operations in
---      a transaction are required to be rerunnable.
---
--- You shouldn't need to explicitly use this type; your functions should only
--- declare the 'MonadSqlQuery' constraint.
+{-| The monad that tracks transaction state.
+
+ Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
+ IO operations, for two reasons:
+
+   1. Forking a thread that uses the same 'SqlBackend' as the current thread
+      causes Bad Things to happen.
+   2. Transactions may need to be retried, in which case IO operations in
+      a transaction are required to be rerunnable.
+
+ You shouldn't need to explicitly use this type; your functions should only
+ declare the 'MonadSqlQuery' constraint.
+-}
 newtype SqlTransaction m a = SqlTransaction
   { unSqlTransaction :: SqlPersistT m a
   }
   deriving (Functor, Applicative, Monad, MonadRerunnableIO)
 
 instance
-  ( GHC.TypeError ('GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
+  ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
   , Monad m
-  )
-  => MonadIO (SqlTransaction m) where
+  ) =>
+  MonadIO (SqlTransaction m)
+  where
   liftIO = undefined
 
 instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
@@ -130,63 +130,67 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
 
--- | 'SqlTransaction' does not have an instance for 'MonadTrans' to prevent
--- accidental lifting of unsafe monadic actions. Use this function to explicitly
--- mark a monadic action as rerunnable.
+{-| 'SqlTransaction' does not have an instance for 'MonadTrans' to prevent
+ accidental lifting of unsafe monadic actions. Use this function to explicitly
+ mark a monadic action as rerunnable.
+-}
 rerunnableLift :: MonadUnliftIO m => m a -> SqlTransaction m a
 rerunnableLift m = SqlTransaction $ lift $ withRunInIO $ \runInIO -> rerunnableIO $ runInIO m
 
 -- | Errors that can occur within a SQL transaction.
 data TransactionError
-  = RetryLimitExceeded
-    -- ^ The retry limit was reached when retrying a transaction.
+  = -- | The retry limit was reached when retrying a transaction.
+    RetryLimitExceeded
   deriving (Show, Eq)
 
 instance Exception TransactionError
 
 {- SqlQueryT monad -}
 
--- | Environment to configure running 'SqlQueryT'.
---
--- For simple usage, you can just use 'runSqlQueryT', but for more advanced
--- usage, including the ability to retry transactions, use 'mkSqlQueryEnv' with
--- 'runSqlQueryTWith'.
+{-| Environment to configure running 'SqlQueryT'.
+
+ For simple usage, you can just use 'runSqlQueryT', but for more advanced
+ usage, including the ability to retry transactions, use 'mkSqlQueryEnv' with
+ 'runSqlQueryTWith'.
+-}
 data SqlQueryEnv = SqlQueryEnv
   { backendPool :: Pool SqlBackend
-    -- ^ The pool for your persistent backend. Get this from @withSqlitePool@
-    -- or the equivalent for your backend.
-
-  , retryIf     :: SomeException -> Bool
-    -- ^ Retry a transaction when an exception matches this predicate. Will
-    -- retry with an exponential backoff.
-    --
-    -- Defaults to always returning False (i.e. never retry)
-
-  , retryLimit  :: Int
-    -- ^ The number of times to retry, if 'retryIf' is satisfied.
-    --
-    -- Defaults to 10.
+  -- ^ The pool for your persistent backend. Get this from @withSqlitePool@
+  -- or the equivalent for your backend.
+  , retryIf :: SomeException -> Bool
+  -- ^ Retry a transaction when an exception matches this predicate. Will
+  -- retry with an exponential backoff.
+  --
+  -- Defaults to always returning False (i.e. never retry)
+  , retryLimit :: Int
+  -- ^ The number of times to retry, if 'retryIf' is satisfied.
+  --
+  -- Defaults to 10.
   }
 
--- | Build a SqlQueryEnv from the default.
---
--- Usage:
---
--- @
--- let env = mkSqlQueryEnv pool $ \\env -> env { retryIf = 10 }
--- in runSqlQueryTWith env m
--- @
+{-| Build a SqlQueryEnv from the default.
+
+ Usage:
+
+ @
+ let env = mkSqlQueryEnv pool $ \\env -> env { retryIf = 10 }
+ in runSqlQueryTWith env m
+ @
+-}
 mkSqlQueryEnv :: Pool SqlBackend -> (SqlQueryEnv -> SqlQueryEnv) -> SqlQueryEnv
-mkSqlQueryEnv backendPool f = f SqlQueryEnv
-  { backendPool
-  , retryIf = const False
-  , retryLimit = 10
-  }
+mkSqlQueryEnv backendPool f =
+  f
+    SqlQueryEnv
+      { backendPool
+      , retryIf = const False
+      , retryLimit = 10
+      }
 
 -- | The monad transformer that implements 'MonadSqlQuery'.
 newtype SqlQueryT m a = SqlQueryT
   { unSqlQueryT :: ReaderT SqlQueryEnv m a
-  } deriving
+  }
+  deriving
     ( Functor
     , Applicative
     , Monad
@@ -214,10 +218,10 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
           loop i = catchJust filterRetry (runSqlTransaction conn m) $ \_ ->
             if i < retryLimit
               then do
-                threadDelay $ 1000 * 2^i
+                threadDelay $ 1000 * 2 ^ i
                 loop $! i + 1
               else throwIO RetryLimitExceeded
-      in loop 0
+       in loop 0
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
@@ -226,8 +230,8 @@ mapSqlQueryT :: (m a -> n b) -> SqlQueryT m a -> SqlQueryT n b
 mapSqlQueryT f = SqlQueryT . mapReaderT f . unSqlQueryT
 
 instance MonadReader r m => MonadReader r (SqlQueryT m) where
-    ask = lift ask
-    local = mapSqlQueryT . local
+  ask = lift ask
+  local = mapSqlQueryT . local
 
 {- Running SqlQueryT -}
 
@@ -235,7 +239,8 @@ instance MonadReader r m => MonadReader r (SqlQueryT m) where
 runSqlQueryT :: Pool SqlBackend -> SqlQueryT m a -> m a
 runSqlQueryT backendPool = runSqlQueryTWith $ mkSqlQueryEnv backendPool id
 
--- | Run the 'SqlQueryT' monad transformer with the explicitly provided
--- environment.
+{-| Run the 'SqlQueryT' monad transformer with the explicitly provided
+ environment.
+-}
 runSqlQueryTWith :: SqlQueryEnv -> SqlQueryT m a -> m a
 runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT

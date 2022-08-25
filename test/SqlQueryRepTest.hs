@@ -1,10 +1,10 @@
 {- AUTOCOLLECT.TEST -}
-
 {-# LANGUAGE CPP #-}
 
 module SqlQueryRepTest (
-  {- AUTOCOLLECT.TEST.export -}
-) where
+  ) where
+
+{- AUTOCOLLECT.TEST.export -}
 
 import qualified Data.ByteString.Lazy.Char8 as Char8
 import Test.Tasty
@@ -25,7 +25,8 @@ persistentVersionDir = error "Running tests against persistent < 2.13 is not sup
 
 test =
   golden "Show representation" (persistentVersionDir ++ "sqlqueryrep_show_representation.golden") $
-      pure $ unlines allSqlQueryRepShowRepresentations
+    pure $
+      unlines allSqlQueryRepShowRepresentations
 
 golden :: String -> FilePath -> IO String -> TestTree
 golden name fp action = goldenVsStringDiff name diffCmd ("test/goldens/" ++ fp) $ Char8.pack <$> action
