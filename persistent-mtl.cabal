@@ -63,10 +63,10 @@ test-suite persistent-mtl-test
   other-modules:
       Example
       Generated
-      Integration
-      Mocked
+      IntegrationTest
+      MockedTest
       MockSqlQueryT
-      README
+      READMETest
       SqlQueryRepTest
       TestUtils.DB
       TestUtils.Esqueleto

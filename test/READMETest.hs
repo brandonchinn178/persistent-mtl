@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module README (
+module READMETest (
   -- $AUTOCOLLECT.TEST.export$
 ) where
 

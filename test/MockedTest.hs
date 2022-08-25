@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Mocked (
+module MockedTest (
   -- $AUTOCOLLECT.TEST.export$
 ) where
 
