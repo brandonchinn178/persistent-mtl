@@ -1,8 +1,8 @@
 # `persistent-mtl`
 
-[![CircleCI](https://img.shields.io/circleci/build/github/brandonchinn178/persistent-mtl)](https://app.circleci.com/pipelines/github/brandonchinn178/persistent-mtl)
+[![GitHub Actions](https://img.shields.io/github/workflow/status/brandonchinn178/persistent-mtl/CI/main)](https://github.com/brandonchinn178/persistent-mtl/actions?query=branch%3Amain)
 [![Hackage](https://img.shields.io/hackage/v/persistent-mtl)](https://hackage.haskell.org/package/persistent-mtl)
-[![Codecov](https://img.shields.io/codecov/c/gh/brandonchinn178/persistent-mtl)](https://codecov.io/gh/brandonchinn178/persistent-mtl)
+[![Codecov](https://img.shields.io/codecov/c/gh/brandonchinn178/persistent-mtl)](https://app.codecov.io/gh/brandonchinn178/persistent-mtl)
 
 Use the `persistent` API in your monad transformer stack, seamlessly interleaving business logic with database operations by simply dropping `SqlQueryT` into your stack.
 
