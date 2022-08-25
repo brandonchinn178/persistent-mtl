@@ -22,6 +22,7 @@ import qualified Database.Esqueleto as E
 #endif
 import Database.Persist.Sql
     ( Entity(..)
+    , IsolationLevel(..)
     , Migration
     , PersistField
     , PersistRecordBackend
@@ -32,9 +33,6 @@ import Database.Persist.Sql
     , (=.)
     , (==.)
     )
-#if MIN_VERSION_persistent(2,9,0)
-import Database.Persist.Sql (IsolationLevel(..))
-#endif
 import Test.Predicates (anything, elemsAre, eq, right)
 import Test.Predicates.HUnit ((@?~))
 import Test.Tasty
@@ -261,16 +259,11 @@ testPersistentAPI backendType = testGroup "Persistent API"
       result <- runTestApp backendType $ do
         let alice = person "Alice"
 -- https://github.com/yesodweb/persistent/issues/832
-#if MIN_VERSION_persistent(2,9,0)
         insert_ alice
         repsertMany
           [ (1, alice { personAge = 100 })
           , (2, person "Bob")
           ]
-#else
-        repsertMany [(1, alice { personAge = 100 })]
-        repsertMany [(2, person "Bob")]
-#endif
         getPeople
       map nameAndAge result @?=
         [ ("Alice", 100)
@@ -345,7 +338,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
           ]
       result @?= [Just (UniqueName "Alice"), Nothing, Just (UniqueName "Alice")]
 
-#if MIN_VERSION_persistent(2,11,0)
   , testCase "checkUniqueUpdateable" $ do
       result <- runTestApp backendType $ do
         let alice = person "Alice"
@@ -356,7 +348,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
           , Entity 3 $ (person "Alice"){ personAge = 100 }
           ]
       result @?= [Nothing, Nothing, Just (UniqueName "Alice")]
-#endif
 
   , testCase "deleteBy" $ do
       result <- runTestApp backendType $ do
@@ -481,13 +472,11 @@ testPersistentAPI backendType = testGroup "Persistent API"
         count [PersonAge ==. 100]
       result @?= 2
 
-#if MIN_VERSION_persistent(2,11,0)
   , testCase "exists" $ do
       result <- runTestApp backendType $ do
         insertMany_ [person "Alice", person "Bob"]
         exists [PersonName ==. "Alice"]
       result @?= True
-#endif
 
   , testCase "selectSource" $ do
       result <- runTestApp backendType $ do
@@ -546,38 +535,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         return (rowsDeleted, names)
       rowsDeleted @?= 1
       names @?= ["Bob"]
-
-#if !MIN_VERSION_persistent(2,13,0)
-  , testCase "deleteCascade" $ do
-      (people, posts) <- runTestApp backendType $ do
-        aliceKey <- insert $ person "Alice"
-        bobKey <- insert $ person "Bob"
-        insertMany_
-          [ post "Post #1" aliceKey
-          , post "Post #2" bobKey
-          ]
-        deleteCascade aliceKey
-        people <- getPeopleNames
-        posts <- getPostTitles
-        return (people, posts)
-      people @?= ["Bob"]
-      posts @?= ["Post #2"]
-
-  , testCase "deleteCascadeWhere" $ do
-      (people, posts) <- runTestApp backendType $ do
-        aliceKey <- insert $ person "Alice"
-        bobKey <- insert $ person "Bob"
-        insertMany_
-          [ post "Post #1" aliceKey
-          , post "Post #2" bobKey
-          ]
-        deleteCascadeWhere [PersonName ==. "Alice"]
-        people <- getPeopleNames
-        posts <- getPostTitles
-        return (people, posts)
-      people @?= ["Bob"]
-      posts @?= ["Post #2"]
-#endif
 
   , testCase "parseMigration" $ do
       result <- runTestApp backendType $ do
@@ -682,7 +639,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         getSchemaColumnNames backendType "person"
       assertNotIn "removed_column" result
 
-#if MIN_VERSION_persistent(2,10,2)
   , testCase "runMigrationQuiet" $ do
       (withQuiet, cols) <- runTestApp backendType $ do
         setupSafeMigration
@@ -694,7 +650,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         runMigrationSilent migration
       assertNotIn "removed_column" cols
       withQuiet @?= withSilent
-#endif
 
   , testCase "runMigrationSilent" $ do
       (sqlPlanned, sqlExecuted, cols) <- runTestApp backendType $ do
@@ -713,7 +668,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         getSchemaColumnNames backendType "person"
       assertNotIn "removed_column" result
 
-#if MIN_VERSION_persistent(2,10,2)
   , testCase "runMigrationUnsafeQuiet" $ do
       (sqlPlanned, sqlExecuted, cols) <- runTestApp backendType $ do
         setupUnsafeMigration
@@ -723,7 +677,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         return (sqlPlanned, sqlExecuted, cols)
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
-#endif
 
   , testCase "getFieldName" $ do
       result <- runTestApp backendType $
@@ -795,7 +748,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
         getPeopleNames
       result2 @?= ["Alice"]
 
-#if MIN_VERSION_persistent(2,9,0)
   , testCase "transactionSaveWithIsolation" $ do
       result1 <- runTestApp backendType $ do
         catchTestError $ withTransaction $ do
@@ -811,7 +763,6 @@ testPersistentAPI backendType = testGroup "Persistent API"
           insertAndFail $ person "Bob"
         getPeopleNames
       result2 @?= ["Alice"]
-#endif
 
   , testCase "transactionUndo" $ do
       result <- runTestApp backendType $ withTransaction $ do
@@ -820,14 +771,12 @@ testPersistentAPI backendType = testGroup "Persistent API"
         getPeopleNames
       result @?= []
 
-#if MIN_VERSION_persistent(2,9,0)
   , testCase "transactionUndoWithIsolation" $ do
       result <- runTestApp backendType $ withTransaction $ do
         insert_ $ person "Alice"
         transactionUndoWithIsolation Serializable
         getPeopleNames
       result @?= []
-#endif
   ]
 
 testInterop :: BackendType -> TestTree

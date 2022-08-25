@@ -165,21 +165,11 @@ getBy
   => Unique record -> m (Maybe (Entity record))
 getBy a1 = runQueryRep $ GetBy a1
 
-#if MIN_VERSION_persistent(2,10,0)
 -- | The lifted version of 'Database.Persist.Sql.getByValue'
 getByValue
   :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Maybe (Entity record))
 getByValue a1 = runQueryRep $ GetByValue a1
-#endif
-
-#if !MIN_VERSION_persistent(2,10,0)
--- | The lifted version of 'Database.Persist.Sql.getByValue'
-getByValue
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
-  => record -> m (Maybe (Entity record))
-getByValue a1 = runQueryRep $ GetByValue a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.checkUnique'
 checkUnique
@@ -187,13 +177,11 @@ checkUnique
   => record -> m (Maybe (Unique record))
 checkUnique a1 = runQueryRep $ CheckUnique a1
 
-#if MIN_VERSION_persistent(2,11,0)
 -- | The lifted version of 'Database.Persist.Sql.checkUniqueUpdateable'
 checkUniqueUpdateable
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => Entity record -> m (Maybe (Unique record))
 checkUniqueUpdateable a1 = runQueryRep $ CheckUniqueUpdateable a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.deleteBy'
 deleteBy
@@ -207,21 +195,11 @@ insertUnique
   => record -> m (Maybe (Key record))
 insertUnique a1 = runQueryRep $ InsertUnique a1
 
-#if MIN_VERSION_persistent(2,10,0)
 -- | The lifted version of 'Database.Persist.Sql.upsert'
 upsert
   :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> [Update record] -> m (Entity record)
 upsert a1 a2 = runQueryRep $ Upsert a1 a2
-#endif
-
-#if !MIN_VERSION_persistent(2,10,0)
--- | The lifted version of 'Database.Persist.Sql.upsert'
-upsert
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
-  => record -> [Update record] -> m (Entity record)
-upsert a1 a2 = runQueryRep $ Upsert a1 a2
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.upsertBy'
 upsertBy
@@ -235,21 +213,11 @@ putMany
   => [record] -> m ()
 putMany a1 = runQueryRep $ PutMany a1
 
-#if MIN_VERSION_persistent(2,10,0)
 -- | The lifted version of 'Database.Persist.Sql.insertBy'
 insertBy
   :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Either (Entity record) (Key record))
 insertBy a1 = runQueryRep $ InsertBy a1
-#endif
-
-#if !MIN_VERSION_persistent(2,10,0)
--- | The lifted version of 'Database.Persist.Sql.insertBy'
-insertBy
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
-  => record -> m (Either (Entity record) (Key record))
-insertBy a1 = runQueryRep $ InsertBy a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.insertUniqueEntity'
 insertUniqueEntity
@@ -263,21 +231,11 @@ replaceUnique
   => Key record -> record -> m (Maybe (Unique record))
 replaceUnique a1 a2 = runQueryRep $ ReplaceUnique a1 a2
 
-#if MIN_VERSION_persistent(2,10,0)
 -- | The lifted version of 'Database.Persist.Sql.onlyUnique'
 onlyUnique
   :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, Typeable record, MonadSqlQuery m)
   => record -> m (Unique record)
 onlyUnique a1 = runQueryRep $ OnlyUnique a1
-#endif
-
-#if !MIN_VERSION_persistent(2,10,0)
--- | The lifted version of 'Database.Persist.Sql.onlyUnique'
-onlyUnique
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
-  => record -> m (Unique record)
-onlyUnique a1 = runQueryRep $ OnlyUnique a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.selectSourceRes'
 selectSourceRes
@@ -303,13 +261,11 @@ count
   => [Filter record] -> m Int
 count a1 = runQueryRep $ Count a1
 
-#if MIN_VERSION_persistent(2,11,0)
 -- | The lifted version of 'Database.Persist.Sql.exists'
 exists
   :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
   => [Filter record] -> m Bool
 exists a1 = runQueryRep $ Exists a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.selectSource'
 selectSource
@@ -359,22 +315,6 @@ updateWhereCount
   => [Filter record] -> [Update record] -> m Int64
 updateWhereCount a1 a2 = runQueryRep $ UpdateWhereCount a1 a2
 
-#if !MIN_VERSION_persistent(2,13,0)
--- | The lifted version of 'Database.Persist.Sql.deleteCascade'
-deleteCascade
-  :: (DeleteCascade record SqlBackend, Typeable record, MonadSqlQuery m)
-  => Key record -> m ()
-deleteCascade a1 = runQueryRep $ DeleteCascade a1
-#endif
-
-#if !MIN_VERSION_persistent(2,13,0)
--- | The lifted version of 'Database.Persist.Sql.deleteCascadeWhere'
-deleteCascadeWhere
-  :: (DeleteCascade record SqlBackend, Typeable record, MonadSqlQuery m)
-  => [Filter record] -> m ()
-deleteCascadeWhere a1 = runQueryRep $ DeleteCascadeWhere a1
-#endif
-
 -- | The lifted version of 'Database.Persist.Sql.parseMigration'
 parseMigration
   :: (HasCallStack, MonadSqlQuery m)
@@ -411,13 +351,11 @@ runMigration
   => Migration -> m ()
 runMigration a1 = runQueryRep $ RunMigration a1
 
-#if MIN_VERSION_persistent(2,10,2)
 -- | The lifted version of 'Database.Persist.Sql.runMigrationQuiet'
 runMigrationQuiet
   :: (MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationQuiet a1 = runQueryRep $ RunMigrationQuiet a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.runMigrationSilent'
 runMigrationSilent
@@ -431,13 +369,11 @@ runMigrationUnsafe
   => Migration -> m ()
 runMigrationUnsafe a1 = runQueryRep $ RunMigrationUnsafe a1
 
-#if MIN_VERSION_persistent(2,10,2)
 -- | The lifted version of 'Database.Persist.Sql.runMigrationUnsafeQuiet'
 runMigrationUnsafeQuiet
   :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationUnsafeQuiet a1 = runQueryRep $ RunMigrationUnsafeQuiet a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.getFieldName'
 getFieldName
@@ -493,13 +429,11 @@ transactionSave
   => m ()
 transactionSave = runQueryRep $ TransactionSave
 
-#if MIN_VERSION_persistent(2,9,0)
 -- | The lifted version of 'Database.Persist.Sql.transactionSaveWithIsolation'
 transactionSaveWithIsolation
   :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionSaveWithIsolation a1 = runQueryRep $ TransactionSaveWithIsolation a1
-#endif
 
 -- | The lifted version of 'Database.Persist.Sql.transactionUndo'
 transactionUndo
@@ -507,13 +441,11 @@ transactionUndo
   => m ()
 transactionUndo = runQueryRep $ TransactionUndo
 
-#if MIN_VERSION_persistent(2,9,0)
 -- | The lifted version of 'Database.Persist.Sql.transactionUndoWithIsolation'
 transactionUndoWithIsolation
   :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionUndoWithIsolation a1 = runQueryRep $ TransactionUndoWithIsolation a1
-#endif
 
 -- | Lift an arbitrary 'SqlPersistT' action into 'MonadSqlQuery'.
 --

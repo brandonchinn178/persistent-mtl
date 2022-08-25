@@ -41,73 +41,39 @@ allSqlQueryRepShowRepresentations =
   , show (InsertEntity undefined :: SqlQueryRep Person (Entity Person))
   , show (InsertRecord undefined :: SqlQueryRep Person Person)
   , show (GetBy undefined :: SqlQueryRep Person (Maybe (Entity Person)))
-#if MIN_VERSION_persistent(2,10,0)
   , show (GetByValue undefined :: SqlQueryRep Person (Maybe (Entity Person)))
-#endif
-#if !MIN_VERSION_persistent(2,10,0)
-  , show (GetByValue undefined :: SqlQueryRep Person (Maybe (Entity Person)))
-#endif
   , show (CheckUnique undefined :: SqlQueryRep Person (Maybe (Unique Person)))
-#if MIN_VERSION_persistent(2,11,0)
   , show (CheckUniqueUpdateable undefined :: SqlQueryRep Person (Maybe (Unique Person)))
-#endif
   , show (DeleteBy undefined :: SqlQueryRep Person ())
   , show (InsertUnique undefined :: SqlQueryRep Person (Maybe (Key Person)))
-#if MIN_VERSION_persistent(2,10,0)
   , show (Upsert undefined undefined :: SqlQueryRep Person (Entity Person))
-#endif
-#if !MIN_VERSION_persistent(2,10,0)
-  , show (Upsert undefined undefined :: SqlQueryRep Person (Entity Person))
-#endif
   , show (UpsertBy undefined undefined undefined :: SqlQueryRep Person (Entity Person))
   , show (PutMany undefined :: SqlQueryRep Person ())
-#if MIN_VERSION_persistent(2,10,0)
   , show (InsertBy undefined :: SqlQueryRep Person (Either (Entity Person) (Key Person)))
-#endif
-#if !MIN_VERSION_persistent(2,10,0)
-  , show (InsertBy undefined :: SqlQueryRep Person (Either (Entity Person) (Key Person)))
-#endif
   , show (InsertUniqueEntity undefined :: SqlQueryRep Person (Maybe (Entity Person)))
   , show (ReplaceUnique undefined undefined :: SqlQueryRep Person (Maybe (Unique Person)))
-#if MIN_VERSION_persistent(2,10,0)
   , show (OnlyUnique undefined :: SqlQueryRep Person (Unique Person))
-#endif
-#if !MIN_VERSION_persistent(2,10,0)
-  , show (OnlyUnique undefined :: SqlQueryRep Person (Unique Person))
-#endif
   , show (SelectSourceRes undefined undefined :: SqlQueryRep Person (Acquire (ConduitM () (Entity Person) IO ())))
   , show (SelectFirst undefined undefined :: SqlQueryRep Person (Maybe (Entity Person)))
   , show (SelectKeysRes undefined undefined :: SqlQueryRep Person (Acquire (ConduitM () (Key Person) IO ())))
   , show (Count undefined :: SqlQueryRep Person Int)
-#if MIN_VERSION_persistent(2,11,0)
   , show (Exists undefined :: SqlQueryRep Person Bool)
-#endif
   , show (SelectList undefined undefined :: SqlQueryRep Person [Entity Person])
   , show (SelectKeysList undefined undefined :: SqlQueryRep Person [Key Person])
   , show (UpdateWhere undefined undefined :: SqlQueryRep Person ())
   , show (DeleteWhere undefined :: SqlQueryRep Person ())
   , show (DeleteWhereCount undefined :: SqlQueryRep Person Int64)
   , show (UpdateWhereCount undefined undefined :: SqlQueryRep Person Int64)
-#if !MIN_VERSION_persistent(2,13,0)
-  , show (DeleteCascade undefined :: SqlQueryRep Person ())
-#endif
-#if !MIN_VERSION_persistent(2,13,0)
-  , show (DeleteCascadeWhere undefined :: SqlQueryRep Person ())
-#endif
   , show (ParseMigration undefined :: SqlQueryRep Void (Either [Text] CautiousMigration))
   , show (ParseMigration' undefined :: SqlQueryRep Void CautiousMigration)
   , show (PrintMigration undefined :: SqlQueryRep Void ())
   , show (ShowMigration undefined :: SqlQueryRep Void [Text])
   , show (GetMigration undefined :: SqlQueryRep Void [Sql])
   , show (RunMigration undefined :: SqlQueryRep Void ())
-#if MIN_VERSION_persistent(2,10,2)
   , show (RunMigrationQuiet undefined :: SqlQueryRep Void [Text])
-#endif
   , show (RunMigrationSilent undefined :: SqlQueryRep Void [Text])
   , show (RunMigrationUnsafe undefined :: SqlQueryRep Void ())
-#if MIN_VERSION_persistent(2,10,2)
   , show (RunMigrationUnsafeQuiet undefined :: SqlQueryRep Void [Text])
-#endif
   , show (GetFieldName undefined :: SqlQueryRep Person Text)
   , show (GetTableName undefined :: SqlQueryRep Person Text)
   , show (WithRawQuery undefined undefined undefined :: SqlQueryRep Void a)
@@ -116,11 +82,7 @@ allSqlQueryRepShowRepresentations =
   , show (RawExecuteCount undefined undefined :: SqlQueryRep Void Int64)
   , show (RawSql undefined undefined :: SqlQueryRep Void [Entity Person])
   , show (TransactionSave :: SqlQueryRep Void ())
-#if MIN_VERSION_persistent(2,9,0)
   , show (TransactionSaveWithIsolation undefined :: SqlQueryRep Void ())
-#endif
   , show (TransactionUndo :: SqlQueryRep Void ())
-#if MIN_VERSION_persistent(2,9,0)
   , show (TransactionUndoWithIsolation undefined :: SqlQueryRep Void ())
-#endif
   ]

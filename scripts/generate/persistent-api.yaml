@@ -168,18 +168,9 @@
   result: '(Maybe (Entity record))'
 
 - name: getByValue
-  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'AtLeastOneUniqueKey record'
-  args:
-    - 'record'
-  result: '(Maybe (Entity record))'
-
-- name: getByValue
-  condition: '!MIN_VERSION_persistent(2,10,0)'
-  constraints:
-    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Maybe (Entity record))'
@@ -192,7 +183,6 @@
   result: '(Maybe (Unique record))'
 
 - name: checkUniqueUpdateable
-  condition: MIN_VERSION_persistent(2,11,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
   args:
@@ -216,19 +206,9 @@
   result: '(Maybe (Key record))'
 
 - name: upsert
-  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'OnlyOneUniqueKey record'
-  args:
-    - 'record'
-    - '[Update record]'
-  result: '(Entity record)'
-
-- name: upsert
-  condition: '!MIN_VERSION_persistent(2,10,0)'
-  constraints:
-    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
     - '[Update record]'
@@ -251,18 +231,9 @@
   result: '()'
 
 - name: insertBy
-  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'AtLeastOneUniqueKey record'
-  args:
-    - 'record'
-  result: '(Either (Entity record) (Key record))'
-
-- name: insertBy
-  condition: '!MIN_VERSION_persistent(2,10,0)'
-  constraints:
-    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Either (Entity record) (Key record))'
@@ -286,18 +257,9 @@
   result: '(Maybe (Unique record))'
 
 - name: onlyUnique
-  condition: MIN_VERSION_persistent(2,10,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
     - 'OnlyOneUniqueKey record'
-  args:
-    - 'record'
-  result: '(Unique record)'
-
-- name: onlyUnique
-  condition: '!MIN_VERSION_persistent(2,10,0)'
-  constraints:
-    - 'PersistRecordBackend record SqlBackend'
   args:
     - 'record'
   result: '(Unique record)'
@@ -338,7 +300,6 @@
   result: 'Int'
 
 - name: exists
-  condition: MIN_VERSION_persistent(2,11,0)
   constraints:
     - 'PersistRecordBackend record SqlBackend'
   args:
@@ -413,24 +374,6 @@
     - '[Update record]'
   result: 'Int64'
 
-# DeleteCascade
-
-- name: deleteCascade
-  condition: '!MIN_VERSION_persistent(2,13,0)'
-  constraints:
-    - 'DeleteCascade record SqlBackend'
-  args:
-    - 'Key record'
-  result: '()'
-
-- name: deleteCascadeWhere
-  condition: '!MIN_VERSION_persistent(2,13,0)'
-  constraints:
-    - 'DeleteCascade record SqlBackend'
-  args:
-    - '[Filter record]'
-  result: '()'
-
 # migration
 
 - name: parseMigration
@@ -474,7 +417,6 @@
   result: '()'
 
 - name: runMigrationQuiet
-  condition: MIN_VERSION_persistent(2,10,2)
   args:
     - 'Migration'
   result: '[Text]'
@@ -490,7 +432,6 @@
   result: '()'
 
 - name: runMigrationUnsafeQuiet
-  condition: MIN_VERSION_persistent(2,10,2)
   constraints:
     - 'HasCallStack'
   args:
@@ -566,7 +507,6 @@
   result: '()'
 
 - name: transactionSaveWithIsolation
-  condition: MIN_VERSION_persistent(2,9,0)
   args:
     - 'IsolationLevel'
   result: '()'
@@ -575,7 +515,6 @@
   result: '()'
 
 - name: transactionUndoWithIsolation
-  condition: MIN_VERSION_persistent(2,9,0)
   args:
     - 'IsolationLevel'
   result: '()'
