@@ -39,7 +39,9 @@ import Data.Void (Void)
 import Database.Persist.Sql as Persist hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
+#if !MIN_VERSION_persistent(2,14,1)
 import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
+#endif
 
 -- | The data type containing a constructor for each persistent function we'd
 -- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.

@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Integration (
+module IntegrationTest (
   -- $AUTOCOLLECT.TEST.export$
 ) where
 

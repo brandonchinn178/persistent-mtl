@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Basic (
+module READMETest (
   -- $AUTOCOLLECT.TEST.export$
 ) where
 
@@ -14,7 +14,7 @@ import Database.Persist.Monad.TestUtils
 import Example
 
 test =
-  testCase "Ensure withTransaction README example typechecks" $ do
+  testCase "withTransaction example works" $ do
     let foo :: MonadSqlQuery m => m ()
         foo = insert_ $ person "Alice"
         bar :: MonadSqlQuery m => m ()

@@ -32,8 +32,11 @@ import Database.Persist.Sql hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
-import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
+
+#if !MIN_VERSION_persistent(2,14,1)
+import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
+#endif
 
 -- | The lifted version of 'Database.Persist.Sql.get'
 get
