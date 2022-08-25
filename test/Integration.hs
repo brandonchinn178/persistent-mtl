@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
@@ -15,11 +14,7 @@ import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Typeable (Typeable)
-#if MIN_VERSION_esqueleto(3,5,0)
 import qualified Database.Esqueleto.Experimental as E
-#else
-import qualified Database.Esqueleto as E
-#endif
 import Database.Persist.Sql
     ( Entity(..)
     , IsolationLevel(..)
@@ -786,11 +781,7 @@ testInterop backendType = testGroup "Interop with third-party Persistent librari
       result <- runTestApp backendType $ do
         insert_ alice
         esqueletoSelect $
-#if MIN_VERSION_esqueleto(3,5,0)
           E.from $ E.table @Person
-#else
-          E.from $ \p -> return p
-#endif
       result @?= [Entity 1 alice]
   ]
 
