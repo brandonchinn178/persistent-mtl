@@ -11,7 +11,7 @@ executors:
         default: stack.yaml
 
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/base:2022.08
     shell: /bin/bash -eux -o pipefail
     environment:
       STACK_YAML: << parameters.stack_yaml >>
