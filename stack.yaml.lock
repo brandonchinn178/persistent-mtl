@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    hackage: explainable-predicates-0.1.2.0@sha256:f50494313c1a303271fff01c3e858b7ac364521abb879898b36a10e3b7b678ab,3749
+    hackage: persistent-2.13.3.3@sha256:4161988646638cfeb9e5fbd6020c25bc32718d3916b200b3b7861bb236e674d4,6839
     pantry-tree:
-      size: 818
-      sha256: b7423cfba1171b8c2a500e337b66eb40bbb5d4a6a99e6ce6463d637fe118ebe0
+      size: 6052
+      sha256: dedf843319b92d1f00b61ecdf1d99c550860fe01360a00dbd5c90313267b43c7
   original:
-    hackage: explainable-predicates-0.1.2.0
+    hackage: persistent-2.13.3.3
 snapshots:
 - completed:
-    size: 590100
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/28.yaml
-    sha256: 428ec8d5ce932190d3cbe266b9eb3c175cd81e984babf876b64019e2cbe4ea68
-  original: lts-18.28
+    size: 619173
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/20.yaml
+    sha256: be747117bed6d462806c883352c3206325b23480825103f5c87884e97e52819a
+  original: lts-19.20
