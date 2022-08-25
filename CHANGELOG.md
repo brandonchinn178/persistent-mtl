@@ -1,6 +1,9 @@
 # Unreleased
 
 * Export `SqlQueryT` constructor ([#46](https://github.com/brandonchinn178/persistent-mtl/pull/46))
+* Drop support for GHC < 8.10
+* Drop support for `persistent` < 2.13
+* Add support for `persistent-2.14`
 
 # 0.4.0.0
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -46,9 +45,6 @@ import Database.Persist.Sql
     (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
     (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
-#if !MIN_VERSION_persistent(2,13,0)
-import qualified Database.Persist.TH
-#endif
 import UnliftIO (MonadUnliftIO(..), wrappedWithRunInIO)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
@@ -57,9 +53,6 @@ import TestUtils.DB (BackendType(..), withTestDB)
 
 share
   [ mkPersist sqlSettings
-#if !MIN_VERSION_persistent(2,13,0)
-  , Database.Persist.TH.mkDeleteCascade sqlSettings
-#endif
   , mkMigrate "migration"
   ]
   [persistLowerCase|
@@ -72,20 +65,13 @@ Person
 
 Post
   title  String
-#if MIN_VERSION_persistent(2,13,0)
   author PersonId
   editor PersonId Maybe
-#else
-  author PersonId       OnDeleteCascade
-  editor PersonId Maybe OnDeleteCascade
-#endif
   deriving Show Eq
 |]
 
 deriving instance Eq (Unique Person)
-#if !MIN_VERSION_persistent_template(2,6,0) || MIN_VERSION_persistent_template(2,9,0)
 deriving instance Show (Unique Person)
-#endif
 
 -- Let tests use a literal number for keys
 instance Num (Key Person) where

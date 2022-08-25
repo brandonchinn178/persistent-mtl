@@ -22,6 +22,7 @@ InsertRecord{..}<Person>
 GetBy{..}<Person>
 GetByValue{..}<Person>
 CheckUnique{..}<Person>
+CheckUniqueUpdateable{..}<Person>
 DeleteBy{..}<Person>
 InsertUnique{..}<Person>
 Upsert{..}<Person>
@@ -35,14 +36,13 @@ SelectSourceRes{..}<Person>
 SelectFirst{..}<Person>
 SelectKeysRes{..}<Person>
 Count{..}<Person>
+Exists{..}<Person>
 SelectList{..}<Person>
 SelectKeysList{..}<Person>
 UpdateWhere{..}<Person>
 DeleteWhere{..}<Person>
 DeleteWhereCount{..}<Person>
 UpdateWhereCount{..}<Person>
-DeleteCascade{..}<Person>
-DeleteCascadeWhere{..}<Person>
 ParseMigration{..}
 ParseMigration'{..}
 PrintMigration{..}

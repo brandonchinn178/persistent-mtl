@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -242,7 +241,6 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= [Just $ UniqueName "Alice", Nothing]
 
-#if MIN_VERSION_persistent(2,11,0)
   , testCase "checkUniqueUpdateable" $ do
       result <- runMockSqlQueryT (mapM checkUniqueUpdateable [Entity 1 $ person "Alice", Entity 2 $ person "Bob"])
         [ withRecord @Person $ \case
@@ -251,7 +249,6 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= [Just $ UniqueName "Alice", Nothing]
-#endif
 
   , testCase "deleteBy" $ do
       result <- runMockSqlQueryT (deleteBy $ UniqueName "Alice")
@@ -375,7 +372,6 @@ testPersistentAPI = testGroup "Persistent API"
         ]
       result @?= 10
 
-#if MIN_VERSION_persistent(2,11,0)
   , testCase "exists" $ do
       result <- runMockSqlQueryT (exists @Person [])
         [ withRecord @Person $ \case
@@ -383,7 +379,6 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= True
-#endif
 
   , testCase "selectSource" $ do
       result <- runResourceT $ runMockSqlQueryT
@@ -454,24 +449,6 @@ testPersistentAPI = testGroup "Persistent API"
             _ -> Nothing
         ]
       result @?= 10
-
-#if !MIN_VERSION_persistent(2,13,0)
-  , testCase "deleteCascade" $ do
-      result <- runMockSqlQueryT (deleteCascade @Person 1)
-        [ withRecord @Person $ \case
-            DeleteCascade _ -> Just ()
-            _ -> Nothing
-        ]
-      result @?= ()
-
-  , testCase "deleteCascadeWhere" $ do
-      result <- runMockSqlQueryT (deleteCascadeWhere [PersonName ==. "Alice"])
-        [ withRecord @Person $ \case
-            DeleteCascadeWhere _ -> Just ()
-            _ -> Nothing
-        ]
-      result @?= ()
-#endif
 
   , testCase "getFieldName" $ do
       result <- runMockSqlQueryT (getFieldName PersonName)

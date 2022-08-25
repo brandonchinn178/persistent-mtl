@@ -1,9 +1,8 @@
-resolver: lts-14.27
+resolver: lts-18.1
 
 extra-deps:
-  - esqueleto-3.0.0
   - explainable-predicates-0.1.2.0
-  - syb-0.7.2.1
+  - persistent-2.13.0.0
 
 flags:
   explainable-predicates:

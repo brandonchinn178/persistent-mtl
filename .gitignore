@@ -2,6 +2,6 @@
 .DS_Store
 
 .stack-work/
-stack-ghc-*.yaml.lock
+stack-*.yaml.lock
 
 .ci/
