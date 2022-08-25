@@ -1,3 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
+
 {-|
 Module: Database.Persist.Monad.Class
 
@@ -6,13 +10,9 @@ in order to interpret how to run a
 'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
 @Database.Persist.Monad.Shim@.
 -}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableSuperClasses #-}
-
-module Database.Persist.Monad.Class
-  ( MonadSqlQuery(..)
-  ) where
+module Database.Persist.Monad.Class (
+  MonadSqlQuery (..),
+) where
 
 import Control.Monad.Trans.Class (lift)
 import qualified Control.Monad.Trans.Except as Except

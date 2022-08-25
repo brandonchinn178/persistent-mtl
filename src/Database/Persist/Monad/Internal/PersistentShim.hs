@@ -1,9 +1,9 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Database.Persist.Monad.Internal.PersistentShim
-  ( SafeToInsert
-  ) where
+module Database.Persist.Monad.Internal.PersistentShim (
+  SafeToInsert,
+) where
 
 #if MIN_VERSION_persistent(2,14,1)
 import Database.Persist.Class (SafeToInsert)

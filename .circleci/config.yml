@@ -11,7 +11,7 @@ executors:
         default: stack.yaml
 
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/base:2022.08
     shell: /bin/bash -eux -o pipefail
     environment:
       STACK_YAML: << parameters.stack_yaml >>
@@ -92,14 +92,15 @@ jobs:
           environment:
             HLINT_VERSION: 3.2.2
       - run:
-          name: Install stylish-haskell
+          name: Install fourmolu
           command: |
-            STYLISH_ARCHIVE="stylish-haskell-v${STYLISH_VERSION}-linux-x86_64.tar.gz"
-            curl -sSLO "https://github.com/jaspervdj/stylish-haskell/releases/download/v${STYLISH_VERSION}/${STYLISH_ARCHIVE}"
             mkdir -p ~/.local/bin/
-            tar xzf "${STYLISH_ARCHIVE}" -C ~/.local/bin/ --strip-components=1 "stylish-haskell-v${STYLISH_VERSION}-linux-x86_64/stylish-haskell"
+            curl -sSL \
+              "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64" \
+              -o ~/.local/bin/fourmolu
+            chmod +x ~/.local/bin/fourmolu
           environment:
-            STYLISH_VERSION: 0.12.2.0
+            FOURMOLU_VERSION: 0.8.2.0
       - run:
           name: Install pre-commit
           command: |
