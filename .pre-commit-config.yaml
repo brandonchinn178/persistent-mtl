@@ -23,8 +23,8 @@ repos:
             | test/SqlQueryRepTest.hs
           )$
 
-      - id: stylish-haskell
-        name: stylish-haskell
+      - id: fourmolu
+        name: fourmolu
         language: system
-        entry: stylish-haskell -i
+        entry: fourmolu -i
         files: '\.hs$'
