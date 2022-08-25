@@ -242,3 +242,6 @@ workflows:
       - run_build_and_test:
           name: test_ghc_8.10
           stack_yaml: stack-ghc-8.10.yaml
+      - run_build_and_test:
+          name: test_persistent_2.13
+          stack_yaml: stack-persistent-2.13.yaml
