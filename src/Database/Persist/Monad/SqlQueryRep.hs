@@ -38,6 +38,8 @@ import Data.Void (Void)
 import Database.Persist.Sql as Persist hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
+import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
+
 -- | The data type containing a constructor for each persistent function we'd
 -- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.
 --
@@ -85,22 +87,22 @@ data SqlQueryRep record a where
 
   -- | Constructor corresponding to 'Persist.insert'
   Insert
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record (Key record)
 
   -- | Constructor corresponding to 'Persist.insert_'
   Insert_
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record ()
 
   -- | Constructor corresponding to 'Persist.insertMany'
   InsertMany
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => [record] -> SqlQueryRep record [Key record]
 
   -- | Constructor corresponding to 'Persist.insertMany_'
   InsertMany_
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => [record] -> SqlQueryRep record ()
 
   -- | Constructor corresponding to 'Persist.insertEntityMany'
@@ -145,12 +147,12 @@ data SqlQueryRep record a where
 
   -- | Constructor corresponding to 'Persist.insertEntity'
   InsertEntity
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record (Entity record)
 
   -- | Constructor corresponding to 'Persist.insertRecord'
   InsertRecord
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record record
 
   -- | Constructor corresponding to 'Persist.getBy'
@@ -180,32 +182,32 @@ data SqlQueryRep record a where
 
   -- | Constructor corresponding to 'Persist.insertUnique'
   InsertUnique
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record (Maybe (Key record))
 
   -- | Constructor corresponding to 'Persist.upsert'
   Upsert
-    :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record)
+    :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, SafeToInsert record)
     => record -> [Update record] -> SqlQueryRep record (Entity record)
 
   -- | Constructor corresponding to 'Persist.upsertBy'
   UpsertBy
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => Unique record -> record -> [Update record] -> SqlQueryRep record (Entity record)
 
   -- | Constructor corresponding to 'Persist.putMany'
   PutMany
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => [record] -> SqlQueryRep record ()
 
   -- | Constructor corresponding to 'Persist.insertBy'
   InsertBy
-    :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record)
+    :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, SafeToInsert record)
     => record -> SqlQueryRep record (Either (Entity record) (Key record))
 
   -- | Constructor corresponding to 'Persist.insertUniqueEntity'
   InsertUniqueEntity
-    :: (PersistRecordBackend record SqlBackend)
+    :: (PersistRecordBackend record SqlBackend, SafeToInsert record)
     => record -> SqlQueryRep record (Maybe (Entity record))
 
   -- | Constructor corresponding to 'Persist.replaceUnique'

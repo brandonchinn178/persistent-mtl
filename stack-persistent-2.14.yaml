@@ -1,0 +1,11 @@
+resolver: lts-19.20
+
+extra-deps:
+  - persistent-2.14.0.2
+
+flags:
+  explainable-predicates:
+    regex: false
+
+ghc-options:
+  "$locals": -Werror

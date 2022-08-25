@@ -38,6 +38,8 @@ import Data.Void (Void)
 import Database.Persist.Sql as Persist hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
+import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
+
 -- | The data type containing a constructor for each persistent function we'd
 -- like to lift into 'Database.Persist.Monad.MonadSqlQuery'.
 --

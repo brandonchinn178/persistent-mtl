@@ -46,6 +46,7 @@ import UnliftIO.IORef (atomicModifyIORef, newIORef)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad
+import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
 import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
 import TestUtils.Esqueleto (esqueletoSelect)
@@ -828,6 +829,7 @@ insertAndFail ::
   , MonadSqlQuery m
   , PersistRecordBackend record SqlBackend
   , Typeable record
+  , SafeToInsert record
   )
   => record -> m ()
 insertAndFail record = do

@@ -31,6 +31,7 @@ import Database.Persist.Sql hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
+import Database.Persist.Monad.Internal.PersistentShim (SafeToInsert)
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
 -- | The lifted version of 'Database.Persist.Sql.get'
@@ -77,25 +78,25 @@ belongsToJust a1 a2 = runQueryRep $ BelongsToJust a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.insert'
 insert
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m (Key record)
 insert a1 = runQueryRep $ Insert a1
 
 -- | The lifted version of 'Database.Persist.Sql.insert_'
 insert_
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m ()
 insert_ a1 = runQueryRep $ Insert_ a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertMany'
 insertMany
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => [record] -> m [Key record]
 insertMany a1 = runQueryRep $ InsertMany a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertMany_'
 insertMany_
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => [record] -> m ()
 insertMany_ a1 = runQueryRep $ InsertMany_ a1
 
@@ -149,13 +150,13 @@ updateGet a1 a2 = runQueryRep $ UpdateGet a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.insertEntity'
 insertEntity
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m (Entity record)
 insertEntity a1 = runQueryRep $ InsertEntity a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertRecord'
 insertRecord
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m record
 insertRecord a1 = runQueryRep $ InsertRecord a1
 
@@ -191,37 +192,37 @@ deleteBy a1 = runQueryRep $ DeleteBy a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertUnique'
 insertUnique
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m (Maybe (Key record))
 insertUnique a1 = runQueryRep $ InsertUnique a1
 
 -- | The lifted version of 'Database.Persist.Sql.upsert'
 upsert
-  :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, OnlyOneUniqueKey record, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> [Update record] -> m (Entity record)
 upsert a1 a2 = runQueryRep $ Upsert a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.upsertBy'
 upsertBy
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => Unique record -> record -> [Update record] -> m (Entity record)
 upsertBy a1 a2 a3 = runQueryRep $ UpsertBy a1 a2 a3
 
 -- | The lifted version of 'Database.Persist.Sql.putMany'
 putMany
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => [record] -> m ()
 putMany a1 = runQueryRep $ PutMany a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertBy'
 insertBy
-  :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, AtLeastOneUniqueKey record, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m (Either (Entity record) (Key record))
 insertBy a1 = runQueryRep $ InsertBy a1
 
 -- | The lifted version of 'Database.Persist.Sql.insertUniqueEntity'
 insertUniqueEntity
-  :: (PersistRecordBackend record SqlBackend, Typeable record, MonadSqlQuery m)
+  :: (PersistRecordBackend record SqlBackend, SafeToInsert record, Typeable record, MonadSqlQuery m)
   => record -> m (Maybe (Entity record))
 insertUniqueEntity a1 = runQueryRep $ InsertUniqueEntity a1
 
