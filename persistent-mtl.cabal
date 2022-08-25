@@ -65,7 +65,6 @@ test-suite persistent-mtl-test
       Generated
       IntegrationTest
       MockedTest
-      MockSqlQueryT
       READMETest
       SqlQueryRepTest
       TestUtils.DB
