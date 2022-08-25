@@ -1,9 +1,13 @@
+{- AUTOCOLLECT.TEST -}
+
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Integration where
+module Integration (
+  {- AUTOCOLLECT.TEST.export -}
+) where
 
 import Conduit (runConduit, (.|))
 import qualified Conduit
@@ -51,16 +55,14 @@ import Example
 import TestUtils.DB (BackendType(..), allBackendTypes)
 import TestUtils.Esqueleto (esqueletoSelect)
 
-tests :: TestTree
-tests = testGroup "Integration tests" $
-  map testsWithBackend allBackendTypes
-
-testsWithBackend :: BackendType -> TestTree
-testsWithBackend backendType = testGroup (show backendType)
-  [ testWithTransaction backendType
-  , testComposability backendType
-  , testPersistentAPI backendType
-  , testInterop backendType
+test_batch =
+  [ testGroup (show backendType)
+      [ testWithTransaction backendType
+      , testComposability backendType
+      , testPersistentAPI backendType
+      , testInterop backendType
+      ]
+  | backendType <- allBackendTypes
   ]
 
 testWithTransaction :: BackendType -> TestTree

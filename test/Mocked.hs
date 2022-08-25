@@ -1,9 +1,13 @@
+{- AUTOCOLLECT.TEST -}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Mocked where
+module Mocked (
+  {- AUTOCOLLECT.TEST.export -}
+) where
 
 import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
@@ -18,14 +22,7 @@ import Database.Persist.Monad
 import Database.Persist.Monad.TestUtils
 import Example
 
-tests :: TestTree
-tests = testGroup "Mocked tests"
-  [ testWithTransaction
-  , testPersistentAPI
-  ]
-
-testWithTransaction :: TestTree
-testWithTransaction = testGroup "withTransaction"
+test = testGroup "withTransaction"
   [ testCase "it doesn't error with MockSqlQueryT" $
       runMockSqlQueryT (withTransaction $ insert_ $ person "Alice")
         [ withRecord @Person $ \case
@@ -34,8 +31,7 @@ testWithTransaction = testGroup "withTransaction"
         ]
   ]
 
-testPersistentAPI :: TestTree
-testPersistentAPI = testGroup "Persistent API"
+test = testGroup "Persistent API"
   [ testCase "get" $ do
       result <- runMockSqlQueryT (mapM get [1, 2])
         [ withRecord @Person $ \case

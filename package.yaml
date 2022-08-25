@@ -38,6 +38,9 @@ tests:
   persistent-mtl-test:
     source-dirs: test
     main: Main.hs
+    ghc-options: -F -pgmF=tasty-autocollect
+    build-tools:
+      - tasty-autocollect:tasty-autocollect
     dependencies:
       - base
       - bytestring
@@ -54,6 +57,7 @@ tests:
       - resource-pool
       - resourcet
       - tasty
+      - tasty-autocollect
       - tasty-golden
       - tasty-hunit
       - text

@@ -1,19 +1,21 @@
+{- AUTOCOLLECT.TEST -}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Basic where
+module Basic (
+  {- AUTOCOLLECT.TEST.export -}
+) where
 
-import Test.Tasty
 import Test.Tasty.HUnit
 
 import Database.Persist.Monad
 import Database.Persist.Monad.TestUtils
 import Example
 
-tests :: TestTree
-tests = testGroup "Basic functionality tests"
-  [ testCase "Ensure withTransaction README example typechecks" $ do
+test =
+  testCase "Ensure withTransaction README example typechecks" $ do
       let foo :: MonadSqlQuery m => m ()
           foo = insert_ $ person "Alice"
           bar :: MonadSqlQuery m => m ()
@@ -28,4 +30,3 @@ tests = testGroup "Basic functionality tests"
             Insert_ _ -> Just ()
             _ -> Nothing
         ]
-  ]
