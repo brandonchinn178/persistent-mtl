@@ -2,9 +2,8 @@
 {-# LANGUAGE CPP #-}
 
 module SqlQueryRepTest (
-  ) where
-
-{- AUTOCOLLECT.TEST.export -}
+  -- $AUTOCOLLECT.TEST.export$
+) where
 
 import qualified Data.ByteString.Lazy.Char8 as Char8
 import Test.Tasty

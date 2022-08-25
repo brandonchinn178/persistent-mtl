@@ -5,9 +5,8 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Mocked (
-  ) where
-
-{- AUTOCOLLECT.TEST.export -}
+  -- $AUTOCOLLECT.TEST.export$
+) where
 
 import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit

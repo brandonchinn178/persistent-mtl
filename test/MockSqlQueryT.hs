@@ -4,9 +4,8 @@
 {-# LANGUAGE TypeApplications #-}
 
 module MockSqlQueryT (
-  ) where
-
-{- AUTOCOLLECT.TEST.export -}
+  -- $AUTOCOLLECT.TEST.export$
+) where
 
 import Database.Persist (Entity (..))
 import Database.Persist.Sql (toSqlKey)

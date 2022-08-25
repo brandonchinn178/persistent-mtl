@@ -5,9 +5,8 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Integration (
-  ) where
-
-{- AUTOCOLLECT.TEST.export -}
+  -- $AUTOCOLLECT.TEST.export$
+) where
 
 import Conduit (runConduit, (.|))
 import qualified Conduit

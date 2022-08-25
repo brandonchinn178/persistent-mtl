@@ -4,9 +4,8 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Basic (
-  ) where
-
-{- AUTOCOLLECT.TEST.export -}
+  -- $AUTOCOLLECT.TEST.export$
+) where
 
 import Test.Tasty.HUnit
 
