@@ -73,7 +73,9 @@ test-suite persistent-mtl-test
       Paths_persistent_mtl
   hs-source-dirs:
       test
-  ghc-options: -Wall
+  ghc-options: -Wall -F -pgmF=tasty-autocollect
+  build-tool-depends:
+      tasty-autocollect:tasty-autocollect
   build-depends:
       base
     , bytestring
@@ -90,6 +92,7 @@ test-suite persistent-mtl-test
     , resource-pool
     , resourcet
     , tasty
+    , tasty-autocollect
     , tasty-golden
     , tasty-hunit
     , text

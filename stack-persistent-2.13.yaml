@@ -3,6 +3,8 @@ resolver: lts-18.1
 extra-deps:
   - explainable-predicates-0.1.2.0
   - persistent-2.13.0.0
+  - tasty-1.4.2.1
+  - tasty-autocollect-0.3.0.0
 
 flags:
   explainable-predicates:

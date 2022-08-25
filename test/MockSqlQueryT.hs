@@ -1,28 +1,32 @@
+{- AUTOCOLLECT.TEST -}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module MockSqlQueryT where
+module MockSqlQueryT (
+  {- AUTOCOLLECT.TEST.export -}
+) where
 
 import Database.Persist (Entity(..))
 import Database.Persist.Sql (toSqlKey)
-import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (SomeException, try)
 
 import Database.Persist.Monad.TestUtils
 import Example
 
-tests :: TestTree
-tests = testGroup "MockSqlQueryT"
-  [ testCase "it errors if it could not find a mock" $ do
+test =
+  testCase "it errors if it could not find a mock" $ do
       result <- try $ runMockSqlQueryT getPeopleNames []
       case result of
         Right _ -> assertFailure "runMockSqlQueryT did not fail"
         Left e -> do
           let msg = head $ lines $ show (e :: SomeException)
           msg @?= "Could not find mock for query: SelectList{..}<Person>"
-  , testCase "it continues after a mock doesn't match" $ do
+
+test =
+  testCase "it continues after a mock doesn't match" $ do
       result <- runMockSqlQueryT getPeopleNames
         [ withRecord @Post $ \_ -> error "getPeopleNames matched Post record"
         , mockQuery $ \_ -> Nothing
@@ -35,4 +39,3 @@ tests = testGroup "MockSqlQueryT"
         ]
 
       result @?= ["Alice", "Bob"]
-  ]
