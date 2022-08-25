@@ -43,20 +43,12 @@ data PersistentFunction = PersistentFunction
 instance FromJSON PersistentFunction where
   parseJSON = withObject "PersistentFunction" $ \o ->
     PersistentFunction
-      <$> o
-      .: "name"
-      <*> o
-      .:? "constraints"
-      .!= []
-      <*> o
-      .:? "args"
-      .!= []
-      <*> o
-      .: "result"
-      <*> o
-      .:? "condition"
-      <*> o
-      .:? "conduitFrom"
+      <$> (o .: "name")
+      <*> (o .:? "constraints" .!= [])
+      <*> (o .:? "args" .!= [])
+      <*> (o .: "result")
+      <*> (o .:? "condition")
+      <*> (o .:? "conduitFrom")
 
 {- Rendering -}
 
@@ -215,8 +207,7 @@ generate context templatePath output = do
   case Mustache.checkedSubstitute template context of
     ([], rendered) -> Text.writeFile output rendered
     (errors, _) ->
-      error $
-        unlines $
-          "Found errors when generating template:" : map showError errors
+      error . unlines $
+        "Found errors when generating template:" : map showError errors
   where
     showError e = "* " ++ show e
