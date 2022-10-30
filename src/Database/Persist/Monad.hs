@@ -61,6 +61,9 @@ module Database.Persist.Monad (
   SqlQueryEnv (..),
   mkSqlQueryEnv,
 
+  -- ** SqlQueryT environment
+  getSqlBackendPool,
+
   -- * Transactions
   SqlTransaction,
   rerunnableLift,
@@ -75,7 +78,7 @@ import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.IO.Unlift (MonadUnliftIO (..), wrappedWithRunInIO)
 import Control.Monad.Logger (MonadLogger)
-import Control.Monad.Reader (ReaderT (..), mapReaderT)
+import Control.Monad.Reader (ReaderT (..), asks, mapReaderT)
 import Control.Monad.Reader.Class (MonadReader (..))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Resource (MonadResource)
@@ -246,3 +249,8 @@ runSqlQueryT backendPool = runSqlQueryTWith $ mkSqlQueryEnv backendPool id
 -}
 runSqlQueryTWith :: SqlQueryEnv -> SqlQueryT m a -> m a
 runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT
+
+{- SqlQueryT environment -}
+
+getSqlBackendPool :: Monad m => SqlQueryT m (Pool SqlBackend)
+getSqlBackendPool = SqlQueryT (asks backendPool)
