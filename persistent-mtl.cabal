@@ -33,6 +33,7 @@ library
       Database.Persist.Monad
       Database.Persist.Monad.Class
       Database.Persist.Monad.Internal.PersistentShim
+      Database.Persist.Monad.Internal.SqlTransaction
       Database.Persist.Monad.Shim
       Database.Persist.Monad.SqlQueryRep
       Database.Persist.Monad.TestUtils
