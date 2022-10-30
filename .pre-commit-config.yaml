@@ -19,6 +19,7 @@ repos:
           (?x)^(
               src/Database/Persist/Monad/Shim.hs
             | src/Database/Persist/Monad/SqlQueryRep.hs
+            | src/Database/Persist/Sql/Shim.hs
             | test/Generated.hs
             | test/SqlQueryRepTest.hs
           )$
