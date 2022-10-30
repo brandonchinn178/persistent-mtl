@@ -4,6 +4,9 @@
 * Drop support for GHC < 8.10
 * Drop support for `persistent` < 2.13
 * Add support for `persistent-2.14`
+* Add `Database.Persist.Sql.Shim` module that re-exports `Database.Persist.Sql` and `Database.Persist.Monad.Shim`
+* Add `MonadFix` instance to `SqlQueryT` and `SqlTransaction`
+* Add `getSqlBackendPool`
 
 # 0.4.0.0
 

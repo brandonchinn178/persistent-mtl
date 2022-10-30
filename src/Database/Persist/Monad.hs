@@ -61,6 +61,9 @@ module Database.Persist.Monad (
   SqlQueryEnv (..),
   mkSqlQueryEnv,
 
+  -- ** SqlQueryT environment
+  getSqlBackendPool,
+
   -- * Transactions
   SqlTransaction,
   rerunnableLift,
@@ -71,10 +74,11 @@ module Database.Persist.Monad (
 ) where
 
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.IO.Unlift (MonadUnliftIO (..), wrappedWithRunInIO)
 import Control.Monad.Logger (MonadLogger)
-import Control.Monad.Reader (ReaderT (..), mapReaderT)
+import Control.Monad.Reader (ReaderT (..), asks, mapReaderT)
 import Control.Monad.Reader.Class (MonadReader (..))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Resource (MonadResource)
@@ -108,7 +112,7 @@ import Database.Persist.Monad.SqlQueryRep
 newtype SqlTransaction m a = SqlTransaction
   { unSqlTransaction :: SqlPersistT m a
   }
-  deriving (Functor, Applicative, Monad, MonadRerunnableIO)
+  deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO)
 
 instance
   ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
@@ -194,6 +198,7 @@ newtype SqlQueryT m a = SqlQueryT
     ( Functor
     , Applicative
     , Monad
+    , MonadFix
     , MonadIO
     , MonadTrans
     , MonadResource
@@ -244,3 +249,8 @@ runSqlQueryT backendPool = runSqlQueryTWith $ mkSqlQueryEnv backendPool id
 -}
 runSqlQueryTWith :: SqlQueryEnv -> SqlQueryT m a -> m a
 runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT
+
+{- SqlQueryT environment -}
+
+getSqlBackendPool :: Monad m => SqlQueryT m (Pool SqlBackend)
+getSqlBackendPool = SqlQueryT (asks backendPool)
