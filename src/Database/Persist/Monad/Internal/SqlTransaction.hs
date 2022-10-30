@@ -32,7 +32,7 @@ import Database.Persist.Monad.SqlQueryRep
  You shouldn't need to explicitly use this type; your functions should only
  declare the 'MonadSqlQuery' constraint.
 -}
-newtype SqlTransaction m a = SqlTransaction
+newtype SqlTransaction m a = UnsafeSqlTransaction
   { unSqlTransaction :: SqlPersistT m a
   }
   deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO, MonadRerunnableTrans)
@@ -48,11 +48,11 @@ instance
 instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
   type TransactionM (SqlTransaction m) = TransactionM m
 
-  runQueryRep = SqlTransaction . runSqlQueryRep
+  runQueryRep = UnsafeSqlTransaction . runSqlQueryRep
 
   -- Delegate to 'm', since 'm' is in charge of starting/stopping transactions.
   -- 'SqlTransaction' is ONLY in charge of executing queries.
-  withTransaction = SqlTransaction . withTransaction
+  withTransaction = UnsafeSqlTransaction . withTransaction
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
