@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_call:
 
 jobs:
   build_and_test:
@@ -33,7 +34,7 @@ jobs:
       TEST_POSTGRESQL: 1
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/cache@v3
         with:
@@ -47,7 +48,7 @@ jobs:
       # upload coverage data
       - name: Generate coverage data
         run: stack install hpc-lcov && hpc-lcov
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         with:
           files: lcov.info
         if: ${{ matrix.latest }}
@@ -58,7 +59,7 @@ jobs:
       HLINT_VERSION: '3.5'
       FOURMOLU_VERSION: '0.8.2.0'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install hlint
         run: |
@@ -81,7 +82,7 @@ jobs:
   check_sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
           path: ~/.stack
@@ -96,7 +97,7 @@ jobs:
   check_codegen:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
           path: ~/.stack
