@@ -11,37 +11,37 @@
 * Add `catchSqlTransaction`
 * Add `retryCallback` to `SqlQueryEnv`
 
-# 0.4.0.0
+# v0.4.0.0
 
 * Add some mtl instances: `MonadThrow`, `MonadCatch`, `MonadMask`, `MonadLogger`, `MonadReader`
 * Removed support for GHC 8.2, 8.4
 * Add `MonadSqlQuery (TransactionM m)` superclass constraint to allow writing functions generic on some `MonadSqlQuery m` using `withTransaction`, as shown in examples in README
 
-# 0.3.0.0
+# v0.3.0.0
 
 * Add `unsafeLiftSql` ([#38](https://github.com/brandonchinn178/persistent-mtl/pull/38))
 
-# 0.2.2.0
+# v0.2.2.0
 
 * Fix for persistent 2.13
 
-# 0.2.1.0
+# v0.2.1.0
 
 * Add `rerunnableLift` for `SqlTransaction`
 * Use `unliftio-pool` instead of `resourcet-pool`, which has better async exeception safety
 
-# 0.2.0.0
+# v0.2.0.0
 
 * Use a separate monad within `withTransaction` to prevent unsafe/arbitrary IO actions ([#7](https://github.com/brandonchinn178/persistent-mtl/issues/7), [#28](https://github.com/brandonchinn178/persistent-mtl/issues/28))
 * Add `MonadRerunnableIO` to support IO actions within `withTransaction` only if the IO action is determined to be rerunnable
 * Add built-in support for retrying transactions if a serialization error occurs
 * Remove `SqlQueryRep` as an export from `Database.Persist.Monad`. You shouldn't ever need it for normal usage. It is now re-exported by `Database.Persist.Monad.TestUtils`, since most of the usage of `SqlQueryRep` is in mocking queries. If you need it otherwise, you can import it directly from `Database.Persist.Monad.SqlQueryRep`.
 
-# 0.1.0.1
+# v0.1.0.1
 
 Fix quickstart
 
-# 0.1.0.0
+# v0.1.0.0
 
 Initial release
 * `SqlQueryT` + `MonadSqlQuery`
