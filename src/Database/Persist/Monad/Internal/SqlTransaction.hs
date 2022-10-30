@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -7,14 +9,16 @@ module Database.Persist.Monad.Internal.SqlTransaction (
   SqlTransaction (..),
   SqlTransactionEnv (..),
   runSqlTransaction,
+  catchSqlTransaction,
 ) where
 
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Control.Monad.Reader (ReaderT, withReaderT)
+import Control.Monad.Reader (ReaderT, ask, withReaderT)
 import Database.Persist.Sql (SqlBackend, runSqlConn)
 import qualified GHC.TypeLits as GHC
+import UnliftIO.Exception (Exception, SomeException, catchJust, fromException)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Control.Monad.Trans.Rerunnable (MonadRerunnableTrans)
@@ -58,6 +62,7 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 
 data SqlTransactionEnv = SqlTransactionEnv
   { sqlBackend :: SqlBackend
+  , ignoreCatch :: SomeException -> Bool
   }
 
 runSqlTransaction ::
@@ -69,3 +74,19 @@ runSqlTransaction opts =
   (`runSqlConn` sqlBackend opts)
     . withReaderT (\conn -> opts{sqlBackend = conn})
     . unSqlTransaction
+
+-- | Like normal 'catch', except ignores errors specified by 'ignoreCatch'.
+catchSqlTransaction ::
+  (MonadUnliftIO m, Exception e) =>
+  SqlTransaction m a ->
+  (e -> SqlTransaction m a) ->
+  SqlTransaction m a
+catchSqlTransaction (UnsafeSqlTransaction m) handler =
+  UnsafeSqlTransaction $ m `catch` (unSqlTransaction . handler)
+  where
+    catch a b = do
+      SqlTransactionEnv{ignoreCatch} <- ask
+      catchJust
+        (\e -> if ignoreCatch e then Nothing else fromException e)
+        a
+        b

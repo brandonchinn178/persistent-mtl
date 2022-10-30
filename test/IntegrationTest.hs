@@ -1,6 +1,7 @@
 {- AUTOCOLLECT.TEST -}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
@@ -45,7 +46,7 @@ import UnliftIO.Exception (
   throwString,
   try,
  )
-import UnliftIO.IORef (atomicModifyIORef, newIORef)
+import UnliftIO.IORef (atomicModifyIORef, newIORef, readIORef, writeIORef)
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
 import Database.Persist.Monad
@@ -58,6 +59,7 @@ test_batch =
   [ testGroup
     (show backendType)
     [ testWithTransaction backendType
+    , testCatchTransaction backendType
     , testComposability backendType
     , testPersistentAPI backendType
     , testInterop backendType
@@ -113,6 +115,36 @@ testWithTransaction backendType =
 
         result @?= Left RetryLimitExceeded
     ]
+
+testCatchTransaction :: BackendType -> TestTree
+testCatchTransaction backendType =
+  testGroup
+    "catchSqlTransaction"
+    [ testCase "catches errors" $ do
+        wasCaughtRef <- newIORef False
+        runTestApp backendType . withTransaction $
+          (`catchSqlTransaction` markCaught wasCaughtRef) $
+            rerunnableIO (throwString "error")
+        wasCaught <- readIORef wasCaughtRef
+        wasCaught @?= True
+    , testCase "does not catch retry errors" $ do
+        let retryIf e = case fromException e of
+              Just (StringException "retry me" _) -> True
+              _ -> False
+            setRetry env = env{retryIf, retryLimit = 2}
+
+        wasCaughtRef <- newIORef False
+        _ <-
+          try @_ @SomeException $
+            runTestAppWith backendType setRetry . withTransaction $
+              (`catchSqlTransaction` markCaught wasCaughtRef) $
+                rerunnableIO (throwString "retry me")
+        wasCaught <- readIORef wasCaughtRef
+        wasCaught @?= False
+    ]
+  where
+    markCaught wasCaughtRef (_ :: SomeException) =
+      rerunnableIO $ writeIORef wasCaughtRef True
 
 -- this should compile
 testComposability :: BackendType -> TestTree

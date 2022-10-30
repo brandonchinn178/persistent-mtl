@@ -66,6 +66,7 @@ module Database.Persist.Monad (
   -- * Transactions
   SqlTransaction,
   TransactionError (..),
+  catchSqlTransaction,
 
   -- * Lifted functions
   module Database.Persist.Monad.Shim,
@@ -164,6 +165,7 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
       let transactionEnv =
             SqlTransactionEnv
               { sqlBackend = conn
+              , ignoreCatch = retryIf -- don't catch retry errors
               }
           filterRetry e = if retryIf e then Just e else Nothing
           loop i = catchJust filterRetry (runSqlTransaction transactionEnv m) $ \_ ->
