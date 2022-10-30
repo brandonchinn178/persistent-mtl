@@ -113,6 +113,8 @@ data SqlQueryEnv = SqlQueryEnv
   -- ^ The number of times to retry, if 'retryIf' is satisfied.
   --
   -- Defaults to 10.
+  , retryCallback :: SomeException -> IO ()
+  -- ^ A callback to run if 'retryIf' returns True. Useful for logging.
   }
 
 {-| Build a SqlQueryEnv from the default.
@@ -131,6 +133,7 @@ mkSqlQueryEnv backendPool f =
       { backendPool
       , retryIf = const False
       , retryLimit = 10
+      , retryCallback = \_ -> pure ()
       }
 
 -- | The monad transformer that implements 'MonadSqlQuery'.
@@ -168,9 +171,10 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
               , ignoreCatch = retryIf -- don't catch retry errors
               }
           filterRetry e = if retryIf e then Just e else Nothing
-          loop i = catchJust filterRetry (runSqlTransaction transactionEnv m) $ \_ ->
+          loop i = catchJust filterRetry (runSqlTransaction transactionEnv m) $ \e ->
             if i < retryLimit
               then do
+                liftIO $ retryCallback e
                 threadDelay $ 1000 * 2 ^ i
                 loop $! i + 1
               else throwIO RetryLimitExceeded

@@ -114,6 +114,24 @@ testWithTransaction backendType =
                   throwString "retry me"
 
         result @?= Left RetryLimitExceeded
+    , testCase "Runs retryCallback" $ do
+        callbackRef <- newIORef Nothing
+
+        let setRetry env =
+              env
+                { retryIf = const True
+                , retryLimit = 2
+                , retryCallback = writeIORef callbackRef . Just
+                }
+        _ <-
+          try @_ @TransactionError @() $
+            runTestAppWith backendType setRetry . withTransaction $
+              rerunnableIO (throwIO TestError)
+
+        mError <- readIORef callbackRef
+        case mError >>= fromException of
+          Just TestError -> return ()
+          _ -> assertFailure $ "Unexpected result: " ++ show mError
     ]
 
 testCatchTransaction :: BackendType -> TestTree
