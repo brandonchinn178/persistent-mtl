@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -66,8 +65,8 @@ module Database.Persist.Monad (
 
   -- * Transactions
   SqlTransaction,
-  rerunnableLift,
   TransactionError (..),
+  catchSqlTransaction,
 
   -- * Lifted functions
   module Database.Persist.Monad.Shim,
@@ -83,71 +82,15 @@ import Control.Monad.Reader.Class (MonadReader (..))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Resource (MonadResource)
 import Data.Pool (Pool)
-import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
-import qualified GHC.TypeLits as GHC
+import Database.Persist.Sql (SqlBackend)
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
 import UnliftIO.Pool (withResource)
 
-import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
 import Database.Persist.Monad.Class
+import Database.Persist.Monad.Internal.SqlTransaction
 import Database.Persist.Monad.Shim
-import Database.Persist.Monad.SqlQueryRep
-
-{- SqlTransaction -}
-
-{-| The monad that tracks transaction state.
-
- Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
- IO operations, for two reasons:
-
-   1. Forking a thread that uses the same 'SqlBackend' as the current thread
-      causes Bad Things to happen.
-   2. Transactions may need to be retried, in which case IO operations in
-      a transaction are required to be rerunnable.
-
- You shouldn't need to explicitly use this type; your functions should only
- declare the 'MonadSqlQuery' constraint.
--}
-newtype SqlTransaction m a = SqlTransaction
-  { unSqlTransaction :: SqlPersistT m a
-  }
-  deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO)
-
-instance
-  ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
-  , Monad m
-  ) =>
-  MonadIO (SqlTransaction m)
-  where
-  liftIO = undefined
-
-instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
-  type TransactionM (SqlTransaction m) = TransactionM m
-
-  runQueryRep = SqlTransaction . runSqlQueryRep
-
-  -- Delegate to 'm', since 'm' is in charge of starting/stopping transactions.
-  -- 'SqlTransaction' is ONLY in charge of executing queries.
-  withTransaction = SqlTransaction . withTransaction
-
-runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
-runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
-
-{-| 'SqlTransaction' does not have an instance for 'MonadTrans' to prevent
- accidental lifting of unsafe monadic actions. Use this function to explicitly
- mark a monadic action as rerunnable.
--}
-rerunnableLift :: MonadUnliftIO m => m a -> SqlTransaction m a
-rerunnableLift m = SqlTransaction $ lift $ withRunInIO $ \runInIO -> rerunnableIO $ runInIO m
-
--- | Errors that can occur within a SQL transaction.
-data TransactionError
-  = -- | The retry limit was reached when retrying a transaction.
-    RetryLimitExceeded
-  deriving (Show, Eq)
-
-instance Exception TransactionError
 
 {- SqlQueryT monad -}
 
@@ -170,6 +113,8 @@ data SqlQueryEnv = SqlQueryEnv
   -- ^ The number of times to retry, if 'retryIf' is satisfied.
   --
   -- Defaults to 10.
+  , retryCallback :: SomeException -> IO ()
+  -- ^ A callback to run if 'retryIf' returns True. Useful for logging.
   }
 
 {-| Build a SqlQueryEnv from the default.
@@ -188,6 +133,7 @@ mkSqlQueryEnv backendPool f =
       { backendPool
       , retryIf = const False
       , retryLimit = 10
+      , retryCallback = \_ -> pure ()
       }
 
 -- | The monad transformer that implements 'MonadSqlQuery'.
@@ -219,10 +165,16 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   withTransaction m = do
     SqlQueryEnv{..} <- SqlQueryT ask
     withResource backendPool $ \conn ->
-      let filterRetry e = if retryIf e then Just e else Nothing
-          loop i = catchJust filterRetry (runSqlTransaction conn m) $ \_ ->
+      let transactionEnv =
+            SqlTransactionEnv
+              { sqlBackend = conn
+              , ignoreCatch = retryIf -- don't catch retry errors
+              }
+          filterRetry e = if retryIf e then Just e else Nothing
+          loop i = catchJust filterRetry (runSqlTransaction transactionEnv m) $ \e ->
             if i < retryLimit
               then do
+                liftIO $ retryCallback e
                 threadDelay $ 1000 * 2 ^ i
                 loop $! i + 1
               else throwIO RetryLimitExceeded
@@ -237,6 +189,14 @@ mapSqlQueryT f = SqlQueryT . mapReaderT f . unSqlQueryT
 instance MonadReader r m => MonadReader r (SqlQueryT m) where
   ask = lift ask
   local = mapSqlQueryT . local
+
+-- | Errors that can occur when running a SQL transaction.
+data TransactionError
+  = -- | The retry limit was reached when retrying a transaction.
+    RetryLimitExceeded
+  deriving (Show, Eq)
+
+instance Exception TransactionError
 
 {- Running SqlQueryT -}
 
