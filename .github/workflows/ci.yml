@@ -55,7 +55,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     env:
-      HLINT_VERSION: '3.2.2'
+      HLINT_VERSION: '3.5'
       FOURMOLU_VERSION: '0.8.2.0'
     steps:
       - uses: actions/checkout@v2
