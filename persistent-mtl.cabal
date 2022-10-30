@@ -29,6 +29,7 @@ source-repository head
 library
   exposed-modules:
       Control.Monad.IO.Rerunnable
+      Control.Monad.Trans.Rerunnable
       Database.Persist.Monad
       Database.Persist.Monad.Class
       Database.Persist.Monad.Internal.PersistentShim

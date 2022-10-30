@@ -66,7 +66,6 @@ module Database.Persist.Monad (
 
   -- * Transactions
   SqlTransaction,
-  rerunnableLift,
   TransactionError (..),
 
   -- * Lifted functions
@@ -89,7 +88,8 @@ import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)
 import UnliftIO.Pool (withResource)
 
-import Control.Monad.IO.Rerunnable (MonadRerunnableIO, rerunnableIO)
+import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
+import Control.Monad.Trans.Rerunnable (MonadRerunnableTrans)
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.Shim
 import Database.Persist.Monad.SqlQueryRep
@@ -112,7 +112,7 @@ import Database.Persist.Monad.SqlQueryRep
 newtype SqlTransaction m a = SqlTransaction
   { unSqlTransaction :: SqlPersistT m a
   }
-  deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO)
+  deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO, MonadRerunnableTrans)
 
 instance
   ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
@@ -133,13 +133,6 @@ instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) 
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
-
-{-| 'SqlTransaction' does not have an instance for 'MonadTrans' to prevent
- accidental lifting of unsafe monadic actions. Use this function to explicitly
- mark a monadic action as rerunnable.
--}
-rerunnableLift :: MonadUnliftIO m => m a -> SqlTransaction m a
-rerunnableLift m = SqlTransaction $ lift $ withRunInIO $ \runInIO -> rerunnableIO $ runInIO m
 
 -- | Errors that can occur within a SQL transaction.
 data TransactionError

@@ -7,6 +7,7 @@
 * Add `Database.Persist.Sql.Shim` module that re-exports `Database.Persist.Sql` and `Database.Persist.Monad.Shim`
 * Add `MonadFix` instance to `SqlQueryT` and `SqlTransaction`
 * Add `getSqlBackendPool`
+* Move `rerunnableLift` into `MonadRerunnableTrans` typeclass in `Control.Monad.Trans.Rerunnable`
 
 # 0.4.0.0
 
