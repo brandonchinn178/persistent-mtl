@@ -1,5 +1,5 @@
 {-
-  stack script --resolver lts-16.23
+  stack script --resolver lts-19.20
     --package aeson
     --package containers
     --package mustache
@@ -199,6 +199,7 @@ main = do
 
   generate context "SqlQueryRep.mustache" $ root ++ "src/Database/Persist/Monad/SqlQueryRep.hs"
   generate context "Shim.mustache" $ root ++ "src/Database/Persist/Monad/Shim.hs"
+  generate context "SqlShim.mustache" $ root ++ "src/Database/Persist/Sql/Shim.hs"
   generate context "TestHelpers.mustache" $ root ++ "test/Generated.hs"
 
 generate :: ToMustache k => k -> FilePath -> FilePath -> IO ()
