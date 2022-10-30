@@ -5,13 +5,15 @@
 
 module Database.Persist.Monad.Internal.SqlTransaction (
   SqlTransaction (..),
+  SqlTransactionEnv (..),
   runSqlTransaction,
 ) where
 
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
+import Control.Monad.Reader (ReaderT, withReaderT)
+import Database.Persist.Sql (SqlBackend, runSqlConn)
 import qualified GHC.TypeLits as GHC
 
 import Control.Monad.IO.Rerunnable (MonadRerunnableIO)
@@ -33,7 +35,7 @@ import Database.Persist.Monad.SqlQueryRep
  declare the 'MonadSqlQuery' constraint.
 -}
 newtype SqlTransaction m a = UnsafeSqlTransaction
-  { unSqlTransaction :: SqlPersistT m a
+  { unSqlTransaction :: ReaderT SqlTransactionEnv m a
   }
   deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO, MonadRerunnableTrans)
 
@@ -48,11 +50,22 @@ instance
 instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
   type TransactionM (SqlTransaction m) = TransactionM m
 
-  runQueryRep = UnsafeSqlTransaction . runSqlQueryRep
+  runQueryRep = UnsafeSqlTransaction . withReaderT sqlBackend . runSqlQueryRep
 
   -- Delegate to 'm', since 'm' is in charge of starting/stopping transactions.
   -- 'SqlTransaction' is ONLY in charge of executing queries.
   withTransaction = UnsafeSqlTransaction . withTransaction
 
-runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
-runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
+data SqlTransactionEnv = SqlTransactionEnv
+  { sqlBackend :: SqlBackend
+  }
+
+runSqlTransaction ::
+  MonadUnliftIO m =>
+  SqlTransactionEnv ->
+  SqlTransaction m a ->
+  m a
+runSqlTransaction opts =
+  (`runSqlConn` sqlBackend opts)
+    . withReaderT (\conn -> opts{sqlBackend = conn})
+    . unSqlTransaction

@@ -161,8 +161,12 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
   withTransaction m = do
     SqlQueryEnv{..} <- SqlQueryT ask
     withResource backendPool $ \conn ->
-      let filterRetry e = if retryIf e then Just e else Nothing
-          loop i = catchJust filterRetry (runSqlTransaction conn m) $ \_ ->
+      let transactionEnv =
+            SqlTransactionEnv
+              { sqlBackend = conn
+              }
+          filterRetry e = if retryIf e then Just e else Nothing
+          loop i = catchJust filterRetry (runSqlTransaction transactionEnv m) $ \_ ->
             if i < retryLimit
               then do
                 threadDelay $ 1000 * 2 ^ i
