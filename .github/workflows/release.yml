@@ -36,7 +36,7 @@ jobs:
       - name: Get CHANGELOG section
         run: |
           sed '/^# Unreleased/,/^$/d' CHANGELOG.md > /tmp/changelog-without-unreleased
-          if [[ ! "$(head -n 1 /tmp/changelog-without-unreleased)" != "# ${VERSION}" ]]; then
+          if [[ "$(head -n 1 /tmp/changelog-without-unreleased)" != "# ${VERSION}" ]]; then
             echo "CHANGELOG doesn't look updated" >&2
             exit 1
           fi
