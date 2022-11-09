@@ -87,8 +87,13 @@ jobs:
         with:
           path: ~/.stack
           key: ${{ runner.os }}-check_sdist-${{ hashFiles('stack.yaml', 'package.yaml') }}
+
+      - name: Strip unreleased section from CHANGELOG
+        run: sed -i -n '/^# Unreleased/d; /^#/,$p' CHANGELOG.md
+
       - name: Create sdist bundle
         run: stack sdist --test-tarball --tar-dir .
+
       - uses: actions/upload-artifact@v3
         with:
           name: persistent-mtl-sdist
