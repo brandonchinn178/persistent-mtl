@@ -23,7 +23,7 @@ jobs:
       - uses: brandonchinn178/haskell-actions/parse-cabal-file@parse-cabal-file
         id: cabal_file
         with:
-          cabal_file: fourmolu.cabal
+          cabal_file: persistent-mtl.cabal
       - name: Set version label
         run: echo 'VERSION=v${{ steps.cabal_file.outputs.version }}' >> "${GITHUB_ENV}"
 
