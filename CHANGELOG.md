@@ -1,5 +1,7 @@
 # Unreleased
 
+* Add GHC 9.4 support
+
 # v0.5.0.0
 
 * Export `SqlQueryT` constructor ([#46](https://github.com/brandonchinn178/persistent-mtl/pull/46))

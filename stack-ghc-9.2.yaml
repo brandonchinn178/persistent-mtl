@@ -1,0 +1,12 @@
+resolver: lts-20.0
+
+extra-deps:
+  # https://github.com/yesodweb/persistent/issues/1406#issuecomment-1226741099
+  - persistent-2.13.3.3
+
+flags:
+  explainable-predicates:
+    regex: false
+
+ghc-options:
+  "$locals": -Werror

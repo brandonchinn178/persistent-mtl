@@ -13,6 +13,8 @@ jobs:
         stack_yaml:
           - stack-ghc-8.10.yaml
           - stack-ghc-9.0.yaml
+          # - stack-ghc-9.2.yaml
+          - stack-ghc-9.4.yaml
           - stack-persistent-2.13.yaml
           - stack-persistent-2.14.yaml
         include:
@@ -20,7 +22,7 @@ jobs:
             latest: true
 
     name: build_and_test (${{ matrix.stack_yaml }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     services:
       postgres:
         image: postgres:13.1
