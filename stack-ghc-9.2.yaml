@@ -1,7 +1,6 @@
-resolver: lts-19.33
+resolver: lts-20.0
 
 extra-deps:
-  - tasty-autocollect-0.3.0.0
   # https://github.com/yesodweb/persistent/issues/1406#issuecomment-1226741099
   - persistent-2.13.3.3
 

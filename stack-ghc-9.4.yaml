@@ -1,0 +1,11 @@
+resolver: nightly-2022-11-19
+
+extra-deps:
+  - tasty-autocollect-0.3.2.0
+
+flags:
+  explainable-predicates:
+    regex: false
+
+ghc-options:
+  "$locals": -Werror
