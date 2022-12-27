@@ -1,3 +1,4 @@
 indentation: 2
 indent-wheres: true
-haddock-style: multi-line-compact
+haddock-style: single-line
+haddock-style-module: multi-line-compact

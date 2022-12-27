@@ -140,16 +140,15 @@ instance ToMustache FunctionContext where
 shouldGenerateSqlQueryRep :: FunctionContext -> Bool
 shouldGenerateSqlQueryRep FunctionContext{..} = isNothing conduitFrom
 
-{-| Get all `record` type variables in the given list of constraints.
-
- A type variable is considered a `record` type variable if it matches the
- pattern "record|recordN", where `N` is a number. The type variables will
- be sorted when returned.
-
- e.g.
-   ["Foo record"] -> ["record"]
-   ["Bar record1", "Foo record2 record1"] -> ["record1", "record2"]
--}
+-- | Get all `record` type variables in the given list of constraints.
+--
+--  A type variable is considered a `record` type variable if it matches the
+--  pattern "record|recordN", where `N` is a number. The type variables will
+--  be sorted when returned.
+--
+--  e.g.
+--    ["Foo record"] -> ["record"]
+--    ["Bar record1", "Foo record2 record1"] -> ["record1", "record2"]
 getRecordTypeVars :: [Text] -> [Text]
 getRecordTypeVars = sort . nub . concatMap getPersistRecordsIn
   where
@@ -164,9 +163,8 @@ capitalize t = case Text.uncons t of
 replaceAll :: [(Text, Text)] -> Text -> Text
 replaceAll replacers haystack = foldr (uncurry Text.replace) haystack replacers
 
-{-| Add to each element keys that indicate information about the element's
- index in the list.
--}
+-- | Add to each element keys that indicate information about the element's
+--  index in the list.
 enumerate :: Mustache.ToMustache a => [a] -> [Mustache.Value]
 enumerate xs =
   let mkElem x i =
@@ -178,9 +176,8 @@ enumerate xs =
             ]
    in zipWith mkElem xs [1 ..]
 
-{-| Convert each element in the list into a Value with the given function,
- then enumerate each element.
--}
+-- | Convert each element in the list into a Value with the given function,
+--  then enumerate each element.
 enumerateWith :: (a -> Mustache.Value) -> [a] -> [Mustache.Value]
 enumerateWith f = enumerate . map f
 

@@ -22,9 +22,8 @@ import qualified Control.Monad.Trans.State.Strict as State.Strict
 import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
 import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 
-{-| A copy of 'Control.Monad.Trans.Class.MonadTrans' to explicitly allow only
-lifting actions that are rerunnable, e.g. in the context of a SQL transaction.
--}
+-- | A copy of 'Control.Monad.Trans.Class.MonadTrans' to explicitly allow only
+-- lifting actions that are rerunnable, e.g. in the context of a SQL transaction.
 class MonadRerunnableTrans t where
   -- | Lift the given action.
   --
