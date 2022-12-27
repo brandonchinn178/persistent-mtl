@@ -44,7 +44,7 @@ newtype SqlTransaction m a = UnsafeSqlTransaction
   deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO, MonadRerunnableTrans)
 
 instance
-  ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
+  ( GHC.TypeError ('GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
   , Monad m
   ) =>
   MonadIO (SqlTransaction m)
