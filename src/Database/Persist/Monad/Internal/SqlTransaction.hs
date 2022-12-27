@@ -66,9 +66,9 @@ data SqlTransactionEnv = SqlTransactionEnv
 
 runSqlTransaction ::
   MonadUnliftIO m =>
-  SqlTransactionEnv ->
-  SqlTransaction m a ->
-  m a
+  SqlTransactionEnv
+  -> SqlTransaction m a
+  -> m a
 runSqlTransaction opts =
   (`runSqlConn` sqlBackend opts)
     . withReaderT (\conn -> opts{sqlBackend = conn})
@@ -77,9 +77,9 @@ runSqlTransaction opts =
 -- | Like normal 'catch', except ignores errors specified by 'ignoreCatch'.
 catchSqlTransaction ::
   (MonadUnliftIO m, Exception e) =>
-  SqlTransaction m a ->
-  (e -> SqlTransaction m a) ->
   SqlTransaction m a
+  -> (e -> SqlTransaction m a)
+  -> SqlTransaction m a
 catchSqlTransaction (UnsafeSqlTransaction m) handler =
   UnsafeSqlTransaction $ m `catch` (unSqlTransaction . handler)
   where

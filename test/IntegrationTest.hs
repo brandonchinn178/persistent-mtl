@@ -836,8 +836,8 @@ insertAndFail ::
   , Typeable record
   , SafeToInsert record
   ) =>
-  record ->
-  m ()
+  record
+  -> m ()
 insertAndFail record = do
   insert_ record
   rerunnableIO $ throwIO TestError
