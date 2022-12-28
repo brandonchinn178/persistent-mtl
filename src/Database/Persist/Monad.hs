@@ -94,12 +94,11 @@ import Database.Persist.Monad.Shim
 
 {- SqlQueryT monad -}
 
-{-| Environment to configure running 'SqlQueryT'.
-
- For simple usage, you can just use 'runSqlQueryT', but for more advanced
- usage, including the ability to retry transactions, use 'mkSqlQueryEnv' with
- 'runSqlQueryTWith'.
--}
+-- | Environment to configure running 'SqlQueryT'.
+--
+--  For simple usage, you can just use 'runSqlQueryT', but for more advanced
+--  usage, including the ability to retry transactions, use 'mkSqlQueryEnv' with
+--  'runSqlQueryTWith'.
 data SqlQueryEnv = SqlQueryEnv
   { backendPool :: Pool SqlBackend
   -- ^ The pool for your persistent backend. Get this from @withSqlitePool@
@@ -117,15 +116,14 @@ data SqlQueryEnv = SqlQueryEnv
   -- ^ A callback to run if 'retryIf' returns True. Useful for logging.
   }
 
-{-| Build a SqlQueryEnv from the default.
-
- Usage:
-
- @
- let env = mkSqlQueryEnv pool $ \\env -> env { retryIf = 10 }
- in runSqlQueryTWith env m
- @
--}
+-- | Build a SqlQueryEnv from the default.
+--
+--  Usage:
+--
+--  @
+--  let env = mkSqlQueryEnv pool $ \\env -> env { retryIf = 10 }
+--  in runSqlQueryTWith env m
+--  @
 mkSqlQueryEnv :: Pool SqlBackend -> (SqlQueryEnv -> SqlQueryEnv) -> SqlQueryEnv
 mkSqlQueryEnv backendPool f =
   f
@@ -204,9 +202,8 @@ instance Exception TransactionError
 runSqlQueryT :: Pool SqlBackend -> SqlQueryT m a -> m a
 runSqlQueryT backendPool = runSqlQueryTWith $ mkSqlQueryEnv backendPool id
 
-{-| Run the 'SqlQueryT' monad transformer with the explicitly provided
- environment.
--}
+-- | Run the 'SqlQueryT' monad transformer with the explicitly provided
+--  environment.
 runSqlQueryTWith :: SqlQueryEnv -> SqlQueryT m a -> m a
 runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT
 

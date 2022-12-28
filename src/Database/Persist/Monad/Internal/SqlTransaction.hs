@@ -25,26 +25,25 @@ import Control.Monad.Trans.Rerunnable (MonadRerunnableTrans)
 import Database.Persist.Monad.Class
 import Database.Persist.Monad.SqlQueryRep
 
-{-| The monad that tracks transaction state.
-
- Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
- IO operations, for two reasons:
-
-   1. Forking a thread that uses the same 'SqlBackend' as the current thread
-      causes Bad Things to happen.
-   2. Transactions may need to be retried, in which case IO operations in
-      a transaction are required to be rerunnable.
-
- You shouldn't need to explicitly use this type; your functions should only
- declare the 'MonadSqlQuery' constraint.
--}
+-- | The monad that tracks transaction state.
+--
+--  Conceptually equivalent to 'Database.Persist.Sql.SqlPersistT', but restricts
+--  IO operations, for two reasons:
+--
+--    1. Forking a thread that uses the same 'SqlBackend' as the current thread
+--       causes Bad Things to happen.
+--    2. Transactions may need to be retried, in which case IO operations in
+--       a transaction are required to be rerunnable.
+--
+--  You shouldn't need to explicitly use this type; your functions should only
+--  declare the 'MonadSqlQuery' constraint.
 newtype SqlTransaction m a = UnsafeSqlTransaction
   { unSqlTransaction :: ReaderT SqlTransactionEnv m a
   }
   deriving (Functor, Applicative, Monad, MonadFix, MonadRerunnableIO, MonadRerunnableTrans)
 
 instance
-  ( GHC.TypeError ( 'GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
+  ( GHC.TypeError ('GHC.Text "Cannot run arbitrary IO actions within a transaction. If the IO action is rerunnable, use rerunnableIO")
   , Monad m
   ) =>
   MonadIO (SqlTransaction m)
@@ -67,9 +66,9 @@ data SqlTransactionEnv = SqlTransactionEnv
 
 runSqlTransaction ::
   MonadUnliftIO m =>
-  SqlTransactionEnv ->
-  SqlTransaction m a ->
-  m a
+  SqlTransactionEnv
+  -> SqlTransaction m a
+  -> m a
 runSqlTransaction opts =
   (`runSqlConn` sqlBackend opts)
     . withReaderT (\conn -> opts{sqlBackend = conn})
@@ -78,9 +77,9 @@ runSqlTransaction opts =
 -- | Like normal 'catch', except ignores errors specified by 'ignoreCatch'.
 catchSqlTransaction ::
   (MonadUnliftIO m, Exception e) =>
-  SqlTransaction m a ->
-  (e -> SqlTransaction m a) ->
   SqlTransaction m a
+  -> (e -> SqlTransaction m a)
+  -> SqlTransaction m a
 catchSqlTransaction (UnsafeSqlTransaction m) handler =
   UnsafeSqlTransaction $ m `catch` (unSqlTransaction . handler)
   where

@@ -1,0 +1,32 @@
+{% macro with_condition(fn) -%}
+{% if fn.condition -%}
+#if {{ fn.condition }}
+{{ caller() }}
+#endif
+{% else -%}
+{{ caller() }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro gen_constraints(constraints) -%}
+    {% for constraint in constraints -%}
+        {{ constraint }}
+        {%- if not loop.last %}, {% endif -%}
+    {%- endfor %}
+{%- endmacro %}
+
+{% macro arg_vars(fn) -%}
+    {%- for _ in fn.args %} a{{ loop.index }}
+    {%- endfor -%}
+{%- endmacro %}
+
+{% macro SqlQueryRep_type(fn) -%}
+  SqlQueryRep (
+    {%- for record_type_var in fn.record_type_vars -%}
+      {{ record_type_var }}
+      {%- if not loop.last %}, {% endif %}
+    {%- else -%}
+      Void
+    {%- endfor -%}
+  ) {{ fn.result }}
+{%- endmacro -%}

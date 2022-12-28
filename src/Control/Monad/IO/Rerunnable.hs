@@ -22,9 +22,8 @@ import qualified Control.Monad.Trans.State.Strict as State.Strict
 import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
 import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 
-{-| A copy of 'Control.Monad.IO.Class.MonadIO' to explicitly allow only IO
- operations that are rerunnable, e.g. in the context of a SQL transaction.
--}
+-- | A copy of 'Control.Monad.IO.Class.MonadIO' to explicitly allow only IO
+--  operations that are rerunnable, e.g. in the context of a SQL transaction.
 class Monad m => MonadRerunnableIO m where
   -- | Lift the given IO operation to @m@.
   --
