@@ -32,7 +32,7 @@ library:
     - transformers >= 0.5.6 && < 0.6
     - unliftio >= 0.2 && < 0.3
     - unliftio-core >= 0.2 && < 0.3
-    - unliftio-pool >= 0.2 && < 0.3
+    - unliftio-pool >= 0.2 && < 1
 
   when:
     # https://gitlab.haskell.org/ghc/ghc/-/issues/20836
