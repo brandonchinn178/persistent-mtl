@@ -1,6 +1,6 @@
 # `persistent-mtl`
 
-[![GitHub Actions](https://img.shields.io/github/workflow/status/brandonchinn178/persistent-mtl/CI/main)](https://github.com/brandonchinn178/persistent-mtl/actions?query=branch%3Amain)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/brandonchinn178/persistent-mtl/ci.yml?branch=main)](https://github.com/brandonchinn178/persistent-mtl/actions?query=branch%3Amain)
 [![Hackage](https://img.shields.io/hackage/v/persistent-mtl)](https://hackage.haskell.org/package/persistent-mtl)
 [![Codecov](https://img.shields.io/codecov/c/gh/brandonchinn178/persistent-mtl)](https://app.codecov.io/gh/brandonchinn178/persistent-mtl)
 
