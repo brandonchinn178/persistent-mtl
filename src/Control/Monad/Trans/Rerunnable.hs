@@ -29,7 +29,7 @@ class MonadRerunnableTrans t where
   --
   -- The given action may be rerun, so use of this function requires
   -- manually verifying that the given action is rerunnable.
-  rerunnableLift :: Monad m => m a -> t m a
+  rerunnableLift :: (Monad m) => m a -> t m a
 
 {- Instances for common monad transformers -}
 
@@ -45,10 +45,10 @@ instance MonadRerunnableTrans Identity.IdentityT where
 instance MonadRerunnableTrans Maybe.MaybeT where
   rerunnableLift = lift
 
-instance Monoid w => MonadRerunnableTrans (RWS.Lazy.RWST r w s) where
+instance (Monoid w) => MonadRerunnableTrans (RWS.Lazy.RWST r w s) where
   rerunnableLift = lift
 
-instance Monoid w => MonadRerunnableTrans (RWS.Strict.RWST r w s) where
+instance (Monoid w) => MonadRerunnableTrans (RWS.Strict.RWST r w s) where
   rerunnableLift = lift
 
 instance MonadRerunnableTrans (State.Lazy.StateT s) where
@@ -57,10 +57,10 @@ instance MonadRerunnableTrans (State.Lazy.StateT s) where
 instance MonadRerunnableTrans (State.Strict.StateT s) where
   rerunnableLift = lift
 
-instance Monoid w => MonadRerunnableTrans (Writer.Lazy.WriterT w) where
+instance (Monoid w) => MonadRerunnableTrans (Writer.Lazy.WriterT w) where
   rerunnableLift = lift
 
-instance Monoid w => MonadRerunnableTrans (Writer.Strict.WriterT w) where
+instance (Monoid w) => MonadRerunnableTrans (Writer.Strict.WriterT w) where
   rerunnableLift = lift
 
 instance MonadRerunnableTrans Resource.ResourceT where

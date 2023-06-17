@@ -35,29 +35,29 @@ class (Monad m, MonadSqlQuery (TransactionM m)) => MonadSqlQuery m where
   type TransactionM m :: Type -> Type
 
   -- | Interpret the given SQL query operation.
-  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
+  runQueryRep :: (Typeable record) => SqlQueryRep record a -> m a
 
   -- | Run all queries in the given action using the same database connection.
   withTransaction :: TransactionM m a -> m a
 
 {- Instances for common monad transformers -}
 
-instance MonadSqlQuery m => MonadSqlQuery (Reader.ReaderT r m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (Reader.ReaderT r m) where
   type TransactionM (Reader.ReaderT r m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Except.ExceptT e m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (Except.ExceptT e m) where
   type TransactionM (Except.ExceptT e m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Identity.IdentityT m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (Identity.IdentityT m) where
   type TransactionM (Identity.IdentityT m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Maybe.MaybeT m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (Maybe.MaybeT m) where
   type TransactionM (Maybe.MaybeT m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
@@ -72,12 +72,12 @@ instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Strict.RWST r w s m) 
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (State.Lazy.StateT s m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (State.Lazy.StateT s m) where
   type TransactionM (State.Lazy.StateT s m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (State.Strict.StateT s m) where
+instance (MonadSqlQuery m) => MonadSqlQuery (State.Strict.StateT s m) where
   type TransactionM (State.Strict.StateT s m) = TransactionM m
   runQueryRep = lift . runQueryRep
   withTransaction = lift . withTransaction

@@ -131,10 +131,10 @@ person name = Person name 0
 getName :: Entity Person -> String
 getName = personName . entityVal
 
-getPeople :: MonadSqlQuery m => m [Person]
+getPeople :: (MonadSqlQuery m) => m [Person]
 getPeople = map entityVal <$> selectList [] [Asc PersonId]
 
-getPeopleNames :: MonadSqlQuery m => m [String]
+getPeopleNames :: (MonadSqlQuery m) => m [String]
 getPeopleNames = map personName <$> getPeople
 
 nameAndAge :: Person -> (String, Int)
@@ -145,8 +145,8 @@ nameAndAge = personName &&& personAge
 post :: String -> Key Person -> Post
 post title author = Post title author Nothing
 
-getPosts :: MonadSqlQuery m => m [Post]
+getPosts :: (MonadSqlQuery m) => m [Post]
 getPosts = map entityVal <$> selectList [] []
 
-getPostTitles :: MonadSqlQuery m => m [String]
+getPostTitles :: (MonadSqlQuery m) => m [String]
 getPostTitles = map postTitle <$> getPosts

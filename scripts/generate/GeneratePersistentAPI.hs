@@ -165,7 +165,7 @@ replaceAll replacers haystack = foldr (uncurry Text.replace) haystack replacers
 
 -- | Add to each element keys that indicate information about the element's
 --  index in the list.
-enumerate :: Mustache.ToMustache a => [a] -> [Mustache.Value]
+enumerate :: (Mustache.ToMustache a) => [a] -> [Mustache.Value]
 enumerate xs =
   let mkElem x i =
         merge (Mustache.toMustache x) $
@@ -199,7 +199,7 @@ main = do
   generate context "SqlShim.mustache" $ root ++ "src/Database/Persist/Sql/Shim.hs"
   generate context "TestHelpers.mustache" $ root ++ "test/Generated.hs"
 
-generate :: ToMustache k => k -> FilePath -> FilePath -> IO ()
+generate :: (ToMustache k) => k -> FilePath -> FilePath -> IO ()
 generate context templatePath output = do
   template <- either (error . show) return =<< Mustache.automaticCompile ["./templates"] templatePath
   case Mustache.checkedSubstitute template context of

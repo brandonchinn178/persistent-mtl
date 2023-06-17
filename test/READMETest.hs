@@ -15,11 +15,11 @@ import Example
 
 test =
   testCase "withTransaction example works" $ do
-    let foo :: MonadSqlQuery m => m ()
+    let foo :: (MonadSqlQuery m) => m ()
         foo = insert_ $ person "Alice"
-        bar :: MonadSqlQuery m => m ()
+        bar :: (MonadSqlQuery m) => m ()
         bar = insert_ $ person "Bob"
-        fooAndBar :: MonadSqlQuery m => m ()
+        fooAndBar :: (MonadSqlQuery m) => m ()
         fooAndBar = withTransaction $ foo >> bar
     runMockSqlQueryT
       fooAndBar

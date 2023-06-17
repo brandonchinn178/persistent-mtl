@@ -65,7 +65,7 @@ data SqlTransactionEnv = SqlTransactionEnv
   }
 
 runSqlTransaction ::
-  MonadUnliftIO m =>
+  (MonadUnliftIO m) =>
   SqlTransactionEnv
   -> SqlTransaction m a
   -> m a

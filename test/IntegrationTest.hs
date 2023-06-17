@@ -167,7 +167,7 @@ testCatchTransaction backendType =
 -- this should compile
 testComposability :: BackendType -> TestTree
 testComposability backendType = testCase "Operations can be composed" $ do
-  let onlySql :: MonadSqlQuery m => m ()
+  let onlySql :: (MonadSqlQuery m) => m ()
       onlySql = do
         _ <- getPeople
         return ()
@@ -178,12 +178,12 @@ testComposability backendType = testCase "Operations can be composed" $ do
         _ <- rerunnableIO $ newIORef True
         return ()
 
-      onlyRerunnableIO :: MonadRerunnableIO m => m ()
+      onlyRerunnableIO :: (MonadRerunnableIO m) => m ()
       onlyRerunnableIO = do
         _ <- rerunnableIO $ newIORef True
         return ()
 
-      arbitraryIO :: MonadIO m => m ()
+      arbitraryIO :: (MonadIO m) => m ()
       arbitraryIO = do
         _ <- liftIO $ newIORef True
         return ()
@@ -792,21 +792,21 @@ testInterop backendType =
 
 {- Persistent helpers -}
 
-fromPersistValue' :: PersistField a => PersistValue -> a
+fromPersistValue' :: (PersistField a) => PersistValue -> a
 fromPersistValue' = either (error . Text.unpack) id . fromPersistValue
 
 {- Meta SQL helpers -}
 
 -- | Put the database in a state where running a migration is safe.
-setupSafeMigration :: MonadSqlQuery m => m ()
+setupSafeMigration :: (MonadSqlQuery m) => m ()
 setupSafeMigration = rawExecute "ALTER TABLE person ADD COLUMN removed_column VARCHAR" []
 
 -- | Put the database in a state where running a migration is unsafe.
-setupUnsafeMigration :: MonadSqlQuery m => m ()
+setupUnsafeMigration :: (MonadSqlQuery m) => m ()
 setupUnsafeMigration = rawExecute "ALTER TABLE person ADD COLUMN foo VARCHAR" []
 
 -- | Get the names of all columns in the given table.
-getSchemaColumnNames :: MonadSqlQuery m => BackendType -> String -> m [String]
+getSchemaColumnNames :: (MonadSqlQuery m) => BackendType -> String -> m [String]
 getSchemaColumnNames backendType tableName = map unSingle <$> rawSql sql []
   where
     sql = Text.pack $ case backendType of
