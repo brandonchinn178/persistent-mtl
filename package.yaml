@@ -12,7 +12,7 @@ extra-source-files:
   - README.md
   - test/goldens/**/*.golden
 
-ghc-options: -Wall
+ghc-options: -Wall -Wcompat -Wunused-packages
 
 github: brandonchinn178/persistent-mtl
 
@@ -60,7 +60,6 @@ tests:
       - persistent-mtl
       - persistent-postgresql
       - persistent-sqlite
-      - persistent-template
       - resource-pool
       - resourcet
       - tasty
