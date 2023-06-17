@@ -36,21 +36,24 @@ jobs:
       TEST_POSTGRESQL: 1
 
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
           key: ${{ runner.os }}-stack-cache-${{ hashFiles(matrix.stack_yaml, 'package.yaml') }}
-      - run: stack test --coverage
-
-      - name: Check that files are unmodified
+      -
+        run: stack test --coverage
+      -
+        name: Check that files are unmodified
         run: git diff --exit-code
-
       # upload coverage data
-      - name: Generate coverage data
+      -
+        name: Generate coverage data
         run: stack install hpc-lcov && hpc-lcov
-      - uses: codecov/codecov-action@v3
+      -
+        uses: codecov/codecov-action@v3
         with:
           files: lcov.info
         if: ${{ matrix.latest }}
@@ -61,42 +64,46 @@ jobs:
       HLINT_VERSION: '3.5'
       FOURMOLU_VERSION: '0.10.1.0'
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install hlint
+      -
+        uses: actions/checkout@v3
+      -
+        name: Install hlint
         run: |
           HLINT_ARCHIVE="hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"
           curl -sSLO "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/${HLINT_ARCHIVE}"
           tar xzf "${HLINT_ARCHIVE}" -C /usr/local/bin/ --strip-components=1 "hlint-${HLINT_VERSION}/hlint"
-
-      - name: Install fourmolu
+      -
+        name: Install fourmolu
         run: |
           curl -sSL \
             "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64" \
             -o /usr/local/bin/fourmolu
           chmod +x /usr/local/bin/fourmolu
-
-      - run: pip install pre-commit
-      - run: pre-commit run --all-files -v --show-diff-on-failure
+      -
+        run: pip install pre-commit
+      -
+        run: pre-commit run --all-files -v --show-diff-on-failure
         env:
           SKIP: no-commit-to-branch
 
   check_sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
           key: ${{ runner.os }}-check_sdist-${{ hashFiles('stack.yaml', 'package.yaml') }}
-
-      - name: Strip unreleased section from CHANGELOG
+      -
+        name: Strip unreleased section from CHANGELOG
         run: sed -i -n '/^# Unreleased/d; /^#/,$p' CHANGELOG.md
-
-      - name: Create sdist bundle
+      -
+        name: Create sdist bundle
         run: stack sdist --test-tarball --tar-dir .
-
-      - uses: actions/upload-artifact@v3
+      -
+        uses: actions/upload-artifact@v3
         with:
           name: persistent-mtl-sdist
           path: persistent-mtl-*.tar.gz
@@ -104,10 +111,14 @@ jobs:
   check_codegen:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
           key: ${{ runner.os }}-check_codegen-${{ hashFiles('stack.yaml') }}
-      - run: scripts/generate/run.sh
-      - run: git diff --exit-code *.hs
+      -
+        run: scripts/generate/run.sh
+      -
+        run: git diff --exit-code *.hs
