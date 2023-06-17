@@ -55,6 +55,7 @@ jobs:
           - '8.10'
           - '9.0'
           - '9.4'
+          - '9.6'
         persistent_version:
           - '2.13'
           - '2.14'
@@ -85,6 +86,16 @@ jobs:
             --test-show-details=streaming
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
             --constraint='persistent < 2.13.3.4 || >= 2.14.0.2'
+      -
+        # TODO: remove
+        if: ${{ matrix.ghc_version == '9.6' }}
+        run:
+          cabal configure
+            --enable-append
+            --allow-newer='persistent:template-haskell'
+            --allow-newer='unliftio-pool:transformers'
+            --allow-newer='explainable-predicates:base'
+            --allow-newer='explainable-predicates:template-haskell'
       -
         name: Get build plan
         run: cabal build --dry-run
