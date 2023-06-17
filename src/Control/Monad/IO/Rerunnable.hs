@@ -24,7 +24,7 @@ import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 
 -- | A copy of 'Control.Monad.IO.Class.MonadIO' to explicitly allow only IO
 --  operations that are rerunnable, e.g. in the context of a SQL transaction.
-class Monad m => MonadRerunnableIO m where
+class (Monad m) => MonadRerunnableIO m where
   -- | Lift the given IO operation to @m@.
   --
   -- The given IO operation may be rerun, so use of this function requires
@@ -36,16 +36,16 @@ instance MonadRerunnableIO IO where
 
 {- Instances for common monad transformers -}
 
-instance MonadRerunnableIO m => MonadRerunnableIO (Reader.ReaderT r m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (Reader.ReaderT r m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (Except.ExceptT e m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (Except.ExceptT e m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (Identity.IdentityT m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (Identity.IdentityT m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (Maybe.MaybeT m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (Maybe.MaybeT m) where
   rerunnableIO = lift . rerunnableIO
 
 instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (RWS.Lazy.RWST r w s m) where
@@ -54,10 +54,10 @@ instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (RWS.Lazy.RWST r w
 instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (RWS.Strict.RWST r w s m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (State.Lazy.StateT s m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (State.Lazy.StateT s m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (State.Strict.StateT s m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (State.Strict.StateT s m) where
   rerunnableIO = lift . rerunnableIO
 
 instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (Writer.Lazy.WriterT w m) where
@@ -66,5 +66,5 @@ instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (Writer.Lazy.Write
 instance (Monoid w, MonadRerunnableIO m) => MonadRerunnableIO (Writer.Strict.WriterT w m) where
   rerunnableIO = lift . rerunnableIO
 
-instance MonadRerunnableIO m => MonadRerunnableIO (Resource.ResourceT m) where
+instance (MonadRerunnableIO m) => MonadRerunnableIO (Resource.ResourceT m) where
   rerunnableIO = lift . rerunnableIO

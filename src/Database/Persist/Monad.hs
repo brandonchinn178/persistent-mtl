@@ -153,7 +153,7 @@ newtype SqlQueryT m a = SqlQueryT
     , MonadLogger
     )
 
-instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
+instance (MonadUnliftIO m) => MonadSqlQuery (SqlQueryT m) where
   type TransactionM (SqlQueryT m) = SqlTransaction (SqlQueryT m)
 
   -- Running a query directly in SqlQueryT will create a one-off transaction.
@@ -178,13 +178,13 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
               else throwIO RetryLimitExceeded
        in loop 0
 
-instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
+instance (MonadUnliftIO m) => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT
 
 mapSqlQueryT :: (m a -> n b) -> SqlQueryT m a -> SqlQueryT n b
 mapSqlQueryT f = SqlQueryT . mapReaderT f . unSqlQueryT
 
-instance MonadReader r m => MonadReader r (SqlQueryT m) where
+instance (MonadReader r m) => MonadReader r (SqlQueryT m) where
   ask = lift ask
   local = mapSqlQueryT . local
 
@@ -209,5 +209,5 @@ runSqlQueryTWith env = (`runReaderT` env) . unSqlQueryT
 
 {- SqlQueryT environment -}
 
-getSqlBackendPool :: Monad m => SqlQueryT m (Pool SqlBackend)
+getSqlBackendPool :: (Monad m) => SqlQueryT m (Pool SqlBackend)
 getSqlBackendPool = SqlQueryT (asks backendPool)

@@ -95,7 +95,7 @@ newtype MockSqlQueryT m a = MockSqlQueryT
 runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
 runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
 
-instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
+instance (MonadIO m) => MonadSqlQuery (MockSqlQueryT m) where
   type TransactionM (MockSqlQueryT m) = MockSqlQueryT m
 
   runQueryRep rep = do
@@ -111,7 +111,7 @@ instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
 -- | A mocked query to use in 'runMockSqlQueryT'.
 --
 --  Use 'withRecord' or another helper to create a 'MockQuery'.
-data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep record a -> Maybe (IO a))
+data MockQuery = MockQuery (forall record a. (Typeable record) => SqlQueryRep record a -> Maybe (IO a))
 
 -- | A helper for defining a mocked database query against a specific @record@
 --  type. Designed to be used with TypeApplications.
@@ -134,7 +134,7 @@ data MockQuery = MockQuery (forall record a. Typeable record => SqlQueryRep reco
 --  @
 --  belongsTo :: (Person -> Maybe (Key Post)) -> Person -> SqlQueryRep (Person, Post) (Maybe Post)
 --  @
-withRecord :: forall record. Typeable record => (forall a. SqlQueryRep record a -> Maybe a) -> MockQuery
+withRecord :: forall record. (Typeable record) => (forall a. SqlQueryRep record a -> Maybe a) -> MockQuery
 withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
   case eqT @record @someRecord of
     Just Refl -> pure <$> f rep
@@ -145,7 +145,7 @@ withRecord f = MockQuery $ \(rep :: SqlQueryRep someRecord result) ->
 --  This does not do any matching on the @record@ type, so it is mostly useful
 --  for queries that don't use the @record@ type, like
 --  'Database.Persist.Monad.Shim.rawExecute'.
-mockQuery :: (forall record a. Typeable record => SqlQueryRep record a -> Maybe a) -> MockQuery
+mockQuery :: (forall record a. (Typeable record) => SqlQueryRep record a -> Maybe a) -> MockQuery
 mockQuery f = MockQuery (fmap pure . f)
 
 -- | A helper for mocking a 'Database.Persist.Monad.Shim.selectSource' or
@@ -162,7 +162,7 @@ mockQuery f = MockQuery (fmap pure . f)
 --        in Just [person1, person2]
 --      else Nothing
 --  @
-mockSelectSource :: forall record. Typeable record => ([Filter record] -> [SelectOpt record] -> Maybe [Entity record]) -> MockQuery
+mockSelectSource :: forall record. (Typeable record) => ([Filter record] -> [SelectOpt record] -> Maybe [Entity record]) -> MockQuery
 mockSelectSource f = withRecord @record $ \case
   SelectSourceRes filters opts ->
     let toAcquire entities = Acquire.mkAcquire (pure $ Conduit.yieldMany entities) (\_ -> pure ())
@@ -180,7 +180,7 @@ mockSelectSource f = withRecord @record $ \case
 --      then Just $ map toSqlKey [1, 2]
 --      else Nothing
 --  @
-mockSelectKeys :: forall record. Typeable record => ([Filter record] -> [SelectOpt record] -> Maybe [Key record]) -> MockQuery
+mockSelectKeys :: forall record. (Typeable record) => ([Filter record] -> [SelectOpt record] -> Maybe [Key record]) -> MockQuery
 mockSelectKeys f = withRecord @record $ \case
   SelectKeysRes filters opts ->
     let toAcquire keys = Acquire.mkAcquire (pure $ Conduit.yieldMany keys) (\_ -> pure ())

@@ -4,25 +4,14 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 0 * * *'
   workflow_call:
 
 jobs:
   build_and_test:
-    strategy:
-      matrix:
-        stack_yaml:
-          - stack-ghc-8.10.yaml
-          - stack-ghc-9.0.yaml
-          # - stack-ghc-9.2.yaml
-          - stack-ghc-9.4.yaml
-          - stack-persistent-2.13.yaml
-          - stack-persistent-2.14.yaml
-        include:
-          - stack_yaml: stack.yaml
-            latest: true
-
-    name: build_and_test (${{ matrix.stack_yaml }})
-    runs-on: ubuntu-22.04
+    name: build_and_test
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:13.1
@@ -32,71 +21,163 @@ jobs:
         ports:
           - 5432:5432
     env:
-      STACK_YAML: ${{ matrix.stack_yaml }}
       TEST_POSTGRESQL: 1
 
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-stack-cache-${{ hashFiles(matrix.stack_yaml, 'package.yaml') }}
-      - run: stack test --coverage
-
-      - name: Check that files are unmodified
+          key: ${{ runner.os }}-stack-cache-${{ hashFiles('stack.yaml', 'package.yaml') }}
+      -
+        run: stack test --coverage
+      -
+        name: Check that files are unmodified
         run: git diff --exit-code
-
-      # upload coverage data
-      - name: Generate coverage data
-        run: stack install hpc-lcov && hpc-lcov
-      - uses: codecov/codecov-action@v3
+      -
+        name: Check for any outdated packages
+        run: cabal outdated --exit-code
+      -
+        name: Generate coverage data
+        run: |
+          HPC_LCOV_VERSION=1.1.1
+          curl -fsSL \
+            "https://github.com/brandonchinn178/hpc-lcov/releases/download/v${HPC_LCOV_VERSION}/hpc-lcov-${HPC_LCOV_VERSION}-linux-x86_64" \
+            -o /usr/local/bin/hpc-lcov
+          chmod +x /usr/local/bin/hpc-lcov
+          hpc-lcov
+      -
+        uses: codecov/codecov-action@v3
         with:
           files: lcov.info
-        if: ${{ matrix.latest }}
+
+  compat_test:
+    strategy:
+      matrix:
+        ghc_version:
+          - '8.10'
+          - '9.0'
+          - '9.4'
+          - '9.6'
+        persistent_version:
+          - '2.13'
+          - '2.14'
+        include:
+          - ghc_version: '8.10.1'
+            persistent_version: '2.13'
+            oldest: true
+        exclude:
+          - ghc_version: '9.4'
+            persistent_version: '2.13'
+          - ghc_version: '9.6'
+            persistent_version: '2.13'
+
+    name: compat_test (ghc-${{ matrix.ghc_version }}, persistent-${{ matrix.persistent_version }})
+    runs-on: ubuntu-latest
+
+    steps:
+      -
+        uses: actions/checkout@v3
+      -
+        id: setup
+        name: Set up GHC ${{ matrix.ghc_version }}
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc_version }}
+      -
+        name: Configure the build
+        run:
+          cabal configure
+            --enable-test
+            --test-options='--color=always'
+            --test-show-details=streaming
+            --constraint='persistent ^>= ${{ matrix.persistent_version }}'
+            --constraint='persistent < 2.13.3.4 || >= 2.14.0.2'
+      -
+        # TODO: remove
+        if: ${{ matrix.ghc_version == '9.6' }}
+        run:
+          cabal configure
+            --enable-append
+            --allow-newer='persistent:template-haskell'
+            --allow-newer='unliftio-pool:transformers'
+            --allow-newer='explainable-predicates:base'
+            --allow-newer='explainable-predicates:template-haskell'
+      -
+        if: ${{ matrix.oldest }}
+        name: Use oldest dependencies
+        run:
+          cabal configure
+            --enable-append --prefer-oldest
+            --constraint 'conduit >= 1.3.1'
+            --constraint 'silently >= 0.0.3'
+            --constraint 'string-conversions >= 0.4'
+            --constraint 'unix-time >= 0.3.8'
+      -
+        name: Get build plan
+        run: cabal build --dry-run
+      -
+        name: Get current month to clear cache
+        run: echo "CURR_MONTH=$(date +%B)" | tee -a "$GITHUB_ENV"
+      -
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ runner.os }}-cabal-cache-${{ env.CURR_MONTH }}-${{ matrix.ghc_version }}-${{ hashFiles('**/plan.json') }}
+          restore-keys: |
+               ${{ runner.os }}-cabal-cache-${{ env.CURR_MONTH }}-${{ matrix.ghc_version }}-
+      -
+        name: Build + Test
+        run: cabal test
 
   lint:
     runs-on: ubuntu-latest
     env:
       HLINT_VERSION: '3.5'
-      FOURMOLU_VERSION: '0.10.1.0'
+      FOURMOLU_VERSION: '0.13.0.0'
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install hlint
+      -
+        uses: actions/checkout@v3
+      -
+        name: Install hlint
         run: |
           HLINT_ARCHIVE="hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"
           curl -sSLO "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/${HLINT_ARCHIVE}"
           tar xzf "${HLINT_ARCHIVE}" -C /usr/local/bin/ --strip-components=1 "hlint-${HLINT_VERSION}/hlint"
-
-      - name: Install fourmolu
+      -
+        name: Install fourmolu
         run: |
           curl -sSL \
             "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64" \
             -o /usr/local/bin/fourmolu
           chmod +x /usr/local/bin/fourmolu
-
-      - run: pip install pre-commit
-      - run: pre-commit run --all-files -v --show-diff-on-failure
+      -
+        run: pip install pre-commit
+      -
+        run: pre-commit run --all-files -v --show-diff-on-failure
         env:
           SKIP: no-commit-to-branch
 
   check_sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
           key: ${{ runner.os }}-check_sdist-${{ hashFiles('stack.yaml', 'package.yaml') }}
-
-      - name: Strip unreleased section from CHANGELOG
+      -
+        name: Strip unreleased section from CHANGELOG
         run: sed -i -n '/^# Unreleased/d; /^#/,$p' CHANGELOG.md
-
-      - name: Create sdist bundle
+      -
+        name: Create sdist bundle
         run: stack sdist --test-tarball --tar-dir .
-
-      - uses: actions/upload-artifact@v3
+      -
+        uses: actions/upload-artifact@v3
         with:
           name: persistent-mtl-sdist
           path: persistent-mtl-*.tar.gz
@@ -104,10 +185,14 @@ jobs:
   check_codegen:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      -
+        uses: actions/checkout@v3
+      -
+        uses: actions/cache@v3
         with:
           path: ~/.stack
           key: ${{ runner.os }}-check_codegen-${{ hashFiles('stack.yaml') }}
-      - run: scripts/generate/run.sh
-      - run: git diff --exit-code *.hs
+      -
+        run: scripts/generate/run.sh
+      -
+        run: git diff --exit-code *.hs
