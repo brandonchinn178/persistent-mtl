@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 0 * * *'
   workflow_call:
 
 jobs:
@@ -34,6 +36,9 @@ jobs:
       -
         name: Check that files are unmodified
         run: git diff --exit-code
+      -
+        name: Check for any outdated packages
+        run: cabal outdated --exit-code
       -
         name: Generate coverage data
         run: |
