@@ -64,6 +64,10 @@ jobs:
         persistent_version:
           - '2.13'
           - '2.14'
+        include:
+          - ghc_version: '8.10.1'
+            persistent_version: '2.13'
+            oldest: true
         exclude:
           - ghc_version: '9.4'
             persistent_version: '2.13'
@@ -101,6 +105,16 @@ jobs:
             --allow-newer='unliftio-pool:transformers'
             --allow-newer='explainable-predicates:base'
             --allow-newer='explainable-predicates:template-haskell'
+      -
+        if: ${{ matrix.oldest }}
+        name: Use oldest dependencies
+        run:
+          cabal configure
+            --enable-append --prefer-oldest
+            --constraint 'conduit >= 1.3.1'
+            --constraint 'silently >= 0.0.3'
+            --constraint 'string-conversions >= 0.4'
+            --constraint 'unix-time >= 0.3.8'
       -
         name: Get build plan
         run: cabal build --dry-run
