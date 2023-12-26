@@ -96,16 +96,6 @@ jobs:
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
             --constraint='persistent < 2.13.3.4 || >= 2.14.0.2'
       -
-        # TODO: remove
-        if: ${{ matrix.ghc_version == '9.6' }}
-        run:
-          cabal configure
-            --enable-append
-            --allow-newer='persistent:template-haskell'
-            --allow-newer='unliftio-pool:transformers'
-            --allow-newer='explainable-predicates:base'
-            --allow-newer='explainable-predicates:template-haskell'
-      -
         if: ${{ matrix.oldest }}
         name: Use oldest dependencies
         run:
