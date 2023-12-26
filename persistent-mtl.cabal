@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -53,7 +53,7 @@ library
     , persistent >=2.13 && <2.15
     , resource-pool <1
     , resourcet <1.4
-    , text <2.1
+    , text <2.2
     , transformers <0.7
     , unliftio <0.3
     , unliftio-core <0.3
