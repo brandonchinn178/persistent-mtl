@@ -1,9 +1,4 @@
-resolver: lts-19.33
-
-extra-deps:
-  - tasty-autocollect-0.3.0.0
-  # https://github.com/yesodweb/persistent/issues/1406#issuecomment-1226741099
-  - persistent-2.13.3.3
+resolver: lts-22.3
 
 ghc-options:
   '$locals': -Werror
