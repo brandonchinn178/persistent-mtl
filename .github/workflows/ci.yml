@@ -61,6 +61,7 @@ jobs:
           - '9.0'
           - '9.4'
           - '9.6'
+          - '9.8'
         persistent_version:
           - '2.13'
           - '2.14'
@@ -72,6 +73,8 @@ jobs:
           - ghc_version: '9.4'
             persistent_version: '2.13'
           - ghc_version: '9.6'
+            persistent_version: '2.13'
+          - ghc_version: '9.8'
             persistent_version: '2.13'
 
     name: compat_test (ghc-${{ matrix.ghc_version }}, persistent-${{ matrix.persistent_version }})

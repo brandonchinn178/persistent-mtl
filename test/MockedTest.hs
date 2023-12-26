@@ -12,6 +12,7 @@ import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
+import Data.Maybe (listToMaybe)
 import Database.Persist.Sql (
   Entity (..),
   Single (..),
@@ -48,8 +49,8 @@ test =
         case result of
           Right _ -> assertFailure "runMockSqlQueryT did not fail"
           Left e -> do
-            let msg = head $ lines $ show (e :: SomeException)
-            msg @?= "Could not find mock for query: SelectList{..}<Person>"
+            let msg = listToMaybe $ lines $ show (e :: SomeException)
+            msg @?= Just "Could not find mock for query: SelectList{..}<Person>"
     , testCase "it continues after a mock doesn't match" $ do
         result <-
           runMockSqlQueryT

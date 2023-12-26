@@ -1,5 +1,7 @@
 # Unreleased
 
+* Add GHC 9.8 support
+
 # v0.5.0.1
 
 * Add GHC 9.4 support

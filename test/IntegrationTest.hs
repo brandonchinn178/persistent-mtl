@@ -1,4 +1,5 @@
 {- AUTOCOLLECT.TEST -}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -698,7 +699,7 @@ testPersistentAPI backendType =
         result <- runTestApp backendType $ do
           insertMany_ [person "Alice", person "Bob"]
           withRawQuery "SELECT name FROM person" [] $
-            Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+            Conduit.mapC (getFirstPersistValue @Text) .| Conduit.sinkList
 
         result @?= ["Alice", "Bob"]
     , testCase "rawQueryRes" $ do
@@ -706,12 +707,12 @@ testPersistentAPI backendType =
           insertMany_ [person "Alice", person "Bob"]
           acquire <- rawQueryRes "SELECT name FROM person" []
           Acquire.with acquire $ \conduit ->
-            runConduit $ conduit .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+            runConduit $ conduit .| Conduit.mapC (getFirstPersistValue @Text) .| Conduit.sinkList
         result @?= ["Alice", "Bob"]
     , testCase "rawQuery" $ do
         result <- runTestApp backendType $ do
           insertMany_ [person "Alice", person "Bob"]
-          runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.mapC (fromPersistValue' @Text . head) .| Conduit.sinkList
+          runConduit $ rawQuery "SELECT name FROM person" [] .| Conduit.mapC (getFirstPersistValue @Text) .| Conduit.sinkList
         result @?= ["Alice", "Bob"]
     , testCase "rawExecute" $ do
         result <- runTestApp backendType $ do
@@ -792,8 +793,13 @@ testInterop backendType =
 
 {- Persistent helpers -}
 
-fromPersistValue' :: (PersistField a) => PersistValue -> a
-fromPersistValue' = either (error . Text.unpack) id . fromPersistValue
+getFirstPersistValue :: (PersistField a) => [PersistValue] -> a
+getFirstPersistValue = \case
+  [] -> error "Unexpectedly got no values"
+  v : _ -> fromPersistValueOrFail v
+
+fromPersistValueOrFail :: (PersistField a) => PersistValue -> a
+fromPersistValueOrFail = either (error . Text.unpack) id . fromPersistValue
 
 {- Meta SQL helpers -}
 
