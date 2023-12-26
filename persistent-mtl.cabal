@@ -59,7 +59,7 @@ library
     , unliftio-core <0.3
     , unliftio-pool <1
   default-language: Haskell2010
-  if impl(ghc >= 9.2.0) && impl(ghc < 9.3) || impl(ghc >= 9.4.0) && impl(ghc < 9.4.3)
+  if impl(ghc >= 9.4.0) && impl(ghc < 9.4.3)
 
     buildable: False
 

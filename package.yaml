@@ -37,7 +37,6 @@ library:
   when:
     # https://gitlab.haskell.org/ghc/ghc/-/issues/20836
     - condition: >
-        impl(ghc >= 9.2.0) && impl(ghc < 9.3) ||
         impl(ghc >= 9.4.0) && impl(ghc < 9.4.3)
       buildable: false
 

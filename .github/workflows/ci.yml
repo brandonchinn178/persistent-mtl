@@ -57,25 +57,15 @@ jobs:
     strategy:
       matrix:
         ghc_version:
-          - '8.10'
-          - '9.0'
           - '9.4'
           - '9.6'
           - '9.8'
         persistent_version:
-          - '2.13'
           - '2.14'
         include:
-          - ghc_version: '8.10.1'
-            persistent_version: '2.13'
+          - ghc_version: '9.4.4'
+            persistent_version: '2.14'
             oldest: true
-        exclude:
-          - ghc_version: '9.4'
-            persistent_version: '2.13'
-          - ghc_version: '9.6'
-            persistent_version: '2.13'
-          - ghc_version: '9.8'
-            persistent_version: '2.13'
 
     name: compat_test (ghc-${{ matrix.ghc_version }}, persistent-${{ matrix.persistent_version }})
     runs-on: ubuntu-latest
@@ -97,17 +87,18 @@ jobs:
             --test-options='--color=always'
             --test-show-details=streaming
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
-            --constraint='persistent < 2.13.3.4 || >= 2.14.0.2'
+            --constraint='persistent >= 2.14.0.2'
       -
         if: ${{ matrix.oldest }}
         name: Use oldest dependencies
         run:
           cabal configure
             --enable-append --prefer-oldest
-            --constraint 'conduit >= 1.3.1'
+            --constraint 'array installed'
+            --constraint 'time installed'
+            --constraint 'persistent-sqlite > 2.13.0.3'
             --constraint 'silently >= 0.0.3'
             --constraint 'string-conversions >= 0.4'
-            --constraint 'unix-time >= 0.3.8'
       -
         name: Get build plan
         run: cabal build --dry-run
