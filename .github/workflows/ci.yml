@@ -89,6 +89,18 @@ jobs:
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
             --constraint='persistent >= 2.14.0.2'
       -
+        # https://github.com/bitemyapp/esqueleto/pull/381
+        if: ${{ matrix.ghc_version == '9.8' }}
+        name: Patch esqueleto
+        run: |
+          cabal configure --enable-append --allow-newer esqueleto:text
+          cat >> cabal.project.local <<EOF
+          source-repository-package
+            type: git
+            location: https://github.com/MercuryTechnologies/esqueleto.git
+            tag: 94d27de57072a823d97bd9868b33c45545c067c4
+          EOF
+      -
         if: ${{ matrix.oldest }}
         name: Use oldest dependencies
         run:
