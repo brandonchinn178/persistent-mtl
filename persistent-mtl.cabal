@@ -86,7 +86,7 @@ test-suite persistent-mtl-test
     , bytestring
     , conduit
     , containers
-    , esqueleto >=3.5
+    , esqueleto >=3.5.4.1
     , explainable-predicates >=0.1.2.0
     , monad-logger
     , persistent
