@@ -46,7 +46,7 @@ library
   build-depends:
       base >=4.14 && <5
     , conduit <1.4
-    , containers <0.7
+    , containers <0.8
     , exceptions <0.11
     , monad-logger <0.4
     , mtl <2.4
