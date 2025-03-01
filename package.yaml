@@ -19,20 +19,20 @@ github: brandonchinn178/persistent-mtl
 library:
   source-dirs: src
   dependencies:
-    - base >= 4.14 && < 5
-    - conduit < 1.4
-    - containers < 0.8
-    - exceptions < 0.11
-    - monad-logger < 0.4
-    - mtl < 2.4
-    - persistent >= 2.13 && < 2.15
-    - resource-pool < 1
-    - resourcet < 1.4
-    - text < 2.2
-    - transformers < 0.7
-    - unliftio < 0.3
-    - unliftio-core < 0.3
-    - unliftio-pool < 1
+    - base < 5
+    - conduit
+    - containers
+    - exceptions
+    - monad-logger
+    - mtl
+    - persistent
+    - resource-pool
+    - resourcet
+    - text
+    - transformers
+    - unliftio
+    - unliftio-core
+    - unliftio-pool
 
   when:
     # https://gitlab.haskell.org/ghc/ghc/-/issues/20836
