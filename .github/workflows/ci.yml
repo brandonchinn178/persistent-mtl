@@ -57,13 +57,13 @@ jobs:
     strategy:
       matrix:
         ghc_version:
-          - '9.4'
-          - '9.6'
           - '9.8'
+          - '9.10'
+          # - '9.12'  # persistent + http-api-data do not support 9.12 yet
         persistent_version:
           - '2.14'
         include:
-          - ghc_version: '9.4.4'
+          - ghc_version: '9.8.1'
             persistent_version: '2.14'
             oldest: true
 
@@ -94,8 +94,7 @@ jobs:
         run:
           cabal configure
             --enable-append --prefer-oldest
-            --constraint 'array installed'
-            --constraint 'time installed'
+            --constraint 'fast-logger > 3.1.2'
             --constraint 'persistent-sqlite > 2.13.0.3'
             --constraint 'silently >= 0.0.3'
             --constraint 'string-conversions >= 0.4'
