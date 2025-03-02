@@ -16,10 +16,8 @@ persistentVersionDir :: FilePath
 persistentVersionDir = error "Running tests against persistent > 2.14 is not supported"
 #elif MIN_VERSION_persistent(2,14,0)
 persistentVersionDir = "persistent-2.14/"
-#elif MIN_VERSION_persistent(2,13,0)
-persistentVersionDir = "persistent-2.13/"
 #else
-persistentVersionDir = error "Running tests against persistent < 2.13 is not supported"
+persistentVersionDir = error "Running tests against persistent < 2.14 is not supported"
 #endif
 
 test =

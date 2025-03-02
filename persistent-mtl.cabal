@@ -19,7 +19,6 @@ build-type:     Simple
 extra-source-files:
     CHANGELOG.md
     README.md
-    test/goldens/persistent-2.13/sqlqueryrep_show_representation.golden
     test/goldens/persistent-2.14/sqlqueryrep_show_representation.golden
 
 source-repository head
