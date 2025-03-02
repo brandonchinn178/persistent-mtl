@@ -1,5 +1,5 @@
 name: persistent-mtl
-version: 0.5.1
+version: 0.5.2
 maintainer: Brandon Chinn <brandonchinn178@gmail.com>
 synopsis: Monad transformer for the persistent API
 description: |
@@ -10,7 +10,7 @@ license: BSD3
 extra-source-files:
   - CHANGELOG.md
   - README.md
-  - test/goldens/**/*.golden
+  - test/**/*.snap.md
 
 ghc-options: -Wall -Wcompat -Wunused-packages
 
@@ -19,20 +19,20 @@ github: brandonchinn178/persistent-mtl
 library:
   source-dirs: src
   dependencies:
-    - base >= 4.14 && < 5
-    - conduit < 1.4
-    - containers < 0.8
-    - exceptions < 0.11
-    - monad-logger < 0.4
-    - mtl < 2.4
-    - persistent >= 2.13 && < 2.15
-    - resource-pool < 1
-    - resourcet < 1.4
-    - text < 2.2
-    - transformers < 0.7
-    - unliftio < 0.3
-    - unliftio-core < 0.3
-    - unliftio-pool < 1
+    - base < 5
+    - conduit
+    - containers
+    - exceptions
+    - monad-logger
+    - mtl
+    - persistent
+    - resource-pool
+    - resourcet
+    - text
+    - transformers
+    - unliftio
+    - unliftio-core
+    - unliftio-pool
 
   when:
     # https://gitlab.haskell.org/ghc/ghc/-/issues/20836
@@ -44,16 +44,15 @@ tests:
   persistent-mtl-test:
     source-dirs: test
     main: Main.hs
-    ghc-options: -F -pgmF=tasty-autocollect
+    ghc-options: -F -pgmF=skeletest-preprocessor
     build-tools:
-      - tasty-autocollect:tasty-autocollect
+      - skeletest:skeletest-preprocessor
     dependencies:
       - base
       - bytestring
       - conduit
       - containers
-      - esqueleto >= 3.5.4.1
-      - explainable-predicates >= 0.1.2.0
+      - esqueleto >= 3.5.14.0
       - monad-logger
       - persistent
       - persistent-mtl
@@ -61,9 +60,6 @@ tests:
       - persistent-sqlite >= 2.13.0.3
       - resource-pool
       - resourcet
-      - tasty
-      - tasty-autocollect >= 0.2.0.0
-      - tasty-golden
-      - tasty-hunit
+      - skeletest >= 0.2.1
       - text
       - unliftio

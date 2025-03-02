@@ -5,7 +5,6 @@ module TestUtils.Esqueleto (
 ) where
 
 import qualified Database.Esqueleto.Experimental as E
-import qualified Database.Esqueleto.Internal.Internal as E
 
 import Database.Persist.Monad (MonadSqlQuery, unsafeLiftSql)
 

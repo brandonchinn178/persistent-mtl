@@ -42,7 +42,7 @@ jobs:
       -
         name: Generate coverage data
         run: |
-          HPC_LCOV_VERSION=1.1.1
+          HPC_LCOV_VERSION=1.2.0
           curl -fsSL \
             "https://github.com/brandonchinn178/hpc-lcov/releases/download/v${HPC_LCOV_VERSION}/hpc-lcov-${HPC_LCOV_VERSION}-linux-x86_64" \
             -o /usr/local/bin/hpc-lcov
@@ -57,13 +57,13 @@ jobs:
     strategy:
       matrix:
         ghc_version:
-          - '9.4'
-          - '9.6'
           - '9.8'
+          - '9.10'
+          # - '9.12'  # persistent + http-api-data do not support 9.12 yet
         persistent_version:
           - '2.14'
         include:
-          - ghc_version: '9.4.4'
+          - ghc_version: '9.8.1'
             persistent_version: '2.14'
             oldest: true
 
@@ -84,30 +84,16 @@ jobs:
         run:
           cabal configure
             --enable-test
-            --test-options='--color=always'
             --test-show-details=streaming
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
             --constraint='persistent >= 2.14.0.2'
-      -
-        # https://github.com/bitemyapp/esqueleto/pull/381
-        if: ${{ matrix.ghc_version == '9.8' }}
-        name: Patch esqueleto
-        run: |
-          cabal configure --enable-append --allow-newer esqueleto:text
-          cat >> cabal.project.local <<EOF
-          source-repository-package
-            type: git
-            location: https://github.com/MercuryTechnologies/esqueleto.git
-            tag: 94d27de57072a823d97bd9868b33c45545c067c4
-          EOF
       -
         if: ${{ matrix.oldest }}
         name: Use oldest dependencies
         run:
           cabal configure
             --enable-append --prefer-oldest
-            --constraint 'array installed'
-            --constraint 'time installed'
+            --constraint 'fast-logger > 3.1.2'
             --constraint 'persistent-sqlite > 2.13.0.3'
             --constraint 'silently >= 0.0.3'
             --constraint 'string-conversions >= 0.4'
@@ -173,7 +159,7 @@ jobs:
         name: Create sdist bundle
         run: stack sdist --test-tarball --tar-dir .
       -
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: persistent-mtl-sdist
           path: persistent-mtl-*.tar.gz

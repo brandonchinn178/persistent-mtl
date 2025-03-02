@@ -1,4 +1,7 @@
-resolver: lts-22.39
+resolver: nightly-2025-02-28
+
+extra-deps:
+  - skeletest-0.2.1
 
 ghc-options:
   '$locals': -Werror

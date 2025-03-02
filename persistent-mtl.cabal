@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
 name:           persistent-mtl
-version:        0.5.1
+version:        0.5.2
 synopsis:       Monad transformer for the persistent API
 description:    A monad transformer and mtl-style type class for using the
                 persistent API directly in your monad transformer stack.
@@ -19,8 +19,7 @@ build-type:     Simple
 extra-source-files:
     CHANGELOG.md
     README.md
-    test/goldens/persistent-2.13/sqlqueryrep_show_representation.golden
-    test/goldens/persistent-2.14/sqlqueryrep_show_representation.golden
+    test/__snapshots__/SqlQueryRepSpec.snap.md
 
 source-repository head
   type: git
@@ -44,20 +43,20 @@ library
       src
   ghc-options: -Wall -Wcompat -Wunused-packages
   build-depends:
-      base >=4.14 && <5
-    , conduit <1.4
-    , containers <0.8
-    , exceptions <0.11
-    , monad-logger <0.4
-    , mtl <2.4
-    , persistent >=2.13 && <2.15
-    , resource-pool <1
-    , resourcet <1.4
-    , text <2.2
-    , transformers <0.7
-    , unliftio <0.3
-    , unliftio-core <0.3
-    , unliftio-pool <1
+      base <5
+    , conduit
+    , containers
+    , exceptions
+    , monad-logger
+    , mtl
+    , persistent
+    , resource-pool
+    , resourcet
+    , text
+    , transformers
+    , unliftio
+    , unliftio-core
+    , unliftio-pool
   default-language: Haskell2010
   if impl(ghc >= 9.4.0) && impl(ghc < 9.4.3)
 
@@ -69,25 +68,24 @@ test-suite persistent-mtl-test
   other-modules:
       Example
       Generated
-      IntegrationTest
-      MockedTest
-      READMETest
-      SqlQueryRepTest
+      IntegrationSpec
+      MockedSpec
+      READMESpec
+      SqlQueryRepSpec
       TestUtils.DB
       TestUtils.Esqueleto
       Paths_persistent_mtl
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Wunused-packages -F -pgmF=tasty-autocollect
+  ghc-options: -Wall -Wcompat -Wunused-packages -F -pgmF=skeletest-preprocessor
   build-tool-depends:
-      tasty-autocollect:tasty-autocollect
+      skeletest:skeletest-preprocessor
   build-depends:
       base
     , bytestring
     , conduit
     , containers
-    , esqueleto >=3.5.4.1
-    , explainable-predicates >=0.1.2.0
+    , esqueleto >=3.5.14.0
     , monad-logger
     , persistent
     , persistent-mtl
@@ -95,10 +93,7 @@ test-suite persistent-mtl-test
     , persistent-sqlite >=2.13.0.3
     , resource-pool
     , resourcet
-    , tasty
-    , tasty-autocollect >=0.2.0.0
-    , tasty-golden
-    , tasty-hunit
+    , skeletest >=0.2.1
     , text
     , unliftio
   default-language: Haskell2010

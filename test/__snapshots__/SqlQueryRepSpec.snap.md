@@ -1,3 +1,8 @@
+# SqlQueryRep
+
+## SqlQueryRep / renders with Show (persistent-2.14)
+
+```
 Get{..}<Person>
 GetMany{..}<Person>
 GetJust{..}<Person>
@@ -64,3 +69,4 @@ TransactionSave{..}
 TransactionSaveWithIsolation{..}
 TransactionUndo{..}
 TransactionUndoWithIsolation{..}
+```
