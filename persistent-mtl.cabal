@@ -19,7 +19,7 @@ build-type:     Simple
 extra-source-files:
     CHANGELOG.md
     README.md
-    test/goldens/persistent-2.14/sqlqueryrep_show_representation.golden
+    test/__snapshots__/SqlQueryRepSpec.snap.md
 
 source-repository head
   type: git
@@ -68,25 +68,24 @@ test-suite persistent-mtl-test
   other-modules:
       Example
       Generated
-      IntegrationTest
-      MockedTest
-      READMETest
-      SqlQueryRepTest
+      IntegrationSpec
+      MockedSpec
+      READMESpec
+      SqlQueryRepSpec
       TestUtils.DB
       TestUtils.Esqueleto
       Paths_persistent_mtl
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Wunused-packages -F -pgmF=tasty-autocollect
+  ghc-options: -Wall -Wcompat -Wunused-packages -F -pgmF=skeletest-preprocessor
   build-tool-depends:
-      tasty-autocollect:tasty-autocollect
+      skeletest:skeletest-preprocessor
   build-depends:
       base
     , bytestring
     , conduit
     , containers
-    , esqueleto >=3.5.4.1
-    , explainable-predicates >=0.1.2.0
+    , esqueleto >=3.5.14.0
     , monad-logger
     , persistent
     , persistent-mtl
@@ -94,10 +93,7 @@ test-suite persistent-mtl-test
     , persistent-sqlite >=2.13.0.3
     , resource-pool
     , resourcet
-    , tasty
-    , tasty-autocollect >=0.2.0.0
-    , tasty-golden
-    , tasty-hunit
+    , skeletest >=0.2.1
     , text
     , unliftio
   default-language: Haskell2010

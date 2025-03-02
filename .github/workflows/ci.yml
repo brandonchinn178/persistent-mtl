@@ -84,7 +84,6 @@ jobs:
         run:
           cabal configure
             --enable-test
-            --test-options='--color=always'
             --test-show-details=streaming
             --constraint='persistent ^>= ${{ matrix.persistent_version }}'
             --constraint='persistent >= 2.14.0.2'

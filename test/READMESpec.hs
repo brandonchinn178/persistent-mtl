@@ -1,20 +1,18 @@
-{- AUTOCOLLECT.TEST -}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module READMETest (
-  -- $AUTOCOLLECT.TEST.export$
-) where
+module READMESpec (spec) where
 
-import Test.Tasty.HUnit
+import Skeletest
 
 import Database.Persist.Monad
 import Database.Persist.Monad.TestUtils
 import Example
 
-test =
-  testCase "withTransaction example works" $ do
+spec :: Spec
+spec = do
+  it "withTransaction example works" $ do
     let foo :: (MonadSqlQuery m) => m ()
         foo = insert_ $ person "Alice"
         bar :: (MonadSqlQuery m) => m ()
